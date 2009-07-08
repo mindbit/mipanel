@@ -1,24 +1,32 @@
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <mysql.h>
 #include <linux/limits.h>
 #include <string.h>
 #include <time.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <libpq-fe.h>
 #include "hash.h"
-#include "redirect-config.h"
 #include "tools.h"
-#include "abort.h"
-#include "constants.h"
-#include "version.h"
+#include "logging.h"
+#include "config.h"
 
-#define ERROR_HOST_NOT_FOUND	6
-#define ERROR_HOST_DISABLED		11
+/* Some maximum length assumptions */
+#define MAX_LINE_LENGTH  16383
+#define MAX_HOST_LENGTH  1023
+#define MAX_QUERY_LENGTH 16383
+#define MAX_IP_LENGTH    63
 
-MYSQL mysql;
+/* Error codes */
+#define ERROR_HOST_NOT_FOUND 6
+#define ERROR_HOST_DISABLED  11
+
+const char version[] = "v1.1";
+
+int pid;
+PGconn *conn;
 struct hash *hash;
-FILE *log_fp;
 
 struct host_info {
 	char *name;						/* numele hostului */
@@ -28,125 +36,107 @@ struct host_info {
 	int r;							/* raspunsul de redirectare */
 };
 
-struct config cfg={
-	"localhost",						/* sql_host */
-	"",									/* sql_user */
-	"",									/* sql_pw */
-	"",									/* sql_db */
-	"/tmp/mysql.sock",					/* sql_sock */
-	"/var/log/squid/redirect.log",		/* log_path */
-	"http://192.168.0.1/badurl.php",	/* out_path */
-	30									/* cache_timeout */
-};
-
-int pid;
-
-int hash_algo(void *e, int n) {
+int hash_algo(void *e, int n)
+{
 	int s=0;
 	char *p;
 
 	p=((struct host_info *)e)->name;
-	while(*p!='\0') s+=*(p++);
+	while(*p!='\0')
+		s+=*(p++);
 	return s%n;
 }
 
-int hash_cmp(void *e1, void *e2) {
+int hash_cmp(void *e1, void *e2)
+{
 	return strcmp(((struct host_info *)e1)->name, ((struct host_info *)e2)->name);
 }
 
-int sql_connect(struct config *cfg) {
-	mysql_init(&mysql);
-	//mysql_options(&mysql, MYSQL_READ_DEFAULT_GROUP, "simple");
-	if(!mysql_real_connect(&mysql, cfg->sql_host, cfg->sql_user,
-				cfg->sql_pw, cfg->sql_db, 0, cfg->sql_sock, 0)) {
-		fprintf(stderr, "MySQL connection failed: %s\n", mysql_error(&mysql));
+int sql_connect(struct config *cfg)
+{
+	conn = PQconnectdb(cfg->dbconn);
+	assert(conn);
+	if (PQstatus(conn) != CONNECTION_OK) {
+		log(LOG_ERR, "Failed to connect to the database. Reason: %s\n", PQerrorMessage(conn));
+		PQfinish(conn);
 		return 1;
 	}
-#ifdef DEBUG
-	fprintf(stderr, "Successfully connected to %s as user %s, database %s\n",
-				cfg->sql_host, cfg->sql_user, cfg->sql_db);
-#endif
 	return 0;
 }
 
-void sql_close(void) {
-	mysql_close(&mysql);
+void sql_close(void)
+{
+	PQfinish(conn);
 }
 
+/* FIXME: these should be parsed from the config */
 const char query1[]="SELECT server_ip, server_port, enabled FROM sites WHERE name='%s' LIMIT 1";
 const char query2[]="SELECT site_idx FROM site_aliases WHERE name='%s' LIMIT 1";
 const char query3[]="SELECT server_ip, server_port, enabled FROM sites WHERE site_idx=%s";
 
-int sql_host_info(char *host, char *ip, int *port) {
+int sql_host_info(char *host, char *ip, int *port)
+{
 	/* intoarce:
 	 * 0 - hostul nu exista
 	 * 1 - hostul exista si e dezactivat
 	 * 2 - hostul exista si e activat
 	 */
-	MYSQL_RES *res;
-	MYSQL_ROW r;
+	PGresult *res;
 	char query[MAX_QUERY_LENGTH+1];
-	int retval=0;
+	int retval = 0;
 	int tmp;
 
 	if (!validate_hostname(host)) {
-#ifdef DEBUG
-		fprintf(stderr, "Invalid hostname '%s'\n", host);
-#endif
+		log(LOG_DEBUG, "Invalid hostname '%s'\n", host);
 		return 0;
 	}
-	
+
 	sprintf(query, query1, host);
-	CRITICAL(mysql_query(&mysql, query));
-	res=mysql_store_result(&mysql);
-	if(mysql_num_rows(res)) {
+	res = PQexec(conn, query);
+	assert(res);
+	assert(PQresultStatus(res) == PGRES_TUPLES_OK);
+	if(PQntuples(res)) {
 		/* e nume primar */
-#ifdef DEBUG
-		fprintf(stderr, "Host '%s' is primary\n", host);
-#endif
-		r=mysql_fetch_row(res);
-		strncpy(ip, r[0], MAX_IP_LENGTH);
-		ip[MAX_IP_LENGTH]='\0';
-		sscanf(r[1], "%d", port);
-		sscanf(r[2], "%d", &tmp);
-		retval=tmp?2:1;
+		log(LOG_DEBUG, "Host '%s' is primary\n", host);
+		strncpy(ip, PQgetvalue(res, 0, 0), MAX_IP_LENGTH);
+		ip[MAX_IP_LENGTH] = '\0';
+		sscanf(PQgetvalue(res, 0, 1), "%d", port);
+		sscanf(PQgetvalue(res, 0, 2), "%d", &tmp);
+		retval = tmp? 2: 1;
 	} else {
 		/* nu e nume primar, deci e alias sau nu exista deloc */
 		sprintf(query, query2, host);
-		mysql_free_result(res);
-		CRITICAL(mysql_query(&mysql, query));
-		res=mysql_store_result(&mysql);
-		if(mysql_num_rows(res)) {
+		PQclear(res);
+		res = PQexec(conn, query);
+		assert(res);
+		assert(PQresultStatus(res) == PGRES_TUPLES_OK);
+		if(PQntuples(res)) {
 			/* e un alias si caut info despre host */
-			r=mysql_fetch_row(res);
-			sprintf(query, query3, r[0]);
-			mysql_free_result(res);
-			CRITICAL(mysql_query(&mysql, query));
-			res=mysql_store_result(&mysql);
-			if(mysql_num_rows(res)) {
+			sprintf(query, query3, PQgetvalue(res, 0, 0));
+			PQclear(res);
+			res = PQexec(conn, query);
+			assert(res);
+			assert(PQresultStatus(res) == PGRES_TUPLES_OK);
+			if(PQntuples(res)) {
 				/* am gasit hostul */
-				r=mysql_fetch_row(res);
-				strncpy(ip, r[0], MAX_IP_LENGTH);
-				ip[MAX_IP_LENGTH]='\0';
-				sscanf(r[1], "%d", port);
-				sscanf(r[2], "%d", &tmp);
-				retval=tmp?2:1;
-#ifdef DEBUG
-				fprintf(stderr, "Host '%s' is an alias for '%s'\n", host, r[0]);
-#endif
+				strncpy(ip, PQgetvalue(res, 0, 0), MAX_IP_LENGTH);
+				ip[MAX_IP_LENGTH] = '\0';
+				sscanf(PQgetvalue(res, 0, 1), "%d", port);
+				sscanf(PQgetvalue(res, 0, 2), "%d", &tmp);
+				retval = tmp? 2: 1;
+				log(LOG_DEBUG, "Host '%s' is an alias for '%s'\n", host, PQgetvalue(res, 0, 0));
 			} else {
 				/* nu am gasit hostul, deci e un alias broken */
-#ifdef DEBUG
-				fprintf(stderr, "Broken alias for host '%s', idx '%s'\n", host, r[0]);
-#endif
+				log(LOG_DEBUG, "Broken alias for host '%s', idx '%s'\n", host, PQgetvalue(res, 0, 0));
 			}
 		}
 	}
-	mysql_free_result(res);
+	PQclear(res);
 	return retval;
 }
 
-int parse_request(char *s, char **host, size_t *hostl, char **path) {
+int parse_request(char *s, char **host, size_t *hostl, char **path)
+{
 	/* parseaza o linie de intrare
 	 *
 	 * primeste:
@@ -180,24 +170,23 @@ int parse_request(char *s, char **host, size_t *hostl, char **path) {
 	dbg_tmp_3=(*host)[*hostl];
 	s[strlen(s)-1]='\0';
 	(*host)[*hostl]='\0';
-	fprintf(stderr, "get_host: said '%s' for ", *host);
+	log(LOG_DEBUG, "get_host: said '%s' for ", *host);
 	(*host)[*hostl]=dbg_tmp_3;
-	fprintf(stderr, "'%s'\n", dbg_tmp_2);
+	log(LOG_DEBUG, "'%s'\n", dbg_tmp_2);
 	s[strlen(s)]=dbg_tmp_1;
 #endif
 	return 0;
 }
 
-void malformed_data(char *s) {
+void malformed_data(char *s)
+{
 	printf("\n");
 	fflush(stdout);		/* altfel squid se blocheaza in read */
-	fprintf(log_fp, "[%d] %ld 3 %s", pid, time(NULL), s);
-#ifdef DEBUG
-	fflush(log_fp);
-#endif
+	log(LOG_INFO, "[%d] %ld 3 %s", pid, time(NULL), s);
 }
 
-void err_url(char *host, size_t hostl, char save_host, char *path, int error) {
+void err_url(char *host, size_t hostl, char save_host, char *path, int error)
+{
 	char enchost[3*MAX_HOST_LENGTH+1];
 	char *path_term, *s;
 	size_t l;
@@ -205,7 +194,7 @@ void err_url(char *host, size_t hostl, char save_host, char *path, int error) {
 	
 	urlencode(enchost, host);
 	host[hostl]=save_host;
-	printf("%s?reason=%d&host=%s", cfg.err_url, error, enchost);
+	printf("%s?reason=%d&host=%s", config.err_url, error, enchost);
 
 	/* caut inceputul ip-ului client */
 	s=host+hostl;
@@ -230,13 +219,11 @@ void err_url(char *host, size_t hostl, char save_host, char *path, int error) {
 	fflush(stdout);		/* altfel squid se blocheaza in read */
 
 	host[hostl]='\0';
-	fprintf(log_fp, "[%d] %ld %d %s\n", pid, time(NULL), error, host);
-#ifdef DEBUG
-	fflush(log_fp);
-#endif
+	log(LOG_INFO, "[%d] %ld %d %s\n", pid, time(NULL), error, host);
 }
 
-void process_line(char *s) {
+void process_line(char *s)
+{
 	struct host_info s1, *s2;
 	size_t hostl;
 	char ip[MAX_IP_LENGTH+1], *host, *path, save_host;
@@ -263,31 +250,31 @@ void process_line(char *s) {
 			 * exploatata memoria prin cereri foarte multe pe diferite nume
 			 * care nu exista */
 			err_url(host, hostl, save_host, path, ERROR_HOST_NOT_FOUND);
-#ifdef DEBUG
-			fprintf(stderr, "Authoritative: host '%s' does not exist.\n", host);
-#endif
+			log(LOG_DEBUG, "Authoritative: host '%s' does not exist.\n", host);
 			return;
 		}
 		/* acum pot sa il adaug */
-		CRITICAL((s2=(struct host_info *)malloc(sizeof(struct host_info)))==NULL);
-		CRITICAL((s2->name=strdup(host))==NULL);
-		CRITICAL((s2->ip=strdup(ip))==NULL);
+		s2 = (struct host_info *)malloc(sizeof(struct host_info));
+		assert(s2);
+		s2->name = strdup(host);
+		assert(s2->name);
+		s2->ip = strdup(ip);
+		assert(s2->ip);
 		s2->port=port;
 		time(&(s2->t));
 		s2->r=r;
 		hash_add(hash, (void *)s2);
-#ifdef DEBUG
-		fprintf(stderr, "Host '%s' not in cache. Now cached.\n", s1.name);
-		fprintf(stderr, "Authoritative: host '%s' is at '%s:%d', status %d.\n", s2->name, s2->ip, s2->port, s2->r);
-#endif
+		log(LOG_DEBUG, "Host '%s' not in cache. Now cached.\n", s1.name);
+		log(LOG_DEBUG, "Authoritative: host '%s' is at '%s:%d', status %d.\n", s2->name, s2->ip, s2->port, s2->r);
 	} else {
 		/* e in cache; sa vedem daca trebuie sa fac refresh */
-		if (time(NULL)-s2->t > cfg.cache_timeout) {
+		if (time(NULL)-s2->t > config.cache_timeout) {
 			/* a expirat; fac refresh */
 			r=sql_host_info(host, ip, &port);
 			free(s2->ip);
 			if(r) {
-				CRITICAL((s2->ip=strdup(ip))==NULL);
+				s2->ip = strdup(ip);
+				assert(s2->ip);
 				s2->port=port;
 			} else {
 				/* se poate intampla: hostul a fost sters din baza de date dupa ce a
@@ -297,12 +284,10 @@ void process_line(char *s) {
 			}
 			time(&(s2->t));
 			s2->r=r;
-#ifdef DEBUG
-			fprintf(stderr, "Host '%s' aged out. Now refreshed.\n", s1.name);
-			fprintf(stderr, "Authoritative: host '%s' is at '%s:%d', status %d.\n", s2->name, s2->ip, s2->port, s2->r);
+			log(LOG_DEBUG, "Host '%s' aged out. Now refreshed.\n", s1.name);
+			log(LOG_DEBUG, "Authoritative: host '%s' is at '%s:%d', status %d.\n", s2->name, s2->ip, s2->port, s2->r);
 		} else {
-			fprintf(stderr, "Non-authoritative: host '%s' is at '%s:%d', status %d.\n", s2->name, s2->ip, s2->port, s2->r);
-#endif
+			log(LOG_DEBUG, "Non-authoritative: host '%s' is at '%s:%d', status %d.\n", s2->name, s2->ip, s2->port, s2->r);
 		}
 	}
 
@@ -328,54 +313,106 @@ void process_line(char *s) {
 		fflush(stdout);		/* altfel squid se blocheaza in read */
 		*host=save_host;
 		host[hostl]='\0';
-		fprintf(log_fp, "[%d] %ld 1 %s %s:%d\n", pid, time(NULL), host, s2->ip, s2->port);
-#ifdef DEBUG
-		fflush(log_fp);
-#endif
+		log(LOG_INFO, "[%d] %ld 1 %s %s:%d\n", pid, time(NULL), host, s2->ip, s2->port);
 	}
 }
 
-int main(int argc, char **argv) {
-	char buf[MAX_LINE_LENGTH];
-	int discard;
-
-	if(parse_config(&cfg)) return 10;
-
-	if(!(log_fp=fopen(cfg.log_path, "a"))) {
-		fprintf(stderr, "Could not open log file %s.\n", cfg.log_path);
-		sql_close();
-		return 2;
+int open_log(void)
+{
+	switch (config.logging_type) {
+	case LOGGING_TYPE_SYSLOG:
+		openlog("redirect", LOG_PID, config.logging_facility);
+		break;
+	case LOGGING_TYPE_LOGFILE:
+		if ((config.log = fopen(config.logging_path, "a")) == NULL)
+			return -1;
+		break;
+	default:
+		break;
 	}
 
-	if(sql_connect(&cfg)) {
-		fprintf(log_fp, "[%d] %ld 7\n", pid, time(NULL));
-		fclose(log_fp);
+	return 0;
+}
+
+void close_log(void)
+{
+	switch (config.logging_type) {
+	case LOGGING_TYPE_SYSLOG:
+		closelog();
+		return;
+	case LOGGING_TYPE_LOGFILE:
+		if (config.log != NULL)
+			fclose(config.log);
+		config.log = NULL;
+		return;
+	default:
+		break;
+	}
+}
+
+static void show_help(const char *argv0)
+{
+	fprintf(stderr,
+			"Usage: %s <options>\n"
+			"\n"
+			"Valid options:\n"
+			"  -c <path>       Read configuration file from <path>\n"
+			"  -h              Show this help\n"
+			"\n",
+			argv0);
+}
+
+int main(int argc, char *argv[])
+{
+	char buf[MAX_LINE_LENGTH];
+	int opt, discard;
+
+	while ((opt = getopt(argc, argv, "hc:")) != -1) {
+		switch (opt) {
+		case 'c':
+			config.path = strdup(optarg);
+			break;
+		case 'h':
+			show_help(argv[0]);
+			return 1;
+		}
+	}
+
+	if (parse_config())
+		return 10;
+
+	if (open_log())
+		return 2;
+
+	if(sql_connect(&config)) {
+		log(LOG_ERR, "[%d] %ld 7\n", pid, time(NULL));
+		close_log();
 		return 1;
 	}
 
 	pid=getpid();
-	fprintf(log_fp, "[%d] %ld 0 %s\n", pid, time(NULL), version);
-#ifdef DEBUG
-	fflush(log_fp);
-#endif
+	log(LOG_INFO, "[%d] %ld 0 %s\n", pid, time(NULL), version);
 
 	hash=hash_create(499, hash_algo, hash_cmp);
 
 	while(!feof(stdin)) {
-		if(fgets(buf, MAX_LINE_LENGTH, stdin)==NULL) break;
+		if(fgets(buf, MAX_LINE_LENGTH, stdin)==NULL)
+			break;
 		discard=0;
 		while(strlen(buf)==MAX_LINE_LENGTH-1) {
 			discard=1;
-			if(buf[MAX_LINE_LENGTH-2]=='\n' || feof(stdin)) break;
+			if(buf[MAX_LINE_LENGTH-2]=='\n' || feof(stdin))
+				break;
 			fgets(buf, MAX_LINE_LENGTH, stdin);
 		}
-		if(discard) continue;
+		if(discard)
+			continue;
 		process_line(buf);
 	}
 	
-	fprintf(log_fp, "[%d] %ld 9\n", pid, time(NULL));
-	fclose(log_fp);
-	
+	log(LOG_INFO, "[%d] %ld 9\n", pid, time(NULL));
+	close_log();
 	sql_close();
+
 	return 0;
 }

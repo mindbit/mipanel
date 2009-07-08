@@ -1,5 +1,5 @@
+#include <assert.h>
 #include <ctype.h>
-#include "abort.h"
 
 int validate_hostname(char *s) {
 	for(;*s!='\0';s++) {
@@ -16,12 +16,13 @@ void lowerstr(char *s) {
 	for(;*s!='\0';s++) *s=tolower(*s);
 }
 
-const char *hex = "0123456789ABCDEF";
 
 void urlencode(char *d, char *s) {
+	const char *hex = "0123456789ABCDEF";
 	char *p;
 
-	CRITICAL(s==NULL || d==NULL);
+	assert(s);
+	assert(d);
 	for(p=d; *s!='\0'; s++) {
 		*(p++)='%';
 		*(p++)=hex[(*(unsigned char *)s) >> 4];
