@@ -71,8 +71,8 @@ void sql_close(void)
 
 /* FIXME: these should be parsed from the config */
 const char query1[]="SELECT server_ip, server_port, enabled FROM sites WHERE name='%s' LIMIT 1";
-const char query2[]="SELECT site_idx FROM site_aliases WHERE name='%s' LIMIT 1";
-const char query3[]="SELECT server_ip, server_port, enabled FROM sites WHERE site_idx=%s";
+const char query2[]="SELECT site_id FROM site_aliases WHERE name='%s' LIMIT 1";
+const char query3[]="SELECT server_ip, server_port, enabled FROM sites WHERE site_id=%s";
 
 int sql_host_info(char *host, char *ip, int *port)
 {
