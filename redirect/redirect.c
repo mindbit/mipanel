@@ -36,18 +36,18 @@ struct host_info {
 	int r;							/* raspunsul de redirectare */
 };
 
-int hash_algo(void *e, int n)
+int hash_fn(void *e, int n)
 {
-	int s=0;
+	int s = 0;
 	char *p;
 
-	p=((struct host_info *)e)->name;
-	while(*p!='\0')
-		s+=*(p++);
-	return s%n;
+	p = ((struct host_info *)e)->name;
+	while (*p != '\0')
+		s += *(p++);
+	return s % n;
 }
 
-int hash_cmp(void *e1, void *e2)
+int hash_compare(void *e1, void *e2)
 {
 	return strcmp(((struct host_info *)e1)->name, ((struct host_info *)e2)->name);
 }
@@ -70,9 +70,9 @@ void sql_close(void)
 }
 
 /* FIXME: these should be parsed from the config */
-const char query1[]="SELECT server_ip, server_port, enabled FROM sites WHERE name='%s' LIMIT 1";
-const char query2[]="SELECT site_id FROM site_aliases WHERE name='%s' LIMIT 1";
-const char query3[]="SELECT server_ip, server_port, enabled FROM sites WHERE site_id=%s";
+const char query1[] = "SELECT server_ip, server_port, enabled FROM sites WHERE name='%s' LIMIT 1";
+const char query2[] = "SELECT site_id FROM site_aliases WHERE name='%s' LIMIT 1";
+const char query3[] = "SELECT server_ip, server_port, enabled FROM sites WHERE site_id=%s";
 
 int sql_host_info(char *host, char *ip, int *port)
 {
@@ -95,7 +95,7 @@ int sql_host_info(char *host, char *ip, int *port)
 	res = PQexec(conn, query);
 	assert(res);
 	assert(PQresultStatus(res) == PGRES_TUPLES_OK);
-	if(PQntuples(res)) {
+	if (PQntuples(res)) {
 		/* e nume primar */
 		log(LOG_DEBUG, "Host '%s' is primary\n", host);
 		strncpy(ip, PQgetvalue(res, 0, 0), MAX_IP_LENGTH);
@@ -110,14 +110,14 @@ int sql_host_info(char *host, char *ip, int *port)
 		res = PQexec(conn, query);
 		assert(res);
 		assert(PQresultStatus(res) == PGRES_TUPLES_OK);
-		if(PQntuples(res)) {
+		if (PQntuples(res)) {
 			/* e un alias si caut info despre host */
 			sprintf(query, query3, PQgetvalue(res, 0, 0));
 			PQclear(res);
 			res = PQexec(conn, query);
 			assert(res);
 			assert(PQresultStatus(res) == PGRES_TUPLES_OK);
-			if(PQntuples(res)) {
+			if (PQntuples(res)) {
 				/* am gasit hostul */
 				strncpy(ip, PQgetvalue(res, 0, 0), MAX_IP_LENGTH);
 				ip[MAX_IP_LENGTH] = '\0';
@@ -148,32 +148,38 @@ int parse_request(char *s, char **host, size_t *hostl, char **path)
 
 	size_t l;
 #ifdef DEBUG
-	char dbg_tmp_1, *dbg_tmp_2=s, dbg_tmp_3;
+	char dbg_tmp_1, *dbg_tmp_2 = s, dbg_tmp_3;
 #endif
 
 	/* am ajuns la campul de URL */
-	if (!(l=strcspn(s, ":"))) return 1;
-	if (strncasecmp(s, "http", l) && strncasecmp(s, "https", l)) return 2;
-	s+=l;
-	if (strspn(s, ":")!=1) return 3;
+	if (!(l = strcspn(s, ":")))
+		return 1;
+	if (strncasecmp(s, "http", l) && strncasecmp(s, "https", l))
+		return 2;
+	s += l;
+	if (strspn(s, ":") != 1)
+		return 3;
 	s++;
-	if (strspn(s, "/")!=2) return 4;
-	s+=2;
-	*host=s;
-	if (!(l=strcspn(s, "/: "))) return 5;
-	s+=l;
-	*path=s;
-	*hostl=l;
-	if (**path==':') (*path)+=strcspn(*path, "/ "); /* elimin si partea de port */
+	if (strspn(s, "/") != 2)
+		return 4;
+	s += 2;
+	*host = s;
+	if (!(l = strcspn(s, "/: ")))
+		return 5;
+	s += l;
+	*path = s;
+	*hostl = l;
+	if (**path == ':')
+		(*path) += strcspn(*path, "/ "); /* elimin si partea de port */
 #ifdef DEBUG
-	dbg_tmp_1=s[strlen(s)-1];
-	dbg_tmp_3=(*host)[*hostl];
-	s[strlen(s)-1]='\0';
-	(*host)[*hostl]='\0';
+	dbg_tmp_1 = s[strlen(s)-1];
+	dbg_tmp_3 = (*host)[*hostl];
+	s[strlen(s)-1] = '\0';
+	(*host)[*hostl] = '\0';
 	log(LOG_DEBUG, "get_host: said '%s' for ", *host);
-	(*host)[*hostl]=dbg_tmp_3;
+	(*host)[*hostl] = dbg_tmp_3;
 	log(LOG_DEBUG, "'%s'\n", dbg_tmp_2);
-	s[strlen(s)]=dbg_tmp_1;
+	s[strlen(s)] = dbg_tmp_1;
 #endif
 	return 0;
 }
@@ -193,32 +199,32 @@ void err_url(char *host, size_t hostl, char save_host, char *path, int error)
 	int i;
 	
 	urlencode(enchost, host);
-	host[hostl]=save_host;
+	host[hostl] = save_host;
 	printf("%s?reason=%d&host=%s", config.err_url, error, enchost);
 
 	/* caut inceputul ip-ului client */
-	s=host+hostl;
-	s+=strcspn(s, " "); /* sunt pe spatiul dinaintea campului de ip */
-	path_term=s;
-	for (i=0; i<2; i++) {
-		if(!(l=strspn(s, " "))) {
+	s = host + hostl;
+	s += strcspn(s, " "); /* sunt pe spatiul dinaintea campului de ip */
+	path_term = s;
+	for (i = 0; i < 2; i++) {
+		if (!(l = strspn(s, " "))) {
 			malformed_data(s);
 			return;
 		}
-		s+=l;
-		if(!(l=strcspn(s, " "))) {
+		s += l;
+		if (!(l = strcspn(s, " "))) {
 			malformed_data(s);
 			return;
 		}
-		s+=l;
+		s += l;
 	}
 	/* sunt pe spatiul dinaintea campului de metoda */
-	*s='\0';
+	*s = '\0';
 	
 	printf("%s GET\n", path_term);
 	fflush(stdout);		/* altfel squid se blocheaza in read */
 
-	host[hostl]='\0';
+	host[hostl] = '\0';
 	log(LOG_INFO, "[%d] %ld %d %s\n", pid, time(NULL), error, host);
 }
 
@@ -229,23 +235,24 @@ void process_line(char *s)
 	char ip[MAX_IP_LENGTH+1], *host, *path, save_host;
 	int r, port;
 
-	if(parse_request(s, &host, &hostl, &path)) {
+	if (parse_request(s, &host, &hostl, &path)) {
 		malformed_data(s);
 		return;
 	}
 
-	if(hostl>MAX_HOST_LENGTH) hostl=MAX_HOST_LENGTH;
-	save_host=host[hostl];
-	host[hostl]='\0';
+	if (hostl > MAX_HOST_LENGTH)
+		hostl = MAX_HOST_LENGTH;
+	save_host = host[hostl];
+	host[hostl] = '\0';
 	lowerstr(host);
-	s1.name=host;
+	s1.name = host;
 
 	/* in continuare ma asigur ca s2 indica spre o structura cu date
 	 * de actualitate, fie ca o iau din cache sau o adaug */
-	if((s2=hash_find(hash, &s1))==NULL) {
+	if ((s2 = hash_find(hash, &s1)) == NULL) {
 		/* nu e in cache, deci ar trebui sa il adaug */
-		r=sql_host_info(host, ip, &port);
-		if(!r) {
+		r = sql_host_info(host, ip, &port);
+		if (!r) {
 			/* daca nu exista, nu il adaug in cache, pt. ca altfel ar putea fi
 			 * exploatata memoria prin cereri foarte multe pe diferite nume
 			 * care nu exista */
@@ -260,9 +267,9 @@ void process_line(char *s)
 		assert(s2->name);
 		s2->ip = strdup(ip);
 		assert(s2->ip);
-		s2->port=port;
+		s2->port = port;
 		time(&(s2->t));
-		s2->r=r;
+		s2->r = r;
 		hash_add(hash, (void *)s2);
 		log(LOG_DEBUG, "Host '%s' not in cache. Now cached.\n", s1.name);
 		log(LOG_DEBUG, "Authoritative: host '%s' is at '%s:%d', status %d.\n", s2->name, s2->ip, s2->port, s2->r);
@@ -270,20 +277,20 @@ void process_line(char *s)
 		/* e in cache; sa vedem daca trebuie sa fac refresh */
 		if (time(NULL)-s2->t > config.cache_timeout) {
 			/* a expirat; fac refresh */
-			r=sql_host_info(host, ip, &port);
+			r = sql_host_info(host, ip, &port);
 			free(s2->ip);
-			if(r) {
+			if (r) {
 				s2->ip = strdup(ip);
 				assert(s2->ip);
-				s2->port=port;
+				s2->port = port;
 			} else {
 				/* se poate intampla: hostul a fost sters din baza de date dupa ce a
 				 * apucat sa intre in cache */
-				s2->ip=NULL;
-				s2->port=0;
+				s2->ip = NULL;
+				s2->port = 0;
 			}
 			time(&(s2->t));
-			s2->r=r;
+			s2->r = r;
 			log(LOG_DEBUG, "Host '%s' aged out. Now refreshed.\n", s1.name);
 			log(LOG_DEBUG, "Authoritative: host '%s' is at '%s:%d', status %d.\n", s2->name, s2->ip, s2->port, s2->r);
 		} else {
@@ -291,7 +298,7 @@ void process_line(char *s)
 		}
 	}
 
-	switch(s2->r) {
+	switch (s2->r) {
 	case 0:
 		/* se poate intampla: hostul a fost sters din baza de date dupa ce a
 		 * apucat sa intre in cache */
@@ -302,17 +309,17 @@ void process_line(char *s)
 		break;
 	default:
 		/* fac redirectarea */
-		host[hostl]=save_host;
-		save_host=*host;
-		*host='\0';
-		if(s2->port==80) {
+		host[hostl] = save_host;
+		save_host = *host;
+		*host = '\0';
+		if (s2->port == 80) {
 			printf("%s%s%s", s, s2->ip, path);
 		} else {
 			printf("%s%s:%d%s", s, s2->ip, s2->port, path);
 		}
 		fflush(stdout);		/* altfel squid se blocheaza in read */
-		*host=save_host;
-		host[hostl]='\0';
+		*host = save_host;
+		host[hostl] = '\0';
 		log(LOG_INFO, "[%d] %ld 1 %s %s:%d\n", pid, time(NULL), host, s2->ip, s2->port);
 	}
 }
@@ -384,28 +391,28 @@ int main(int argc, char *argv[])
 	if (open_log())
 		return 2;
 
-	if(sql_connect(&config)) {
+	if (sql_connect(&config)) {
 		log(LOG_ERR, "[%d] %ld 7\n", pid, time(NULL));
 		close_log();
 		return 1;
 	}
 
-	pid=getpid();
+	pid = getpid();
 	log(LOG_INFO, "[%d] %ld 0 %s\n", pid, time(NULL), version);
 
-	hash=hash_create(499, hash_algo, hash_cmp);
+	hash = hash_create(499, hash_fn, hash_compare);
 
-	while(!feof(stdin)) {
-		if(fgets(buf, MAX_LINE_LENGTH, stdin)==NULL)
+	while (!feof(stdin)) {
+		if (fgets(buf, MAX_LINE_LENGTH, stdin) == NULL)
 			break;
-		discard=0;
-		while(strlen(buf)==MAX_LINE_LENGTH-1) {
-			discard=1;
-			if(buf[MAX_LINE_LENGTH-2]=='\n' || feof(stdin))
+		discard = 0;
+		while (strlen(buf) == MAX_LINE_LENGTH-1) {
+			discard = 1;
+			if (buf[MAX_LINE_LENGTH-2] == '\n' || feof(stdin))
 				break;
 			fgets(buf, MAX_LINE_LENGTH, stdin);
 		}
-		if(discard)
+		if (discard)
 			continue;
 		process_line(buf);
 	}

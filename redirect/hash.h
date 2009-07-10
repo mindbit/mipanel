@@ -11,13 +11,13 @@ struct hash_bucket {
 
 struct hash {
 	int n;							/* number of buckets */
-	int (*algo)(void *, int);		/* hashing algorhythm */
-	int (*cmp)(void *, void *);		/* function that compares elements */
+	int (*hash_fn)(void *, int);	/* hashing algorhythm */
+	int (*compare)(void *, void *);	/* function that compares elements */
 	struct hash_bucket **buckets;	/* bucket vector */
 };
 
-extern struct hash *hash_create(int n, int(*algo)(void *, int),
-		int(*cmp)(void *, void *));
+extern struct hash *hash_create(int n, int(*hash_fn)(void *, int),
+		int(*compare)(void *, void *));
 extern void hash_add(struct hash *h, void *e);
 extern void *hash_find(struct hash *h, void *e);
 extern void hash_walk(struct hash *h, void (*callback)(void *, void *), void *arg);
