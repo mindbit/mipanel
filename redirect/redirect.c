@@ -1,80 +1,131 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 #include <linux/limits.h>
 #include <string.h>
-#include <time.h>
 #include <sys/types.h>
 #include <unistd.h>
 #include <libpq-fe.h>
-#include "hash.h"
+#include <stdint.h>
+#include "list.h"
 #include "tools.h"
 #include "logging.h"
 #include "config.h"
 
+/* Program version */
+const char version[] = "v1.1";
+
 /* Some maximum length assumptions */
 #define MAX_LINE_LENGTH  16383
 #define MAX_HOST_LENGTH  1023
-#define MAX_QUERY_LENGTH 16383
 #define MAX_IP_LENGTH    63
 
 /* Error codes */
 #define ERROR_HOST_NOT_FOUND 6
 #define ERROR_HOST_DISABLED  11
 
-const char version[] = "v1.1";
+static int pid;
 
-int pid;
-PGconn *conn;
-struct hash *hash;
+/* Database connection */
+static PGconn *conn;
 
-struct host_info {
-	char *name;						/* numele hostului */
-	char *ip;						/* ip-ul */
-	int port;
-	time_t t;						/* timestamp-ul ultimei actualizari */
-	int r;							/* raspunsul de redirectare */
+/* Prepared SQL statements */
+enum {
+	PSTMT_GET_SITE_BY_ID,
+	PSTMT_GET_SITE_BY_NAME,
+	PSTMT_GET_SITE_ID_BY_ALIAS,
 };
 
-int hash_fn(void *e, int n)
+static const char *prepared_statements[] = {
+	[PSTMT_GET_SITE_BY_ID] =
+		"SELECT server_ip, server_port, enabled FROM sites WHERE site_id=$1::integer",
+	[PSTMT_GET_SITE_BY_NAME] =
+		"SELECT server_ip, server_port, enabled FROM sites WHERE name=$1 LIMIT 1",
+	[PSTMT_GET_SITE_ID_BY_ALIAS] =
+		"SELECT site_id FROM site_aliases WHERE name=$1 LIMIT 1",
+};
+
+static uint32_t prepared_mask = 0;
+
+#define _PQexecPrepared(id, nParams, paramValues, paramLengths, paramFormats, resultFormat) \
+	__PQexecPrepared(#id, id, nParams, paramValues, paramLengths, paramFormats, resultFormat)
+
+static PGresult *__PQexecPrepared(const char *stmt, int stmt_id,
+		int nParams, const char * const *paramValues, const int *paramLengths,
+		const int *paramFormats, int resultFormat)
+{
+	PGresult *res;
+	int mask = 1 << stmt_id;
+
+	if (!(prepared_mask & mask)) {
+		res = PQprepare(conn, stmt, prepared_statements[stmt_id], 0, NULL);
+		log(LOG_DEBUG, "Preparing statement '%s': '%s'\n", stmt, prepared_statements[stmt_id]);
+		if (res == NULL) {
+			log(LOG_ERR, "[%d] %ld PQprepare(%s) failed: %s\n",
+					pid, time(NULL), stmt, PQerrorMessage(conn));
+			return NULL;
+		}
+		if (PQresultStatus(res) != PGRES_COMMAND_OK) {
+			log(LOG_ERR, "[%d] %ld PQprepare(%s) failed(%d): %s\n",
+					pid, time(NULL), stmt, PQresultStatus(res), PQerrorMessage(conn));
+			PQclear(res);
+			return NULL;
+		}
+		PQclear(res);
+		prepared_mask |= mask;
+	}
+	res = PQexecPrepared(conn, stmt, nParams, paramValues, paramLengths, paramFormats, resultFormat);
+	if (res == NULL) {
+		log(LOG_ERR, "[%d] %ld PQexecPrepared(%s) failed: %s\n", pid, time(NULL),
+				prepared_statements[stmt_id], PQerrorMessage(conn));
+		return NULL;
+	}
+	if (PQresultStatus(res) != PGRES_COMMAND_OK && PQresultStatus(res) != PGRES_TUPLES_OK) {
+		log(LOG_ERR, "[%d] %ld PQexecPrepared(%s) failed(%d): %s\n", pid, time(NULL),
+				prepared_statements[stmt_id], PQresultStatus(res), PQerrorMessage(conn));
+		PQclear(res);
+		return NULL;
+	}
+	return res;
+}
+
+struct host_info {
+	char *name;
+	char *ip;
+	int port;
+	time_t t;
+	int r;
+	struct list_head lh;
+};
+
+#define HOST_INFO_HASH_BITS 8
+#define HOST_INFO_HASH_SIZE (1 << HOST_INFO_HASH_BITS)
+
+/* Host info cache (hash table) */
+struct list_head host_cache[HOST_INFO_HASH_SIZE];
+
+static int hash_fn(char *p)
 {
 	int s = 0;
-	char *p;
 
-	p = ((struct host_info *)e)->name;
 	while (*p != '\0')
 		s += *(p++);
-	return s % n;
+	return s % HOST_INFO_HASH_SIZE;
 }
 
-int hash_compare(void *e1, void *e2)
+static struct host_info *host_cache_find(struct host_info *host)
 {
-	return strcmp(((struct host_info *)e1)->name, ((struct host_info *)e2)->name);
+	int bucket = hash_fn(host->name);
+	struct host_info *entry;
+
+	list_for_each_entry(entry, &host_cache[bucket], lh)
+		if (!strcmp(host->name, entry->name))
+			return entry;
+	return NULL;
 }
 
-int sql_connect(struct config *cfg)
-{
-	conn = PQconnectdb(cfg->dbconn);
-	assert(conn);
-	if (PQstatus(conn) != CONNECTION_OK) {
-		log(LOG_ERR, "Failed to connect to the database. Reason: %s\n", PQerrorMessage(conn));
-		PQfinish(conn);
-		return 1;
-	}
-	return 0;
-}
-
-void sql_close(void)
-{
-	PQfinish(conn);
-}
-
-/* FIXME: these should be parsed from the config */
-const char query1[] = "SELECT server_ip, server_port, enabled FROM sites WHERE name='%s' LIMIT 1";
-const char query2[] = "SELECT site_id FROM site_aliases WHERE name='%s' LIMIT 1";
-const char query3[] = "SELECT server_ip, server_port, enabled FROM sites WHERE site_id=%s";
-
-int sql_host_info(char *host, char *ip, int *port)
+static int sql_host_info(char *host, char *ip, int *port)
 {
 	/* intoarce:
 	 * 0 - hostul nu exista
@@ -82,7 +133,6 @@ int sql_host_info(char *host, char *ip, int *port)
 	 * 2 - hostul exista si e activat
 	 */
 	PGresult *res;
-	char query[MAX_QUERY_LENGTH+1];
 	int retval = 0;
 	int tmp;
 
@@ -91,13 +141,19 @@ int sql_host_info(char *host, char *ip, int *port)
 		return 0;
 	}
 
-	sprintf(query, query1, host);
-	res = PQexec(conn, query);
+	res = _PQexecPrepared(PSTMT_GET_SITE_BY_NAME, 1,
+			(const char * const[]){host},
+			(const int[]){strlen(host)},
+			(const int[]){0},
+			0);
 	assert(res);
 	assert(PQresultStatus(res) == PGRES_TUPLES_OK);
+	log(LOG_DEBUG, "PSTMT_GET_SITE_BY_NAME(%s) returned %d tuples, %d fields\n",
+			host, PQntuples(res), PQnfields(res));
 	if (PQntuples(res)) {
 		/* e nume primar */
-		log(LOG_DEBUG, "Host '%s' is primary\n", host);
+		log(LOG_DEBUG, "Host '%s' is primary,  ip='%s', port='%s', enabled='%s'\n",
+				host, PQgetvalue(res, 0, 0), PQgetvalue(res, 0, 1), PQgetvalue(res, 0, 2));
 		strncpy(ip, PQgetvalue(res, 0, 0), MAX_IP_LENGTH);
 		ip[MAX_IP_LENGTH] = '\0';
 		sscanf(PQgetvalue(res, 0, 1), "%d", port);
@@ -105,18 +161,29 @@ int sql_host_info(char *host, char *ip, int *port)
 		retval = tmp? 2: 1;
 	} else {
 		/* nu e nume primar, deci e alias sau nu exista deloc */
-		sprintf(query, query2, host);
 		PQclear(res);
-		res = PQexec(conn, query);
+		res = _PQexecPrepared(PSTMT_GET_SITE_ID_BY_ALIAS, 1,
+				(const char * const[]){host},
+				(const int[]){strlen(host)},
+				(const int[]){0},
+				0);
 		assert(res);
 		assert(PQresultStatus(res) == PGRES_TUPLES_OK);
+		log(LOG_DEBUG, "PSTMT_GET_SITE_ID_BY_ALIAS(%s) returned %d tuples\n",
+				host, PQntuples(res));
 		if (PQntuples(res)) {
 			/* e un alias si caut info despre host */
-			sprintf(query, query3, PQgetvalue(res, 0, 0));
+			const char *site_id = PQgetvalue(res, 0, 0);
 			PQclear(res);
-			res = PQexec(conn, query);
+			res = _PQexecPrepared(PSTMT_GET_SITE_BY_ID, 1,
+					(const char * const[]){site_id},
+					(const int[]){strlen(site_id)},
+					(const int[]){0},
+					0);
 			assert(res);
 			assert(PQresultStatus(res) == PGRES_TUPLES_OK);
+			log(LOG_DEBUG, "PSTMT_GET_SITE_BY_ID(%s) returned %d tuples\n",
+					host, PQntuples(res));
 			if (PQntuples(res)) {
 				/* am gasit hostul */
 				strncpy(ip, PQgetvalue(res, 0, 0), MAX_IP_LENGTH);
@@ -135,7 +202,7 @@ int sql_host_info(char *host, char *ip, int *port)
 	return retval;
 }
 
-int parse_request(char *s, char **host, size_t *hostl, char **path)
+static int parse_request(char *s, char **host, size_t *hostl, char **path)
 {
 	/* parseaza o linie de intrare
 	 *
@@ -184,14 +251,14 @@ int parse_request(char *s, char **host, size_t *hostl, char **path)
 	return 0;
 }
 
-void malformed_data(char *s)
+static void malformed_data(char *s)
 {
 	printf("\n");
 	fflush(stdout);		/* altfel squid se blocheaza in read */
 	log(LOG_INFO, "[%d] %ld 3 %s", pid, time(NULL), s);
 }
 
-void err_url(char *host, size_t hostl, char save_host, char *path, int error)
+static void err_url(char *host, size_t hostl, char save_host, char *path, int error)
 {
 	char enchost[3*MAX_HOST_LENGTH+1];
 	char *path_term, *s;
@@ -228,7 +295,7 @@ void err_url(char *host, size_t hostl, char save_host, char *path, int error)
 	log(LOG_INFO, "[%d] %ld %d %s\n", pid, time(NULL), error, host);
 }
 
-void process_line(char *s)
+static void process_line(char *s)
 {
 	struct host_info s1, *s2;
 	size_t hostl;
@@ -249,7 +316,7 @@ void process_line(char *s)
 
 	/* in continuare ma asigur ca s2 indica spre o structura cu date
 	 * de actualitate, fie ca o iau din cache sau o adaug */
-	if ((s2 = hash_find(hash, &s1)) == NULL) {
+	if ((s2 = host_cache_find(&s1)) == NULL) {
 		/* nu e in cache, deci ar trebui sa il adaug */
 		r = sql_host_info(host, ip, &port);
 		if (!r) {
@@ -270,7 +337,7 @@ void process_line(char *s)
 		s2->port = port;
 		time(&(s2->t));
 		s2->r = r;
-		hash_add(hash, (void *)s2);
+		list_add_tail(&s2->lh, &host_cache[hash_fn(s2->name)]);
 		log(LOG_DEBUG, "Host '%s' not in cache. Now cached.\n", s1.name);
 		log(LOG_DEBUG, "Authoritative: host '%s' is at '%s:%d', status %d.\n", s2->name, s2->ip, s2->port, s2->r);
 	} else {
@@ -324,7 +391,7 @@ void process_line(char *s)
 	}
 }
 
-int open_log(void)
+static int open_log(void)
 {
 	switch (config.logging_type) {
 	case LOGGING_TYPE_SYSLOG:
@@ -341,7 +408,7 @@ int open_log(void)
 	return 0;
 }
 
-void close_log(void)
+static void close_log(void)
 {
 	switch (config.logging_type) {
 	case LOGGING_TYPE_SYSLOG:
@@ -372,7 +439,7 @@ static void show_help(const char *argv0)
 int main(int argc, char *argv[])
 {
 	char buf[MAX_LINE_LENGTH];
-	int opt, discard;
+	int opt, discard, i;
 
 	while ((opt = getopt(argc, argv, "hc:")) != -1) {
 		switch (opt) {
@@ -391,16 +458,23 @@ int main(int argc, char *argv[])
 	if (open_log())
 		return 2;
 
-	if (sql_connect(&config)) {
-		log(LOG_ERR, "[%d] %ld 7\n", pid, time(NULL));
+	pid = getpid();
+	log(LOG_INFO, "[%d] %ld 0 %s\n", pid, time(NULL), version);
+
+	/* Connect to the database */
+	conn = PQconnectdb(config.dbconn);
+	assert(conn);
+	if (PQstatus(conn) != CONNECTION_OK) {
+		log(LOG_ERR, "[%d] %ld Failed to connect to the database. Reason: %s\n",
+				pid, time(NULL), PQerrorMessage(conn));
+		PQfinish(conn);
 		close_log();
 		return 1;
 	}
 
-	pid = getpid();
-	log(LOG_INFO, "[%d] %ld 0 %s\n", pid, time(NULL), version);
-
-	hash = hash_create(499, hash_fn, hash_compare);
+	/* Initialize the host cache hash table */
+	for (i = 0; i < HOST_INFO_HASH_SIZE; i++)
+		INIT_LIST_HEAD(&host_cache[i]);
 
 	while (!feof(stdin)) {
 		if (fgets(buf, MAX_LINE_LENGTH, stdin) == NULL)
@@ -419,7 +493,7 @@ int main(int argc, char *argv[])
 	
 	log(LOG_INFO, "[%d] %ld 9\n", pid, time(NULL));
 	close_log();
-	sql_close();
+	PQfinish(conn);
 
 	return 0;
 }

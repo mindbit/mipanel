@@ -2,7 +2,8 @@
 
 all: redirect
 
-OBJS = hash.o logging.o config.o tools.o redirect.o
+OBJS = logging.o config.o tools.o redirect.o
+CFLAGS = -g #-DDEBUG
 
 redirect: $(OBJS)
 	$(CC) $(OBJS) -o redirect -lpq -lconfig

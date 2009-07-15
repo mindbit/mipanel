@@ -33,13 +33,4 @@ redirect:
 	err_url = "http://192.168.0.1/badurl.php";
 	# Cache timeout in seconds
 	cache_timeout = 30;
-
-	# SQL prepared statements
-	prepared_statements:
-	{
-		get_site_by_name = "SELECT server_ip, server_port, enabled FROM sites WHERE name=$1::varchar LIMIT 1";
-		get_site_by_id   = "SELECT server_ip, server_port, enabled FROM sites WHERE site_id=$1::integer";
-		get_site_id_by_alias = "SELECT site_id FROM site_aliases WHERE name=$1::varchar LIMIT 1";
-	};
-
 };
