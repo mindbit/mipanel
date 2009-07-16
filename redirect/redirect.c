@@ -8,6 +8,8 @@
 #include <unistd.h>
 #include <libpq-fe.h>
 #include <stdint.h>
+#include <regex.h>
+
 #include "list.h"
 #include "tools.h"
 #include "logging.h"
@@ -35,15 +37,18 @@ enum {
 	PSTMT_GET_SITE_BY_ID,
 	PSTMT_GET_SITE_BY_NAME,
 	PSTMT_GET_SITE_ID_BY_ALIAS,
+	PSTMT_GET_SITE_REWRITES
 };
 
 static const char *prepared_statements[] = {
 	[PSTMT_GET_SITE_BY_ID] =
 		"SELECT server_ip, server_port, enabled FROM sites WHERE site_id=$1::integer",
 	[PSTMT_GET_SITE_BY_NAME] =
-		"SELECT server_ip, server_port, enabled FROM sites WHERE name=$1 LIMIT 1",
+		"SELECT site_id, server_ip, server_port, enabled FROM sites WHERE name=$1 LIMIT 1",
 	[PSTMT_GET_SITE_ID_BY_ALIAS] =
 		"SELECT site_id FROM site_aliases WHERE name=$1 LIMIT 1",
+	[PSTMT_GET_SITE_REWRITES] =
+		"SELECT pattern, replacement, prio, continue FROM site_rewrites WHERE site_id=$1::integer ORDER BY prio",
 };
 
 static uint32_t prepared_mask = 0;
@@ -90,12 +95,23 @@ static PGresult *__PQexecPrepared(const char *stmt, int stmt_id,
 	return res;
 }
 
+struct site_rewrite {
+	regex_t preg;
+	uint32_t id;
+	char *pattern;
+	char *replacement;
+	uint8_t cont;
+	uint8_t prio;
+	struct list_head lh;
+};
+
 struct host_info {
 	char *name;
 	char *ip;
 	int port;
 	time_t t;
 	int r;
+	struct list_head rewrites;
 	struct list_head lh;
 };
 
@@ -125,7 +141,78 @@ static struct host_info *host_cache_find(struct host_info *host)
 	return NULL;
 }
 
-static int sql_host_info(char *host, char *ip, int *port)
+static int sql_reload_rewrites(struct host_info *host, char *site_id)
+{
+	PGresult *res;
+	struct list_head old_lh;
+	struct site_rewrite *entry, *tmp;
+	char *pattern, *replacement;
+	int i, ret = 0, rewrite_id, prio, cont;
+
+	res = _PQexecPrepared(PSTMT_GET_SITE_REWRITES, 1,
+			(const char * const[]){site_id},
+			(const int[]){strlen(site_id)},
+			(const int[]){0},
+			0);
+	log(LOG_DEBUG, "PSTMT_GET_SITE_REWRITES(%d) returned %d tuples, %d fields\n",
+			site_id, PQntuples(res), PQnfields(res));
+
+	INIT_LIST_HEAD(&old_lh);
+	list_for_each_entry_safe(entry, tmp, &host->rewrites, lh) {
+		list_del(&entry->lh);
+		list_add_tail(&entry->lh, &old_lh);
+	}
+
+	for (i = 0; i < PQntuples(res); i++) {
+		pattern = PQgetvalue(res, i, 0);
+		replacement = PQgetvalue(res, i, 1);
+		sscanf(PQgetvalue(res, i, 2), "%d", &prio);
+		sscanf(PQgetvalue(res, i, 3), "%d", &cont);
+
+		/* try to reuse already compiled patterns from the old list */
+		entry = NULL;
+		list_for_each_entry(tmp, &old_lh, lh) {
+			if (!strcmp(tmp->pattern, pattern)) {
+				entry = tmp;
+				break;
+			}
+		}
+
+		if (entry) {
+			list_del(&entry->lh);
+			free(entry->replacement);
+			log(LOG_DEBUG, "Reusing pattern '%s' found in old list\n", entry->pattern);
+		}
+		else {
+			entry = (struct site_rewrite *)malloc(sizeof(struct site_rewrite));
+			assert(entry);
+			entry->pattern = strdup(pattern);
+			/* FIXME: should we use REG_ICASE? */
+			ret = regcomp(&entry->preg, entry->pattern, 0);
+			assert(ret == 0);
+			log(LOG_DEBUG, "Adding new pattern '%s'\n", entry->pattern);
+		}
+		entry->replacement = strdup(replacement);
+		assert(entry->replacement);
+		entry->prio = prio;
+		entry->cont = cont;
+		list_add_tail(&entry->lh, &host->rewrites);
+	}
+	PQclear(res);
+
+	/* cleanup remaining entries in the old list */
+	list_for_each_entry_safe(entry, tmp, &old_lh, lh) {
+		list_del(&entry->lh);
+		regfree(&entry->preg);
+		free(entry->pattern);
+		free(entry->replacement);
+		free(entry);
+	}
+
+	return 0;
+}
+
+static int sql_host_info(char *host, char *ip, int *port, char **site_id)
 {
 	/* intoarce:
 	 * 0 - hostul nu exista
@@ -134,7 +221,7 @@ static int sql_host_info(char *host, char *ip, int *port)
 	 */
 	PGresult *res;
 	int retval = 0;
-	int tmp;
+	int enabled;
 
 	if (!validate_hostname(host)) {
 		log(LOG_DEBUG, "Invalid hostname '%s'\n", host);
@@ -153,12 +240,14 @@ static int sql_host_info(char *host, char *ip, int *port)
 	if (PQntuples(res)) {
 		/* e nume primar */
 		log(LOG_DEBUG, "Host '%s' is primary,  ip='%s', port='%s', enabled='%s'\n",
-				host, PQgetvalue(res, 0, 0), PQgetvalue(res, 0, 1), PQgetvalue(res, 0, 2));
-		strncpy(ip, PQgetvalue(res, 0, 0), MAX_IP_LENGTH);
+				host, PQgetvalue(res, 0, 1), PQgetvalue(res, 0, 2), PQgetvalue(res, 0, 3));
+		*site_id = strdup(PQgetvalue(res, 0, 0));
+		assert(*site_id);
+		strncpy(ip, PQgetvalue(res, 0, 1), MAX_IP_LENGTH);
 		ip[MAX_IP_LENGTH] = '\0';
-		sscanf(PQgetvalue(res, 0, 1), "%d", port);
-		sscanf(PQgetvalue(res, 0, 2), "%d", &tmp);
-		retval = tmp? 2: 1;
+		sscanf(PQgetvalue(res, 0, 2), "%d", port);
+		sscanf(PQgetvalue(res, 0, 3), "%d", &enabled);
+		retval = enabled? 2: 1;
 	} else {
 		/* nu e nume primar, deci e alias sau nu exista deloc */
 		PQclear(res);
@@ -173,11 +262,12 @@ static int sql_host_info(char *host, char *ip, int *port)
 				host, PQntuples(res));
 		if (PQntuples(res)) {
 			/* e un alias si caut info despre host */
-			const char *site_id = PQgetvalue(res, 0, 0);
+			*site_id = strdup(PQgetvalue(res, 0, 0));
+			assert(*site_id);
 			PQclear(res);
 			res = _PQexecPrepared(PSTMT_GET_SITE_BY_ID, 1,
-					(const char * const[]){site_id},
-					(const int[]){strlen(site_id)},
+					(const char * const[]){*site_id},
+					(const int[]){strlen(*site_id)},
 					(const int[]){0},
 					0);
 			assert(res);
@@ -189,8 +279,8 @@ static int sql_host_info(char *host, char *ip, int *port)
 				strncpy(ip, PQgetvalue(res, 0, 0), MAX_IP_LENGTH);
 				ip[MAX_IP_LENGTH] = '\0';
 				sscanf(PQgetvalue(res, 0, 1), "%d", port);
-				sscanf(PQgetvalue(res, 0, 2), "%d", &tmp);
-				retval = tmp? 2: 1;
+				sscanf(PQgetvalue(res, 0, 2), "%d", &enabled);
+				retval = enabled? 2: 1;
 				log(LOG_DEBUG, "Host '%s' is an alias for '%s'\n", host, PQgetvalue(res, 0, 0));
 			} else {
 				/* nu am gasit hostul, deci e un alias broken */
@@ -301,6 +391,7 @@ static void process_line(char *s)
 	size_t hostl;
 	char ip[MAX_IP_LENGTH+1], *host, *path, save_host;
 	int r, port;
+	char *site_id = NULL;
 
 	if (parse_request(s, &host, &hostl, &path)) {
 		malformed_data(s);
@@ -318,7 +409,7 @@ static void process_line(char *s)
 	 * de actualitate, fie ca o iau din cache sau o adaug */
 	if ((s2 = host_cache_find(&s1)) == NULL) {
 		/* nu e in cache, deci ar trebui sa il adaug */
-		r = sql_host_info(host, ip, &port);
+		r = sql_host_info(host, ip, &port, &site_id);
 		if (!r) {
 			/* daca nu exista, nu il adaug in cache, pt. ca altfel ar putea fi
 			 * exploatata memoria prin cereri foarte multe pe diferite nume
@@ -337,6 +428,9 @@ static void process_line(char *s)
 		s2->port = port;
 		time(&(s2->t));
 		s2->r = r;
+		INIT_LIST_HEAD(&s2->rewrites);
+		sql_reload_rewrites(s2, site_id);
+		free(site_id);
 		list_add_tail(&s2->lh, &host_cache[hash_fn(s2->name)]);
 		log(LOG_DEBUG, "Host '%s' not in cache. Now cached.\n", s1.name);
 		log(LOG_DEBUG, "Authoritative: host '%s' is at '%s:%d', status %d.\n", s2->name, s2->ip, s2->port, s2->r);
@@ -344,12 +438,14 @@ static void process_line(char *s)
 		/* e in cache; sa vedem daca trebuie sa fac refresh */
 		if (time(NULL)-s2->t > config.cache_timeout) {
 			/* a expirat; fac refresh */
-			r = sql_host_info(host, ip, &port);
+			r = sql_host_info(host, ip, &port, &site_id);
 			free(s2->ip);
 			if (r) {
 				s2->ip = strdup(ip);
 				assert(s2->ip);
 				s2->port = port;
+				sql_reload_rewrites(s2, site_id);
+				free(site_id);
 			} else {
 				/* se poate intampla: hostul a fost sters din baza de date dupa ce a
 				 * apucat sa intre in cache */
