@@ -22,6 +22,7 @@ const char version[] = "v1.1";
 #define MAX_LINE_LENGTH  16383
 #define MAX_HOST_LENGTH  1023
 #define MAX_IP_LENGTH    63
+#define MAX_PMATCH_SIZE  16
 
 /* Error codes */
 #define ERROR_HOST_NOT_FOUND 6
@@ -212,6 +213,117 @@ static int sql_reload_rewrites(struct host_info *host, char *site_id)
 	return 0;
 }
 
+/*
+ * Url rewrite state machine.
+ */
+enum {
+	COPY_INPUT,
+	BACKREF_FOUND,
+	PARSE_NUMBER
+};
+
+static int url_rewrite(struct host_info *host, char *url, char **new_url)
+{
+	regmatch_t pmatch[MAX_PMATCH_SIZE];
+	struct site_rewrite *entry;
+	int i, j, k, state, new_size, err = 1;
+	char *tmp, *buf, *__url, save;
+
+	list_for_each_entry(entry, &host->rewrites, lh) {
+		tmp = index(url, ' ');
+		save = *tmp;
+		*tmp = '\0';
+
+		log(LOG_DEBUG, "url_rewrite('%s'), pattern='%s', replacement='%s'\n",
+				url, entry->pattern, entry->replacement);
+
+		if (regexec(&entry->preg, url, MAX_PMATCH_SIZE, pmatch, 0)) {
+			log(LOG_DEBUG, "Pattern didn't match, trying next pattern ...\n");
+			*tmp = save;
+			continue;
+		}
+
+		log(LOG_DEBUG, "Pattern matched, entering state COPY_INPUT\n");
+		new_size = strlen(url) - pmatch[0].rm_eo + pmatch[0].rm_so +
+			strlen(entry->replacement) + 1;
+		__url = (char *)malloc(new_size);
+		assert(__url);
+		memcpy(__url, url, pmatch[0].rm_so);
+		j = pmatch[0].rm_so;
+		state = COPY_INPUT;
+
+		for (i = 0; i < strlen(entry->replacement); i++) {
+			switch (state) {
+			case COPY_INPUT:
+				if (entry->replacement[i] == '$') {
+					state = BACKREF_FOUND;
+					buf = &entry->replacement[i];
+					log(LOG_DEBUG, "Found '$' at %d. Switching to state BACKREF_FOUND\n", i);
+					break;
+				}
+				__url[j++] = entry->replacement[i];
+				break;
+			case BACKREF_FOUND:
+				if (entry->replacement[i] != '{') {
+					memcpy(&__url[j], buf, &entry->replacement[i] - buf);
+					j += &entry->replacement[i] - buf;
+					state = COPY_INPUT;
+					break;
+				}
+				log(LOG_DEBUG, "Found '{' at %d. Switching to state PARSE_NUMBER\n", i);
+				state = PARSE_NUMBER;
+				break;
+			case PARSE_NUMBER:
+				if (entry->replacement[i] == '}') {
+					buf += 2;
+					entry->replacement[i] = '\0';
+					k = atoi(buf);
+					log(LOG_DEBUG, "Found '}' at %d. Parsed number is %d. Going back to COPY_INPUT\n", i, k);
+					assert(k < MAX_PMATCH_SIZE);
+					assert(pmatch[k].rm_so != -1);
+					if (strlen(buf) + 3 < pmatch[k].rm_eo - pmatch[k].rm_so) {
+						new_size += pmatch[k].rm_eo - pmatch[k].rm_so - strlen(buf) - 3;
+						__url = realloc(__url, new_size);
+						assert(__url);
+					}
+					entry->replacement[i] = '}';
+					memcpy(&__url[j], url + pmatch[k].rm_so,
+							pmatch[k].rm_eo - pmatch[k].rm_so);
+					j += pmatch[k].rm_eo - pmatch[k].rm_so;
+					state = COPY_INPUT;
+					break;
+				}
+				if (entry->replacement[i] < '0' || entry->replacement[i] > '9') {
+					memcpy(&__url[j], buf, &entry->replacement[i] - buf);
+					j += &entry->replacement[i] - buf;
+					log(LOG_DEBUG, "Invalid char '%c' found at %d. Switching back to COPY_INPUT\n",
+							entry->replacement[i], i);
+					state = COPY_INPUT;
+				}
+				break;
+			default:
+				err = 1;
+				break;
+			}
+		}
+		__url[j] = '\0';
+		log(LOG_DEBUG, "Rewritten url '%s' to '%s'\n", url, __url);
+		*tmp = save;
+		__url = realloc(__url, new_size + strlen(tmp));
+		memcpy(&__url[j], url + pmatch[0].rm_eo, strlen(url) - pmatch[0].rm_eo);
+		j += strlen(url) - pmatch[0].rm_eo;
+		__url[j++] = '\0';
+		*new_url = __url;
+		err = 0;
+		if (!entry->cont)
+			break;
+		url = __url;
+	}
+
+
+	return err;
+}
+
 static int sql_host_info(char *host, char *ip, int *port, char **site_id)
 {
 	/* intoarce:
@@ -389,7 +501,7 @@ static void process_line(char *s)
 {
 	struct host_info s1, *s2;
 	size_t hostl;
-	char ip[MAX_IP_LENGTH+1], *host, *path, save_host;
+	char ip[MAX_IP_LENGTH+1], *host, *path, *new_url, save_host;
 	int r, port;
 	char *site_id = NULL;
 
@@ -473,17 +585,28 @@ static void process_line(char *s)
 	default:
 		/* fac redirectarea */
 		host[hostl] = save_host;
-		save_host = *host;
-		*host = '\0';
-		if (s2->port == 80) {
-			printf("%s%s%s", s, s2->ip, path);
+		/* if we've rewritten the url, redirect to the rewritten url,
+		 * otherwise redirect using the host info from the cache */
+		if (!url_rewrite(s2, host, &new_url)) {
+			save_host = *host;
+			*host = '\0';
+			printf("%s%s", s, new_url);
+			fflush(stdout);
+			*host = save_host;
+			free(new_url);
 		} else {
-			printf("%s%s:%d%s", s, s2->ip, s2->port, path);
+			save_host = *host;
+			*host = '\0';
+			if (s2->port == 80) {
+				printf("%s%s%s", s, s2->ip, path);
+			} else {
+				printf("%s%s:%d%s", s, s2->ip, s2->port, path);
+			}
+			fflush(stdout);
+			*host = save_host;
+			host[hostl] = '\0';
+			log(LOG_INFO, "[%d] %ld 1 %s %s:%d\n", pid, time(NULL), host, s2->ip, s2->port);
 		}
-		fflush(stdout);		/* altfel squid se blocheaza in read */
-		*host = save_host;
-		host[hostl] = '\0';
-		log(LOG_INFO, "[%d] %ld 1 %s %s:%d\n", pid, time(NULL), host, s2->ip, s2->port);
 	}
 }
 
