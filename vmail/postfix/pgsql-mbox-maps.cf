@@ -1,0 +1,11 @@
+# Map mailbox address to filesystem path.
+#
+# This table maps a fully-qualified mailbox address (such as
+# user@domain) to a local filesystem path. The result path is relative
+# to $virtual_mailbox_base (defined in main.cf).
+
+hosts = 192.168.56.1
+user = vmail
+password = 123
+dbname = mipanel
+query = SELECT path FROM get_mailbox_properties('%u', '%d')

@@ -1,0 +1,10 @@
+# List of locally hosted domains.
+#
+# This is not a map. See "Postfix lists versus tables" in the
+# DATABASE_README document for a discussion.
+
+hosts = 192.168.56.1
+user = vmail
+password = 123
+dbname = mipanel
+query = SELECT domain FROM domains WHERE domain='%s'
