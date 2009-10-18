@@ -15,7 +15,7 @@ DECLARE
 	_ret mailbox_properties;
 	_domain_id integer;
 BEGIN --{
-	SELECT INTO _domain_id, _ret.uid, _ret.gid domain_id, uid, gid FROM domains WHERE domain = _domain;
+	SELECT INTO _domain_id, _ret.uid, _ret.gid domain_id, mail_uid, mail_gid FROM domains WHERE domain = _domain;
 	IF NOT FOUND THEN --{
 		RETURN;
 	END IF; --}
