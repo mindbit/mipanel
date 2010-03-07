@@ -104,10 +104,10 @@ mail_owner = postfix
 #
 # Note: you need to stop/start Postfix when this parameter changes.
 #
-inet_interfaces = all
+#inet_interfaces = all
 #inet_interfaces = $myhostname
 #inet_interfaces = $myhostname, localhost
-#inet_interfaces = localhost
+inet_interfaces = localhost
 
 # The proxy_interfaces parameter specifies the network interface
 # addresses that this mail system receives mail on by way of a
@@ -239,7 +239,7 @@ unknown_local_recipient_reject_code = 550
 # 
 #mynetworks_style = class
 #mynetworks_style = subnet
-mynetworks_style = host
+#mynetworks_style = host
 
 # Alternatively, you can specify the mynetworks list by hand, in
 # which case Postfix ignores the mynetworks_style setting.
@@ -665,17 +665,3 @@ sample_directory = /usr/share/doc/postfix-2.3.3/samples
 # readme_directory: The location of the Postfix README files.
 #
 readme_directory = /usr/share/doc/postfix-2.3.3/README_FILES
-
-# VIRTUAL MAILBOX CONFIGURATION
-virtual_mailbox_domains = pgsql:/etc/postfix/pgsql-mbox-domains.cf
-virtual_mailbox_base = /var/mail/virtual
-virtual_mailbox_maps = pgsql:/etc/postfix/pgsql-mbox-maps.cf
-virtual_minimum_uid = 100
-virtual_uid_maps = pgsql:/etc/postfix/pgsql-uid-maps.cf
-virtual_gid_maps = pgsql:/etc/postfix/pgsql-gid-maps.cf
-virtual_alias_maps = hash:/etc/postfix/virtual
-
-smtpd_sasl_auth_enable = yes
-smtpd_sasl_type = dovecot
-smtpd_sasl_path = private/auth
-smtpd_recipient_restrictions = permit_mynetworks, permit_auth_destination, permit_sasl_authenticated, reject
