@@ -1,0 +1,251 @@
+<html>
+<head>
+<script>var isomorphicDir="/isomorphic/";</script>
+<script src="/isomorphic/system/modules/ISC_Core.js"></script>
+<script src="/isomorphic/system/modules/ISC_Foundation.js"></script>
+<script src="/isomorphic/system/modules/ISC_Containers.js"></script>
+<script src="/isomorphic/system/modules/ISC_Grids.js"></script>
+<script src="/isomorphic/system/modules/ISC_Forms.js"></script>
+<script src="/isomorphic/system/modules/ISC_DataBinding.js"></script>
+<script src="/isomorphic/skins/TreeFrog/load_skin.js"></script>
+</head>
+<body>
+<script> 
+isc.RestDataSource.create({
+    ID:"book",
+    dataFormat:"json",
+    dataURL:"ds-books.php",
+    fields:[
+        {type: "sequence", name: "book_id", primaryKey: true},
+	{name: "book_id"},
+        {title:"Title", name:"title", type: "text",  required: true},
+        {title:"ISBN", name:"isbn", type: "text",  required: true},
+	{title:"Author", name:"author_id", type: "text",  required: true},
+	{title:"Publisher", name:"publisher_id", type: "text",  required: true}
+    ],
+    operationBindings:[
+       {operationType:"fetch", dataProtocol:"postMessage"},
+       {operationType:"add", dataProtocol:"postMessage"},
+       {operationType:"remove", dataProtocol:"postMessage"},
+       {operationType:"update", dataProtocol:"postMessage"}
+    ],
+}); 
+
+isc.ClassFactory.defineClass("PanelView", isc.HLayout);
+
+isc.PanelView.addProperties({
+	width: "100%",
+	height: "100%",
+	initWidget: function() {
+		this.Super("initWidget", arguments);
+		this.listGrid = isc.ListGrid.create({ ID: "listGrid",
+    		width: 130,
+		showResizeBar:true,
+ 		recordClick: function (viewer, record)
+			{
+				isc.say(record.project);
+                                menu3Button.title=record.project;
+                		menu3Button.setTitle(record.project);
+			},
+    		fields: [
+        		{name: "project", title: "Project", type: "text"}
+    		],
+   		data: [
+       		{project: "AJAX Interface"},
+        	{project: "Simplify Backend"},
+        	{project: "Broaden Reach"}
+    		]
+		});
+			
+		this.tabWeb=isc.TabSet.create({
+                        ID:"tabWeb",
+			container:this,
+			tabs:[
+				{title:"Settings", pane:"", ID:"tab0", width:70, icon:"[SKIN]/ImgButton/button.png"},
+				{title:"VHOSTS", pane:"", ID:"tab1", width:70, icon:"[SKIN]/ImgButton/button.png"},
+				{title:"Statistics", pane:"", ID:"tab2", width:70, icon:"[SKIN]/ImgButton/button.png"},
+				{title:"Logs", pane:"", ID:"tab3", width:70, icon:"[SKIN]/ImgButton/button.png"}
+			]
+		});
+               
+		this.menu1Button =isc.IButton.create({
+                        ID:"menu1Button",
+			container:this,
+		    	title: "MENU",
+			paddingLeft:20,
+		   	width: 150,
+			align:"left",
+			click: function () { isc.say('menu1');}
+		});
+
+		this.menu1= isc.Menu.create({ 
+                        ID:"menu1",
+			cellHeight:20,
+			container:this,
+			width:150,
+			height:100,
+		 	showShadow: false,
+			align:"center",
+			autoDraw:true,
+			data:[
+				{
+				title:"Domains",
+				icon:"[SKIN]/ImgButton/button.png",
+			    	click:"tabWeb.selectTab(0)"
+				},
+		   
+				{
+				title:"Databases",
+				icon:"[SKIN]/ImgButton/button.png",
+				click:"tabWeb.selectTab(1)"
+		       		},
+				{
+				title:"System",
+				icon:"[SKIN]/ImgButton/button.png",
+				click:"tabWeb.selectTab(2)"
+				},
+				{
+				title:"Logout",
+				icon:"[SKIN]/ImgButton/button.png",
+				click:"tabWeb.selectTab(3)"
+		      		}
+			]  
+		  });
+
+		this.menu2Button=isc.IButton.create({
+                        ID:"menu2Button",
+			container:this,		   	
+			title: "ACTIONS",
+			paddingLeft:20,
+		    	width: 150,
+			align:"left",
+			click: function () { isc.say('menu2');}
+		});
+
+		this.menu2= isc.Menu.create({ 
+                        ID:"menu2",
+			cellHeight:20,
+			container:this,
+			width:150,
+			height:75,
+			showShadow: false,
+			align:"center",
+			data:[
+				{
+				title:"New Domain",
+				icon:"[SKIN]/ImgButton/button.png",
+				click:"this.tabWeb.selectTab(0)"
+				},
+				{title:"Wizard",
+				icon:"[SKIN]/ImgButton/button.png",
+				click:"this.tabWeb.selectTab(0)"
+				},
+				{title:"Remove",
+				icon:"[SKIN]/ImgButton/button.png",
+				lick:"this.tabWeb.selectTab(1)"
+				}
+			]  
+		 });
+
+		this.menu3Button=isc.IButton.create({
+                                 ID:"menu3Button",
+				container:this,
+		    		title: "BIBI.RO",
+				paddingLeft:20,
+		    		width: 150,
+				align:"left",
+				click: function () { isc.say('menu3 ->atentie titlu e dinamic');}
+		});
+
+		this.menu3= isc.Menu.create({ 
+                        ID:"menu3",
+			cellHeight:20,
+			container:this,
+			width:150,
+			height:125,
+			showShadow: false,
+			align:"center",
+                    
+			data:[
+				{
+				title:"Summary",
+				icon:"[SKIN]/ImgButton/button.png",
+				},
+				{
+				title:"Web",
+				icon:"[SKIN]/ImgButton/button.png",
+				click:function ()
+                                           {
+                                             if (tabWeb.tabs.length==5) tabWeb.removeTab("logmail");  
+                                             tabWeb.addTab({title:"Settings", pane:"", ID:"tab0", width:70, icon:"[SKIN]/ImgButton/button.png"});
+                                             tabWeb.addTab({title:"VHOSTS", pane:"", ID:"tab1", width:70, icon:"[SKIN]/ImgButton/button.png"});
+                                             tabWeb.addTab({title:"Statistics", pane:"", ID:"tab2", width:70, icon:"[SKIN]/ImgButton/button.png"});
+					     tabWeb.addTab({title:"Logs", pane:"", ID:"tab3", width:70, icon:"[SKIN]/ImgButton/button.png"});
+                                             tabWeb.selectTab(0);
+                                            }
+				},
+			       	{
+				title:"FTP",
+				icon:"[SKIN]/ImgButton/button.png",
+				click:function ()
+                                           {
+                                              
+					     if (tabWeb.tabs.length==5) tabWeb.removeTab("logmail");
+						 tabWeb.removeTab("tab3"); 
+                                             tabWeb.addTab({
+                                             title:"Settings", pane:this.listGrid, ID:"tab0", width:70, icon:"[SKIN]/ImgButton/button.png"
+                                             });
+                                             tabWeb.addTab({
+                                             title:"SmartAuth", pane:"tab ftp", ID:"tab1", width:70, icon:"[SKIN]/ImgButton/button.png"
+                                             });
+                                             tabWeb.addTab({
+                                             title:"Logs", pane:"tab ftp", ID:"tab2", width:70, icon:"[SKIN]/ImgButton/button.png"
+                                             });
+                                             tabWeb.selectTab(0);
+                                            }
+				},
+				{
+				title:"Mail",
+				icon:"[SKIN]/ImgButton/button.png",
+				click:function ()
+                                           { 
+                                             tabWeb.addTab({
+                                             title:"Mailboxes", pane:"", ID:"tab0", width:70, icon:"[SKIN]/ImgButton/button.png"});
+				             tabWeb.addTab({title:"Forwards&Aliases", pane:"", ID:"tab1", width:70, icon:"[SKIN]/ImgButton/button.png"});
+				             tabWeb.addTab({title:"Catch-all", pane:"", ID:"tab2", width:70, icon:"[SKIN]/ImgButton/button.png"});
+				             tabWeb.addTab({title:"Auto-Reply", pane:"", ID:"tab3", width:70, icon:"[SKIN]/ImgButton/button.png"});
+				             tabWeb.addTab({title:"Logs", pane:"", ID:"logmail", width:70, icon:"[SKIN]/ImgButton/button.png"});
+                                             tabWeb.selectTab(0);
+                                            }
+				},
+				{
+				title:"DNS",
+				icon:"[SKIN]/ImgButton/button.png"
+			       	}
+			] 
+		  });		
+
+		this.TabsPanel = isc.VLayout.create({
+                         ID:"TabsPanel",
+			members: [this.listGrid, this.tabWeb]
+		});
+		
+		this.MenuPanel = isc.VLayout.create({
+                         ID:"MenuPanel",
+			width:"20%",
+			showResizeBar:true,
+			align: "center",
+			members: [this.menu1Button,this.menu1,this.menu2Button,this.menu2,this.menu3Button,this.menu3]
+		});
+
+		this.addMember(this.MenuPanel);
+		this.addMember(this.TabsPanel);
+	}
+});
+isc.PanelView.create();
+
+
+
+</script>
+</body>
+</html>
