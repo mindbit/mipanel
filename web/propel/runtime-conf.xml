@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<config>
+	<propel>
+		<datasources default="mipanel">
+			<datasource id="mipanel"> <!-- this ID must match <database name=""> in schema.xml -->
+				<adapter>pgsql</adapter> <!-- sqlite, mysql, myssql, oracle, or pgsql -->
+				<connection>
+					<dsn>pgsql:host=localhost;dbname=mipanel;user=mipanel</dsn> 
+				</connection>
+			</datasource>
+		</datasources>
+	</propel>
+</config>
