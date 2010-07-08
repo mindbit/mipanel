@@ -8,10 +8,6 @@
 <script src="/isomorphic/system/modules/ISC_Forms.js"></script>
 <script src="/isomorphic/system/modules/ISC_DataBinding.js"></script>
 <script src="/isomorphic/skins/TreeFrog/load_skin.js"></script>
-<style type="text/css">
-
-
-</style>
 </head>
 <body>
 <script> 
@@ -67,7 +63,8 @@ isc.RestDataSource.create({
     		var dsResponse = this.Super("transformResponse", arguments);
 		for (i=0; i<dsResponse.totalRows; i++)
 		{
-			dsResponse.data[i].address = dsResponse.data[i].mailbox + '@';
+			dsResponse.data[i].addressmail = dsResponse.data[i].mailbox + '@';
+			
 		}
      		return dsResponse;
 		},
@@ -76,7 +73,8 @@ isc.RestDataSource.create({
 	{name: "mailbox_id"},
 	{name: "domain_id"},
         {title:"Mailbox", name:"mailbox", type: "text",  required: true},
-	{name: "address", title: "Address", align:"center", canFilter:false}
+	{name: "addressmail", align:"center", canFilter:false},
+	{name: "copy_on_forward",type:"checkbox",valueMap:{"f":false,"t":true}}
     ],
     operationBindings:[
        {operationType:"fetch", dataProtocol:"postMessage"},
@@ -86,6 +84,24 @@ isc.RestDataSource.create({
     ],
 });
 
+isc.RestDataSource.create({
+    ID:"forwards",
+    dataFormat:"json",
+    dataURL:"ds-forwards.php",
+    fields:[
+        {type: "sequence", name: "mailbox_forward_id", primaryKey: true},
+	{name: "mailbox_forward_id"},
+	{name: "mailbox_id"},
+	{name: "address",align:"center"},
+{name: "copy_on_forward",type:"checkbox"}
+    ],
+    operationBindings:[
+       {operationType:"fetch", dataProtocol:"postMessage"},
+       {operationType:"add", dataProtocol:"postMessage"},
+       {operationType:"remove", dataProtocol:"postMessage"},
+       {operationType:"update", dataProtocol:"postMessage"}
+    ],
+});
 isc.Label.create({
 	ID:"label1",
 	autoDraw: false,
@@ -142,22 +158,7 @@ isc.Label.create({
 	align:"center",
 	contents:"Logs for <b>FTP</b> Tab"
 });
-isc.Label.create({
-	ID:"label8",
-	autoDraw: false,
-	width:"100%",
-	height:"100%",
-	align:"center",
-	contents:"Mailboxes for <b>Mail</b> Tab"
-});
-isc.Label.create({
-	ID:"label9",
-	autoDraw: false,
-	width:"100%",
-	height:"100%",
-	align:"center",
-	contents:"Fw&Alias for <b>Mail</b> Tab"
-});
+
 isc.Label.create({
 	ID:"label10",
 	autoDraw: false,
@@ -206,12 +207,13 @@ isc.TabsPanel.addProperties({
 				if (stack3.sectionIsExpanded(0)) menu3.show();
 				if (stack1.sectionIsExpanded(0)) menu1.show();
 				if (stack2.sectionIsExpanded(0)) menu2.show();
-				
+				this.container.loadRecord(record);
 			},
 				fields: [
 					{name: "domain", title: "Domain",required:"true"},
 					{name: "web", title: "Web", align:"center",  width:100, type:"image", canFilter:false},
-                       			{name: "ftp", title: "FTP", align:"center",  width:100, type:"image",canFilter:false},
+              
+		      			{name: "ftp", title: "FTP", align:"center",  width:100, type:"image",canFilter:false},
                        			{name: "dns", title: "DNS", align:"center",  width:100, type:"image", canFilter:false},
                        			{name: "mail", title: "Mail", align:"center",  width:100, type:"image",canFilter:false}
 					],  
@@ -239,7 +241,7 @@ isc.TabsPanel.addProperties({
 			container:this,
 			tabs:[
 				{title:"Mailboxes", pane:this.TabMailboxes, ID:"mailboxMailTab"},
-				{title:"Forwards&Aliases", pane:label9, ID:"fwMailTab"},
+				{title:"Global Aliases", pane:label10, ID:"fwMailTab"},
 				{title:"Catch-all", pane:label10, ID:"catchMailTab"},
 				{title:"Auto-Reply", pane:label11, ID:"autoMailTab"},
 				{title:"Logs", pane:label12, ID:"logsMailTab"}
@@ -296,11 +298,14 @@ isc.TabsPanel.addProperties({
 			border:"1px solid gray",
 			members: [this.tabWeb,this.tabMail, this.tabFTP,this.formLayout]
 		});	
-
+		
 		this.addMember(this.listGrid);
 		this.addMember(this.hLayout);
 	},
-
+	loadRecord: function(record) {
+		this.TabMailboxes.setDomainId(record.domain_id);
+		valuesManager.editNewRecord(record);
+	},
 	saveRecord: function() {
 		this.dynamForm.saveData(function(dsResponse, data, dsRequest) {
 			if (dsResponse.status != 0)
@@ -311,10 +316,6 @@ isc.TabsPanel.addProperties({
 		});
 	},
 
-	setDomainId: function(domainId) {
-		this.domainId = domainId;
-		//this.listGrid.fetchData({domain_id: domainId});
-	}
 });
 
 isc.ClassFactory.defineClass("TabMailboxes", isc.VLayout);
@@ -329,24 +330,45 @@ isc.TabMailboxes.addProperties({
 		this.listGrid_Mailboxes=isc.ListGrid.create({
 			ID:"listGrid_Mailboxes",
 			container:this,
-			width:"100%",
-			height:"50%",
+			width:"80%",
+			height:"100%",
 			alternateRecordStyles:true,
 			dataSource: isc.DS.get("mailboxes"),
-			autoFetchData: true,
+			autoFetchData: false,
 			showResizeBar: false,
 			recordClick: function (viewer, record){
 				this.container.deleteButton.setDisabled(false);
 				this.container.saveButton.setDisabled(false);
+				this.container.tabset_Mailboxes.show();
+				this.container.valuesManager.editRecord(record);
+				this.container.loadFwRecord(record);
+				
 			},
 				fields: [
+					{name: "domain_id",showIf:"false"},
+					{name: "mailbox_id",showIf:"false"},
 					{name: "mailbox", title: "Mailbox",required:"true",canEdit:false},
-					{name: "address", title: "Address", align:"center",canFilter:false,canEdit:false}
+					{name: "addressmail", title: "Address", align:"center",canFilter:false,canEdit:false}
 					],  
 		  		autoFitData: "vertical",
 		  		showFilterEditor: false,
 		  		autoFitMaxRecords: 10
 		});
+
+		this.mailboxForm=isc.DynamicForm.create({
+			ID:"mailboxForm",
+			width:"100%",
+			height:"100%",
+			align:"center",
+			container: this,
+			dataSource: isc.DS.get("mailboxes"),
+			fields: [
+				
+				{name: "mailbox", type: "text", title: "Mailbox",required:"true"},
+				{name: "password", type: "text", title: "Password",required:"true"}
+			]
+		});
+
 		this.newButton = isc.IButton.create({
 			container: this,
 			title: "New",
@@ -354,7 +376,10 @@ isc.TabMailboxes.addProperties({
 			showDisabledIcon: false,
 			click: function ()
 				{
-					tabset_Mailboxes.show();
+					this.container.newRecord();
+					this.container.mailboxForm.clearErrors(true);
+					this.container.tabset_Mailboxes.show();
+					this.container.saveButton.setDisabled(false);
 				}
 
 		});
@@ -362,19 +387,18 @@ isc.TabMailboxes.addProperties({
 		this.saveButton = isc.IButton.create({
 			container: this,
 			title: "Save",
-			//icon: "[SKIN]/actions/save.png",
-			//showDisabledIcon: true,
-			click: "this.container.saveRecord()",
+			icon: "[SKIN]/actions/save.png",
+			click: function () {this.container.saveRecord();},
 			disabled: true
 		});
 		
 		this.deleteButton = isc.IButton.create({
 			container: this,
 			title: "Delete",
-			//icon: "[SKIN]/actions/remove.png",
-			//showDisabledIcon: true,
+			icon: "[SKIN]/TabSet/close.png",
+			showDisabledIcon: "[SKIN]/TabSet/close_Disabled.png",
 			disabled: true,
-			click: "this.container.deleteRecord()"
+			click: "this.container.deleteRecord();"
 		});
 		
 		this.toolbar = isc.VLayout.create({
@@ -384,35 +408,150 @@ isc.TabMailboxes.addProperties({
 
 		this.tabH=isc.HLayout.create({
 			showResizeBar:true,
-			width:"100%",
+			padding:30,
+			width:"80%",
+			height:"30%",
 			members: [this.listGrid_Mailboxes, this.toolbar]
 		});
+
+		
+		this.listGrid_FwMailboxes=isc.ListGrid.create({
+			ID:"listGrid_FwMailboxes",
+			container:this,
+			width:"100%",
+			alternateRecordStyles:true,
+			dataSource: isc.DS.get("forwards"),
+			autoFetchData: false,
+			showResizeBar: false,
+			recordClick: function (viewer, record){
+				this.container.removeButton.setDisabled(false);
+				this.container.fwForm.editRecord(record);
+			},
+				fields: [
+					{name: "address", title: "Address", align:"center"}
+					],  
+		  		autoFitData: "vertical",
+		  		autoFitMaxRecords: 5
+		});
+		this.fwForm=isc.DynamicForm.create({
+			ID:"fwForm",
+			container: this,
+			dataSource: isc.DS.get("forwards"),
+			fields: [
+			{name: "address", type: "text", required:"true"}]
+		});
+		this.fwCheckForm=isc.DynamicForm.create({
+			ID:"fwCheckForm",
+			container: this,
+			dataSource: isc.DS.get("mailboxes"),
+			fields: [
+			{name: "copy_on_forward", type: "checkbox", title:"Also leap a local copy", valueMap:{"f":false,"t":true}}
+			]
+		});
+		
+		this.valuesManager = isc.ValuesManager.create({
+			ID:"valuesManager",
+			container: this,
+			dataSource: isc.DS.get("mailboxes"),
+			members: [
+				this.mailboxForm,
+				this.fwCheckForm
+			]
+		});
+		
+		this.addButton = isc.IButton.create({
+			container: this,
+			title: "Add",
+			icon: "[SKIN]/actions/save.png",
+			click: "this.container.saveFwRecord();"
+		});
+		
+		this.removeButton = isc.IButton.create({
+			container: this,
+			title: "Remove",
+			icon: "[SKIN]/TabSet/close.png",
+			showDisabledIcon: "[SKIN]/TabSet/close_Disabled.png",
+			disabled: true,
+			click: "this.container.deleteFwRecord();"
+		});
+		
+		this.fwGridH=isc.HLayout.create({
+			showResizeBar:false,
+			width:"80%",
+			height:"60%",
+			padding:30,
+			members: [this.listGrid_FwMailboxes, this.removeButton]
+		});
+
+		this.fwAddH = isc.HLayout.create({
+			showResizeBar:false,
+			width:"80%",
+			height:"40%",
+			padding:30,
+			members: [this.fwForm, this.addButton]
+		});
+		
+		this.fwTab=isc.VLayout.create({
+			showResizeBar:false,
+			members: [this.fwGridH, this.fwAddH,this.fwCheckForm]
+		});
+
 		this.tabset_Mailboxes=isc.TabSet.create({
 			ID:"tabset_Mailboxes",
 			visibility:"hidden",
+			height:"70%",
+			width:"80%",
+			padding:30,
 			container:this,
 			tabs:[
-				{title:"Mailbox", pane:label8, ID:"tab0"},
-				{title:"Forwards", pane:label6, ID:"tab1"}
+				{title:"Mailbox", pane:this.mailboxForm, ID:"tab0"},
+				{title:"Forwards", pane:this.fwTab, ID:"tab1"}
 			]
 		});
-
 		this.addMember(this.tabH);
 		this.addMember(this.tabset_Mailboxes);
 	},
-
+	loadFwRecord: function(record) {
+		this.setMailboxId(record.mailbox_id);
+		fwForm.editNewRecord(record);
+	},
+	newRecord: function() {
+		//this.mailboxForm.editNewRecord();
+		this.valuesManager.editNewRecord({domain_id:listGrid_Mailboxes.container.domainId});
+	},
+	setDomainId: function(domainId) {
+		this.domainId = domainId;
+		this.listGrid_Mailboxes.fetchData({domain_id: domainId});
+		this.newButton.setDisabled(false);
+		this.deleteButton.setDisabled(true);
+	},
+	setMailboxId: function(mailId) {
+		this.mailId = mailId;
+		this.listGrid_FwMailboxes.fetchData({mailbox_id: mailId});
+		this.removeButton.setDisabled(true);
+	},
 	saveRecord: function() {
-		this.listGrid_Mailboxes.saveData(function(dsResponse, data, dsRequest) {
+		this.valuesManager.saveData(function(dsResponse, data, dsRequest) {
 			if (dsResponse.status != 0)
 				return;
 			if (!this.isNewRecord())
 				return;
-			this.setSaveOperationType("update"); 
+			this.setSaveOperationType("update");
 		});
 	},
-
+	saveFwRecord: function() {
+		fwForm.saveData(function(dsResponse, data, dsRequest) {
+			if (dsResponse.status != 0)
+				return;
+			if (!this.isNewRecord())
+				return;
+			this.setSaveOperationType("update");
+		});
+	this.fwForm.editNewRecord({mailbox_id:listGrid_FwMailboxes.container.mailId});
+	},
 	deleteRecord: function() {
-		isc.ask("Really delete?", function (value) {
+		if (listGrid_Mailboxes.getSelectedRecord()==null) isc.say("Select a mailbox first!");
+		else isc.ask("Really delete?", function (value) {
 			if (value)
 				this.container.__deleteRecord();
 		}, {container: this});
@@ -427,7 +566,25 @@ isc.TabMailboxes.addProperties({
 			return;
 		this.newRecord();
 	},
-	domainId: null
+	deleteFwRecord: function() {
+		
+		isc.ask("Really delete?", function (value) {
+			if (value)
+				this.container.__deleteFwRecord();
+		}, {container: this});
+	},
+
+	__deleteFwRecord: function() {
+		this.listGrid_FwMailboxes.dataSource.removeData(this.listGrid_FwMailboxes.getSelectedRecord(), { target: this, methodName: "deleteFwRecordCallback" });
+	},
+
+	deleteFwRecordCallback: function(dsResponse, data, dsRequest) {
+		if (dsResponse.status != 0)
+			return;
+		this.fwForm.editNewRecord({mailbox_id:listGrid_FwMailboxes.container.mailId});
+	},
+	domainId: null,
+	mailId:null
 	
 });
 isc.ClassFactory.defineClass("MenuPanel", isc.VLayout);
@@ -641,7 +798,7 @@ isc.MenuPanel.addProperties({
 				},
 				{
 				title:"DNS",
-				icon:"/imgs/cube_blue.png",
+				icon:"/imgs/cube_green.png",
 				click: function ()
 					{
 					     	if (stack1.sectionIsExpanded(0)) menu1.show();  

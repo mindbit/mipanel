@@ -35,6 +35,7 @@
     <column name="uid" phpName="Uid" type="INTEGER" required="false"/>
     <column name="gid" phpName="Gid" type="INTEGER" required="false"/>
     <column name="password" phpName="Password" type="VARCHAR" size="64" required="false"/>
+    <column name="copy_on_forward" phpName="CopyOnForward" type="BOOLEAN" required="true" defaultValue="false"/>
     <foreign-key foreignTable="domains" name="mailboxes_domain_id_fkey">
       <reference local="domain_id" foreign="domain_id"/>
     </foreign-key>
@@ -44,6 +45,14 @@
     <index name="mailboxes_mailbox_idx">
       <index-column name="mailbox"/>
     </index>
+  </table>
+  <table name="mailbox_forwards" phpName="MailboxForwards">
+    <column name="mailbox_forward_id" phpName="MailboxForwardId" type="INTEGER" primaryKey="true" autoIncrement="true" required="true"/>
+    <column name="mailbox_id" phpName="MailboxId" type="INTEGER" required="true"/>
+    <column name="address" phpName="Address" type="VARCHAR" required="true"/>
+    <foreign-key foreignTable="mailboxes" name="mailbox_forwards_mailbox_id_fkey">
+      <reference local="mailbox_id" foreign="mailbox_id"/>
+    </foreign-key>
   </table>
   <table name="settings" phpName="Settings">
     <column name="setting_id" phpName="SettingId" type="INTEGER" primaryKey="true" autoIncrement="true" required="true"/>
