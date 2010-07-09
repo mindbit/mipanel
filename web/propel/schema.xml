@@ -14,6 +14,22 @@
       <unique-column name="username"/>
     </unique>
   </table>
+  <table name="global_mail_aliases" phpName="GlobalMailAliases">
+    <column name="global_mail_alias_id" phpName="GlobalMailAliasId" type="INTEGER" primaryKey="true" autoIncrement="true" required="true"/>
+    <column name="domain_id" phpName="DomainId" type="INTEGER" required="true"/>
+    <column name="name" phpName="Name" type="VARCHAR" required="true"/>
+    <foreign-key foreignTable="domains" name="global_mail_aliases_domain_id_fkey">
+      <reference local="domain_id" foreign="domain_id"/>
+    </foreign-key>
+  </table>
+  <table name="global_mail_alias_to" phpName="GlobalMailAliasTo">
+    <column name="global_mail_alias_to_id" phpName="GlobalMailAliasToId" type="INTEGER" primaryKey="true" autoIncrement="true" required="true"/>
+    <column name="global_mail_alias_id" phpName="GlobalMailAliasId" type="INTEGER" required="true"/>
+    <column name="address" phpName="Address" type="VARCHAR" required="true"/>
+    <foreign-key foreignTable="global_mail_aliases" name="global_mail_alias_to_global_mail_alias_id_fkey">
+      <reference local="global_mail_alias_id" foreign="global_mail_alias_id"/>
+    </foreign-key>
+  </table>
   <table name="limits" phpName="Limits">
     <column name="limit_id" phpName="LimitId" type="INTEGER" primaryKey="true" autoIncrement="true" required="true"/>
     <column name="user_id" phpName="UserId" type="INTEGER" required="true"/>

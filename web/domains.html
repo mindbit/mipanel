@@ -59,7 +59,9 @@ isc.RestDataSource.create({
     ID:"mailboxes",
     dataFormat:"json",
     dataURL:"ds-mailboxes.php",
-    transformResponse : function (dsResponse, dsRequest, data) {        
+    transformResponse : function (dsResponse, dsRequest, data) {      
+		var dataSource=isc.DS.get("domains");  
+		// dataSource.fetchRecord(dsResponse.data[i].domain_id)
     		var dsResponse = this.Super("transformResponse", arguments);
 		for (i=0; i<dsResponse.totalRows; i++)
 		{
@@ -72,8 +74,9 @@ isc.RestDataSource.create({
         {type: "sequence", name: "mailbox_id", primaryKey: true},
 	{name: "mailbox_id"},
 	{name: "domain_id"},
+	{name: "domain"},
         {title:"Mailbox", name:"mailbox", type: "text",  required: true},
-	{name: "addressmail", align:"center", canFilter:false},
+	{name: "addressmail"},
 	{name: "copy_on_forward",type:"checkbox",valueMap:{"f":false,"t":true}}
     ],
     operationBindings:[
@@ -92,8 +95,7 @@ isc.RestDataSource.create({
         {type: "sequence", name: "mailbox_forward_id", primaryKey: true},
 	{name: "mailbox_forward_id"},
 	{name: "mailbox_id"},
-	{name: "address",align:"center"},
-{name: "copy_on_forward",type:"checkbox"}
+	{name: "address",align:"center"}
     ],
     operationBindings:[
        {operationType:"fetch", dataProtocol:"postMessage"},
@@ -102,6 +104,70 @@ isc.RestDataSource.create({
        {operationType:"update", dataProtocol:"postMessage"}
     ],
 });
+
+isc.RestDataSource.create({
+    ID:"aliases",
+    dataFormat:"json",
+    dataURL:"ds-aliases.php",
+    transformResponse : function (dsResponse, dsRequest, data) {        
+    		var dsResponse = this.Super("transformResponse", arguments);
+		for (i=0; i<dsResponse.totalRows; i++)
+		{
+			dsResponse.data[i].addressalias = dsResponse.data[i].name + '@';
+		}
+     		return dsResponse;
+		},
+    fields:[
+        {type: "sequence", name: "global_mail_alias_id", primaryKey: true},
+	{name: "global_mail_alias_id"},
+	{name: "domain_id"},
+        {name:"name", type: "text",  required: true},
+	{name: "addressalias", align:"center", canFilter:false}
+    ],
+    operationBindings:[
+       {operationType:"fetch", dataProtocol:"postMessage"},
+       {operationType:"add", dataProtocol:"postMessage"},
+       {operationType:"remove", dataProtocol:"postMessage"},
+       {operationType:"update", dataProtocol:"postMessage"}
+    ],
+});
+
+isc.RestDataSource.create({
+    ID:"aliasesto",
+    dataFormat:"json",
+    dataURL:"ds-aliasesto.php",
+    fields:[
+        {type: "sequence", name: "global_mail_alias_to_id", primaryKey: true},
+	{name: "global_mail_alias_to_id"},
+	{name: "global_mail_alias_id"},
+	{name: "address",align:"center"}
+    ],
+    operationBindings:[
+       {operationType:"fetch", dataProtocol:"postMessage"},
+       {operationType:"add", dataProtocol:"postMessage"},
+       {operationType:"remove", dataProtocol:"postMessage"},
+       {operationType:"update", dataProtocol:"postMessage"}
+    ],
+});
+isc.RestDataSource.create({
+    ID:"users",
+    dataFormat:"json",
+    dataURL:"ds-users.php",
+    fields:[
+        {type: "sequence", name: "user_id", primaryKey: true},
+	{name: "user_id"},
+	{name: "parent_id"},
+	{name: "username"},
+	{name: "password"}
+    ],
+    operationBindings:[
+       {operationType:"fetch", dataProtocol:"postMessage"},
+       {operationType:"add", dataProtocol:"postMessage"},
+       {operationType:"remove", dataProtocol:"postMessage"},
+       {operationType:"update", dataProtocol:"postMessage"}
+    ],
+});
+
 isc.Label.create({
 	ID:"label1",
 	autoDraw: false,
@@ -202,12 +268,16 @@ isc.TabsPanel.addProperties({
 			autoFetchData: true,
 			showResizeBar: true,
 			recordClick: function (viewer, record){
-				stack3.setSectionTitle(0,record.domain.toUpperCase());
-				stack3.show();
-				if (stack3.sectionIsExpanded(0)) menu3.show();
+				stack1.setSectionTitle(2,record.domain.toUpperCase());
+				stack1.showSection(2);
+				if (stack1.sectionIsExpanded(2)) menu3.show();
 				if (stack1.sectionIsExpanded(0)) menu1.show();
-				if (stack2.sectionIsExpanded(0)) menu2.show();
+				if (stack1.sectionIsExpanded(1)) menu2.show();
 				this.container.loadRecord(record);
+				mailboxForm.clearErrors(true);
+				fwForm.clearErrors(true);
+				aliasForm.clearErrors(true);
+				aliasToForm.clearErrors(true);
 			},
 				fields: [
 					{name: "domain", title: "Domain",required:"true"},
@@ -233,7 +303,11 @@ isc.TabsPanel.addProperties({
 				{title:"Logs", pane:label4, ID:"logsWebTab"}
 			]
               	});
+
 		this.TabMailboxes=isc.TabMailboxes.create();
+		this.TabAliases=isc.TabAliases.create();
+		this.TabFTPSett=isc.TabFTPSett.create();
+
 		this.tabMail=isc.TabSet.create({
 			ID:"tabMail",
 			visibility:"hidden",
@@ -241,7 +315,7 @@ isc.TabsPanel.addProperties({
 			container:this,
 			tabs:[
 				{title:"Mailboxes", pane:this.TabMailboxes, ID:"mailboxMailTab"},
-				{title:"Global Aliases", pane:label10, ID:"fwMailTab"},
+				{title:"Global Aliases", pane:this.TabAliases, ID:"fwMailTab"},
 				{title:"Catch-all", pane:label10, ID:"catchMailTab"},
 				{title:"Auto-Reply", pane:label11, ID:"autoMailTab"},
 				{title:"Logs", pane:label12, ID:"logsMailTab"}
@@ -253,7 +327,7 @@ isc.TabsPanel.addProperties({
 			visibility:"hidden",
 			container:this,
 			tabs:[
-				{title:"Settings", pane:label5, ID:"settFTPTab"},
+				{title:"Settings", pane:this.TabFTPSett, ID:"settFTPTab"},
 				{title:"SmartAuth", pane:label6, ID:"smartFTPTab"},
 				{title:"Logs", pane:label7, ID:"logsFTPTab"}
 			]
@@ -304,7 +378,11 @@ isc.TabsPanel.addProperties({
 	},
 	loadRecord: function(record) {
 		this.TabMailboxes.setDomainId(record.domain_id);
+		this.TabAliases.setDomainId(record.domain_id);
+		//this.TabMailboxes.loadFwRecord(null);
+		//this.TabAliases.setAliasId(record.global_mail_alias_id);
 		valuesManager.editNewRecord(record);
+		aliasForm.editNewRecord(record);
 	},
 	saveRecord: function() {
 		this.dynamForm.saveData(function(dsResponse, data, dsRequest) {
@@ -330,7 +408,7 @@ isc.TabMailboxes.addProperties({
 		this.listGrid_Mailboxes=isc.ListGrid.create({
 			ID:"listGrid_Mailboxes",
 			container:this,
-			width:"80%",
+			width:"100%",
 			height:"100%",
 			alternateRecordStyles:true,
 			dataSource: isc.DS.get("mailboxes"),
@@ -342,6 +420,8 @@ isc.TabMailboxes.addProperties({
 				this.container.tabset_Mailboxes.show();
 				this.container.valuesManager.editRecord(record);
 				this.container.loadFwRecord(record);
+				aliasForm.clearErrors(true);
+				aliasToForm.clearErrors(true);
 				
 			},
 				fields: [
@@ -516,7 +596,6 @@ isc.TabMailboxes.addProperties({
 		fwForm.editNewRecord(record);
 	},
 	newRecord: function() {
-		//this.mailboxForm.editNewRecord();
 		this.valuesManager.editNewRecord({domain_id:listGrid_Mailboxes.container.domainId});
 	},
 	setDomainId: function(domainId) {
@@ -587,6 +666,282 @@ isc.TabMailboxes.addProperties({
 	mailId:null
 	
 });
+
+isc.ClassFactory.defineClass("TabAliases", isc.VLayout);
+
+isc.TabAliases.addProperties({
+	width: "100%",
+	height: "100%",
+	align:"center",
+	showResizeBar:false,
+	initWidget: function() {
+		this.Super("initWidget", arguments);
+		this.listGrid_Aliases=isc.ListGrid.create({
+			ID:"listGrid_Aliases",
+			container:this,
+			width:"100%",
+			height:"100%",
+			alternateRecordStyles:true,
+			dataSource: isc.DS.get("aliases"),
+			autoFetchData: false,
+			showResizeBar: false,
+			recordClick: function (viewer, record){
+				this.container.deleteButton.setDisabled(false);
+				this.container.aliasToForm.editNewRecord({global_mail_alias_id:record.global_mail_alias_id});
+				this.container.loadToRecord(record);
+				this.container.addButton.setDisabled(false);
+				this.container.newButton.setDisabled(true);
+			},
+				fields: [
+					{name: "domain_id",showIf:"false"},
+					{name: "global_mail_alias_id",showIf:"false"},
+					{name: "name", title: "Alias",required:"true",canEdit:false},
+					{name: "addressalias", title: "Address", align:"center",canFilter:false,canEdit:false}
+					],  
+		  		autoFitData: "vertical",
+		  		showFilterEditor: false,
+		  		autoFitMaxRecords: 10
+		});
+		
+		this.deleteButton = isc.IButton.create({
+			container: this,
+			title: "Remove",
+			icon: "[SKIN]/TabSet/close.png",
+			showDisabledIcon: "[SKIN]/TabSet/close_Disabled.png",
+			disabled: true,
+			click: "this.container.deleteRecord();"
+		});
+		this.aliasForm=isc.DynamicForm.create({
+			ID:"aliasForm",
+			container: this,
+			width:"100%",
+			dataSource: isc.DS.get("aliases"),
+			fields: [
+			{name: "name",type: "text", required:"true",width:500}],
+		});
+		this.newButton = isc.IButton.create({
+			container: this,
+			title: "New",
+			icon: "[SKIN]/actions/add.png",
+			showDisabledIcon: false,
+			click: function ()
+				{	
+					this.container.saveRecord();
+				}
+
+		});
+		this.AliasGridH = isc.HLayout.create({
+			showResizeBar:false,
+			
+			members: [this.listGrid_Aliases, this.deleteButton]
+		});
+		this.AliasAddH = isc.HLayout.create({
+			showResizeBar:false,
+			members: [this.aliasForm, this.newButton]
+		});
+
+		this.Alias=isc.VLayout.create({
+			showResizeBar:true,
+			padding:30,
+			width:"80%",
+			height:"30%",
+			members: [this.AliasGridH, this.AliasAddH]
+		});
+
+		this.listGrid_AliasTo=isc.ListGrid.create({
+			ID:"listGrid_AliasTo",
+			container:this,
+			width:"100%",
+			alternateRecordStyles:true,
+			dataSource: isc.DS.get("aliasesto"),
+			autoFetchData: false,
+			showResizeBar: false,
+			recordClick: function (viewer, record){
+				this.container.removeButton.setDisabled(false);
+				//this.container.aliasForm.editRecord(record);
+				
+			},
+			fields: [
+				{name: "address", align:"center"}
+				],  
+		  	autoFitData: "vertical",
+		  	autoFitMaxRecords: 5
+		});
+		
+		this.aliasToForm=isc.DynamicForm.create({
+			ID:"aliasToForm",
+			container: this,
+			dataSource: isc.DS.get("aliasesto"),
+			fields: [
+			{name: "address", type: "text", required:"true"}]
+		});
+
+		this.addButton = isc.IButton.create({
+			container: this,
+			title: "Add",
+			disabled:true,
+			icon: "[SKIN]/actions/add.png",
+			click: "this.container.saveToRecord();"
+		});
+		this.removeButton = isc.IButton.create({
+			container: this,
+			title: "Remove",
+			icon: "[SKIN]/TabSet/close.png",
+			showDisabledIcon: "[SKIN]/TabSet/close_Disabled.png",
+			disabled: true,
+			click: "this.container.deleteToRecord();"
+		});
+		
+		this.AliasToGridH=isc.HLayout.create({
+			showResizeBar:false,
+			width:"80%",
+			height:"60%",
+			padding:30,
+			members: [this.listGrid_AliasTo, this.removeButton]
+		});
+
+		this.AliasToAddH = isc.HLayout.create({
+			showResizeBar:false,
+			width:"80%",
+			height:"40%",
+			padding:30,
+			members: [this.aliasToForm, this.addButton]
+		});
+		
+		this.AliasTo=isc.VLayout.create({
+			showResizeBar:false,
+			
+			members: [this.AliasToGridH, this.AliasToAddH]
+		});
+
+		this.addMember(this.Alias);
+		this.addMember(this.AliasTo);
+	},
+	setDomainId: function(domainId) {
+		this.domainId = domainId;
+		this.listGrid_Aliases.fetchData({domain_id: domainId});
+		this.newButton.setDisabled(false);
+		this.deleteButton.setDisabled(true);
+	},
+	loadToRecord: function(record) {
+		this.setAliasId(record.global_mail_alias_id);
+		aliasForm.editNewRecord(record);
+	},
+	newRecord: function() {
+		this.alisForm.editNewRecord({domain_id:listGrid_Aliases.container.domainId});
+	},
+	setAliasId: function(aliasId) {
+		this.aliasId = aliasId;
+		this.listGrid_AliasTo.fetchData({global_mail_alias_id: aliasId});
+		this.removeButton.setDisabled(true);
+	},
+	saveRecord: function() {
+		this.aliasForm.saveData(function(dsResponse, data, dsRequest) {
+			if (dsResponse.status != 0)
+				return;
+			if (!this.isNewRecord())
+				return;
+			this.setSaveOperationType("update");
+		});
+	this.aliasForm.editNewRecord({domain_id:listGrid_Aliases.container.domainId});
+	},
+	saveToRecord: function() {
+		this.aliasToForm.saveData(function(dsResponse, data, dsRequest) {
+			if (dsResponse.status != 0)
+				return;
+			if (!this.isNewRecord())
+				return;
+			this.setSaveOperationType("update");
+		});
+	
+	this.aliasToForm.editNewRecord({global_mail_alias_id:listGrid_AliasTo.container.aliasId});
+	},
+	deleteRecord: function() {
+		if (listGrid_Aliases.getSelectedRecord()==null) isc.say("Select a alias first!");
+		else isc.ask("Really delete?", function (value) {
+			if (value)
+				this.container.__deleteRecord();
+		}, {container: this});
+	},
+
+	__deleteRecord: function() {
+		this.listGrid_Aliases.dataSource.removeData(this.listGrid_Aliases.getSelectedRecord(), { target: this, methodName: "deleteRecordCallback" });
+	},
+
+	deleteRecordCallback: function(dsResponse, data, dsRequest) {
+		if (dsResponse.status != 0)
+			return;
+		//this.newRecord();
+	},
+	deleteToRecord: function() {
+		
+		isc.ask("Really delete?", function (value) {
+			if (value)
+				this.container.__deleteToRecord();
+		}, {container: this});
+	},
+
+	__deleteToRecord: function() {
+		this.listGrid_AliasTo.dataSource.removeData(this.listGrid_AliasTo.getSelectedRecord(), { target: this, methodName: "deleteToRecordCallback" });
+	},
+
+	deleteToRecordCallback: function(dsResponse, data, dsRequest) {
+		if (dsResponse.status != 0)
+			return;
+		this.aliasToForm.editNewRecord({global_mail_alias_id:listGrid_AliasTo.container.aliasId});
+	},
+	domainId: null,
+	aliasId:null
+});
+
+isc.ClassFactory.defineClass("TabFTPSett", isc.VLayout);
+
+isc.TabFTPSett.addProperties({
+	width: "100%",
+	height: "100%",
+	padding:30,
+	align:"center",
+	showResizeBar:false,
+	initWidget: function() {
+		this.Super("initWidget", arguments);
+		this.settForm=isc.DynamicForm.create({
+		    ID: "settForm",
+		    dataSource: isc.DS.get("users"),
+		    fields: [
+			{name:"username",canEdit:false},
+			{name: "password",required: true,type: "password"},
+			{name: "password_confirm", title: "Confirm", type: "password", required: true, 
+			 length: 20, validators: [{
+			     type: "matchesField",
+			     otherField: "password",
+			     errorMessage: "Passwords do not match"
+			 }]
+			},
+			{name:"ftp_check", type:"checkbox", title:"Enable FTP Access"}
+		    ],values:{username:"gigi"}
+		});
+		this.saveButton = isc.IButton.create({
+			container: this,
+			title: "Save",
+			icon: "[SKIN]/actions/save.png",
+			click: function () {this.container.saveRecord();},
+		});
+
+		this.TabSett=isc.VLayout.create({
+			members:[this.settForm, this.saveButton]		
+		});
+		this.addMember(this.TabSett);
+	},
+	saveRecord: function() {
+		this.settForm.saveData(function(dsResponse, data, dsRequest) {
+			if (dsResponse.status != 0)
+				return;
+			if (!this.isNewRecord())
+				return;
+			this.setSaveOperationType("update");
+		});
+	}
+});
 isc.ClassFactory.defineClass("MenuPanel", isc.VLayout);
 
 isc.MenuPanel.addProperties({
@@ -609,12 +964,12 @@ isc.MenuPanel.addProperties({
 			data:[
 				{
 				title:"Domains",
-				icon:"/imgs/complexType.gif",
+				icon:"[SKINIMG]/SchemaViewer/complexType.gif",
 			    	click:function () 
 					{
 						if (stack1.sectionIsExpanded(0)) menu1.show(); 
-						if (stack2.sectionIsExpanded(0)) menu2.show(); 
-						if (listGrid.getSelectedRecord() != null && stack3.sectionIsExpanded(0))  menu3.show();
+						if (stack1.sectionIsExpanded(1)) menu2.show(); 
+						if (listGrid.getSelectedRecord() != null && stack1.sectionIsExpanded(2))  menu3.show();
 						tabWeb.hide();
 						tabFTP.hide();
 						tabMail.hide();
@@ -624,12 +979,12 @@ isc.MenuPanel.addProperties({
 		   
 				{
 				title:"Databases",
-				icon:"/imgs/data.png",
+				icon:"[SKINIMG]/DatabaseBrowser/data.png",
 				click: function () 
 					{
 						if (stack1.sectionIsExpanded(0)) menu1.show(); 
-						if (stack2.sectionIsExpanded(0)) menu2.show(); 
-						if (listGrid.getSelectedRecord() != null && stack3.sectionIsExpanded(0))  menu3.show();
+						if (stack1.sectionIsExpanded(1)) menu2.show(); 
+						if (listGrid.getSelectedRecord() != null && stack1.sectionIsExpanded(2))  menu3.show();
 						tabWeb.hide();
 						tabFTP.hide();
 						tabMail.hide();
@@ -638,12 +993,12 @@ isc.MenuPanel.addProperties({
 				},
 				{
 				title:"System",
-				icon:"/imgs/gears.png",
+				icon:"[SKINIMG]/Window/headerIcon.png",
 				click: function () 
 					{
 						if (stack1.sectionIsExpanded(0)) menu1.show(); 
-						if (stack2.sectionIsExpanded(0)) menu2.show(); 
-						if (listGrid.getSelectedRecord() != null && stack3.sectionIsExpanded(0))  menu3.show();
+						if (stack1.sectionIsExpanded(1)) menu2.show(); 
+						if (listGrid.getSelectedRecord() != null && stack1.sectionIsExpanded(2))  menu3.show();
 						tabWeb.hide();
 						tabFTP.hide();
 						tabMail.hide();
@@ -652,12 +1007,12 @@ isc.MenuPanel.addProperties({
 				},
 				{
 				title:"Logout",
-				icon:"/imgs/cube_yellow.png",
+				icon:"[SKINIMG]/Window/headerIcon.png",
 				click: function () 
 					{
 						if (stack1.sectionIsExpanded(0)) menu1.show(); 
-						if (stack2.sectionIsExpanded(0)) menu2.show(); 
-						if (listGrid.getSelectedRecord() != null && stack3.sectionIsExpanded(0))  menu3.show();
+						if (stack1.sectionIsExpanded(1)) menu2.show(); 
+						if (listGrid.getSelectedRecord() != null && stack1.sectionIsExpanded(2))  menu3.show();
 						tabWeb.hide();
 						tabFTP.hide();
 						tabMail.hide();
@@ -679,12 +1034,12 @@ isc.MenuPanel.addProperties({
 			data:[
 				{
 				title:"New Domain",
-				icon:"/imgs/add.png",
+				icon:"[SKINIMG]/actions/add.png",
 				click:function () 
 					{ 
 						if (stack1.sectionIsExpanded(0)) menu1.show();  
-						if (stack2.sectionIsExpanded(0))  menu2.show(); 
-						if (listGrid.getSelectedRecord() != null && stack3.sectionIsExpanded(0))  menu3.show();
+						if (stack1.sectionIsExpanded(1))  menu2.show(); 
+						if (listGrid.getSelectedRecord() != null && stack1.sectionIsExpanded(2))  menu3.show();
 						tabWeb.hide();
 						tabFTP.hide();
 						tabMail.hide();
@@ -693,12 +1048,12 @@ isc.MenuPanel.addProperties({
 					}
 				},
 				{title:"Wizard",
-				icon:"/imgs/cube_blue.png",
+				icon:"[SKINIMG]/RichTextEditor/link_new.png",
 				click:function () 
 					{ 
 						if (stack1.sectionIsExpanded(0)) menu1.show();  
-						if (stack2.sectionIsExpanded(0))  menu2.show();  
-						if (listGrid.getSelectedRecord() != null && stack3.sectionIsExpanded(0)) menu3.show();
+						if (stack1.sectionIsExpanded(1))  menu2.show();  
+						if (listGrid.getSelectedRecord() != null && stack1.sectionIsExpanded(2)) menu3.show();
 						tabWeb.hide();
 						tabFTP.hide();
 						tabMail.hide();
@@ -707,13 +1062,13 @@ isc.MenuPanel.addProperties({
 					}
 				},
 				{title:"Remove",
-				icon:"/imgs/remove.png",
+				icon:"[SKINIMG]/actions/remove.png",
 				container:this,
 				click:function () 
 					{ 
 						if (stack1.sectionIsExpanded(0)) menu1.show();  
-						if (stack2.sectionIsExpanded(0))  menu2.show();  
-						if (listGrid.getSelectedRecord() != null && stack3.sectionIsExpanded(0)) menu3.show();
+						if (stack1.sectionIsExpanded(1))  menu2.show();  
+						if (listGrid.getSelectedRecord() != null && stack1.sectionIsExpanded(2)) menu3.show();
 						tabWeb.hide();
 						tabFTP.hide();
 						tabMail.hide();
@@ -739,11 +1094,11 @@ isc.MenuPanel.addProperties({
 			data:[
 				{
 				title:"Summary",
-				icon:"/imgs/file.png",
+				icon:"[SKINIMG]/FileBrowser/file.png",
 				click: function ()
 					{
 					    	if (stack1.sectionIsExpanded(0)) menu1.show();  
-					     	if (stack2.sectionIsExpanded(0))  menu2.show();  
+					     	if (stack1.sectionIsExpanded(1))  menu2.show();  
 					     	menu3.show();
 						tabWeb.hide();
 						tabFTP.hide();
@@ -754,11 +1109,11 @@ isc.MenuPanel.addProperties({
 				},
 				{
 				title:"Web",
-				icon:"/imgs/cube_yellow.png",
+				icon:"[SKINIMG]/Window/headerIcon.png",
 				click:function ()
                                 	{ 
 						if (stack1.sectionIsExpanded(0)) menu1.show();  
-						if (stack2.sectionIsExpanded(0))  menu2.show();  
+						if (stack1.sectionIsExpanded(1))  menu2.show();  
 						menu3.show();
 						tabWeb.show();
 						tabFTP.hide();
@@ -769,11 +1124,11 @@ isc.MenuPanel.addProperties({
 				},
 			       	{
 				title:"FTP",
-				icon:"/imgs/folder_closed.png",
+				icon:"[SKINIMG]/FileBrowser/folder.png",
 				click:function ()
                                      	{
 		                                if (stack1.sectionIsExpanded(0)) menu1.show();  
-						if (stack2.sectionIsExpanded(0))  menu2.show();  
+						if (stack1.sectionIsExpanded(1))  menu2.show();  
 						menu3.show();
 						tabWeb.hide();
 						tabFTP.show();
@@ -784,11 +1139,11 @@ isc.MenuPanel.addProperties({
 				},
 				{
 				title:"Mail",
-				icon:"/imgs/cube_green.png",
+				icon:"[SKINIMG]/Window/headerIcon.png",
 				click:function ()
                                         { 
 						if (stack1.sectionIsExpanded(0)) menu1.show();  
-						if (stack2.sectionIsExpanded(0))  menu2.show();  
+						if (stack1.sectionIsExpanded(1))  menu2.show();  
 						menu3.show();  
 						tabFTP.hide();
 						tabMail.show();
@@ -798,11 +1153,11 @@ isc.MenuPanel.addProperties({
 				},
 				{
 				title:"DNS",
-				icon:"/imgs/cube_green.png",
+				icon:"[SKINIMG]/Window/headerIcon.png",
 				click: function ()
 					{
 					     	if (stack1.sectionIsExpanded(0)) menu1.show();  
-					     	if (stack2.sectionIsExpanded(0))  menu2.show();  
+					     	if (stack1.sectionIsExpanded(1))  menu2.show();  
 					     	menu3.show();
 						tabWeb.hide();
 						tabFTP.hide();
@@ -818,48 +1173,25 @@ isc.MenuPanel.addProperties({
 			container:this,
 			visibilityMode: "multiple",
 		    	width:	152,
-			height: 150,
+			height: 500,
 			align:"center",
 		    	sections: [
-			{title: "MENU", expanded: true,width: 152,align:"right", items: [this.menu1],
+			{title: "MENU", expanded: true,width: 152,align:"center", items: [this.menu1],
 				click: function (){
-					     if (stack2.sectionIsExpanded(0)) menu2.show(); 
-					     if (listGrid.getSelectedRecord() != null && stack3.sectionIsExpanded(0)) menu3.show();}}
-		    ]
-		});
-		this.stack2=isc.SectionStack.create({
-		    	ID: "stack2",
-			container:this,
-		    	visibilityMode: "multiple",
-		    	width: 152, 
-			height:130,
-			align:"center",
-		    	sections: [
+					     if (stack1.sectionIsExpanded(1)) menu2.show(); 
+					     if (listGrid.getSelectedRecord() != null && stack1.sectionIsExpanded(2)) menu3.show();}},
 			{title: "ACTIONS", expanded: true, items: [this.menu2],
 				click: function (){
 					     if (stack1.sectionIsExpanded(0)) menu1.show(); 
-					     if (listGrid.getSelectedRecord() != null && stack3.sectionIsExpanded(0)) menu3.show();}}
-		    ]
-		});
-
-		this.stack3=isc.SectionStack.create({
-		    	ID: "stack3",
-			container:this,
-		    	visibilityMode: "multiple",
-		    	width: 152,
-			height:175,
-			align:"center",
-		    	sections: [
+					     if (listGrid.getSelectedRecord() != null && stack1.sectionIsExpanded(2)) menu3.show();}},
 			{title: "d", expanded: true, items: [this.menu3],
 				click: function (){
 					      if (stack1.sectionIsExpanded(0)) menu1.show(); 
-					      if (stack2.sectionIsExpanded(0)) menu2.show();}}
+					      if (stack1.sectionIsExpanded(1)) menu2.show();}}
 		    ]
 		});
 		
 		this.addMember(this.stack1);
-		this.addMember(this.stack2);
-		this.addMember(this.stack3);
 
 	},
 
@@ -877,7 +1209,7 @@ isc.MenuPanel.addProperties({
 	deleteRecordCallback: function(dsResponse, data, dsRequest) {
 		if (dsResponse.status != 0)
 			return;
-		stack3.hide();
+		stack1.hideSection(2);
 	}
 });
 
@@ -898,7 +1230,7 @@ isc.PanelView.addProperties({
 
         loadinit: function()
         {
-             if (listGrid.getSelectedRecord() == null) stack3.hide();	
+             if (listGrid.getSelectedRecord() == null) stack1.hideSection(2); 
         }
 });
 isc.PanelView.create();
