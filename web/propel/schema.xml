@@ -7,6 +7,12 @@
     <column name="mail_uid" phpName="MailUid" type="INTEGER" required="false"/>
     <column name="mail_gid" phpName="MailGid" type="INTEGER" required="false"/>
     <column name="username" phpName="Username" type="VARCHAR" size="64" required="false"/>
+    <column name="enable_ftp" phpName="EnableFtp" type="BOOLEAN" required="true" defaultValue="false"/>
+    <column name="site_id" phpName="SiteId" type="INTEGER" required="false"/>
+    <column name="enable_mail" phpName="EnableMail" type="BOOLEAN" required="true" defaultValue="false"/>
+    <foreign-key foreignTable="sites" name="domains_site_id_fkey">
+      <reference local="site_id" foreign="site_id"/>
+    </foreign-key>
     <index name="domains_domain_idx">
       <index-column name="domain"/>
     </index>
@@ -18,7 +24,7 @@
     <column name="global_mail_alias_id" phpName="GlobalMailAliasId" type="INTEGER" primaryKey="true" autoIncrement="true" required="true"/>
     <column name="domain_id" phpName="DomainId" type="INTEGER" required="true"/>
     <column name="name" phpName="Name" type="VARCHAR" required="true"/>
-    <foreign-key foreignTable="domains" name="global_mail_aliases_domain_id_fkey">
+    <foreign-key foreignTable="domains" name="global_mail_aliases_domain_id_fkey" onDelete="CASCADE" onUpdate="CASCADE">
       <reference local="domain_id" foreign="domain_id"/>
     </foreign-key>
   </table>
@@ -26,7 +32,7 @@
     <column name="global_mail_alias_to_id" phpName="GlobalMailAliasToId" type="INTEGER" primaryKey="true" autoIncrement="true" required="true"/>
     <column name="global_mail_alias_id" phpName="GlobalMailAliasId" type="INTEGER" required="true"/>
     <column name="address" phpName="Address" type="VARCHAR" required="true"/>
-    <foreign-key foreignTable="global_mail_aliases" name="global_mail_alias_to_global_mail_alias_id_fkey">
+    <foreign-key foreignTable="global_mail_aliases" name="global_mail_alias_to_global_mail_alias_id_fkey" onDelete="CASCADE" onUpdate="CASCADE">
       <reference local="global_mail_alias_id" foreign="global_mail_alias_id"/>
     </foreign-key>
   </table>
@@ -52,7 +58,7 @@
     <column name="gid" phpName="Gid" type="INTEGER" required="false"/>
     <column name="password" phpName="Password" type="VARCHAR" size="64" required="false"/>
     <column name="copy_on_forward" phpName="CopyOnForward" type="BOOLEAN" required="true" defaultValue="false"/>
-    <foreign-key foreignTable="domains" name="mailboxes_domain_id_fkey">
+    <foreign-key foreignTable="domains" name="mailboxes_domain_id_fkey" onDelete="CASCADE" onUpdate="CASCADE">
       <reference local="domain_id" foreign="domain_id"/>
     </foreign-key>
     <index name="mailboxes_domain_id_idx">
@@ -66,7 +72,7 @@
     <column name="mailbox_forward_id" phpName="MailboxForwardId" type="INTEGER" primaryKey="true" autoIncrement="true" required="true"/>
     <column name="mailbox_id" phpName="MailboxId" type="INTEGER" required="true"/>
     <column name="address" phpName="Address" type="VARCHAR" required="true"/>
-    <foreign-key foreignTable="mailboxes" name="mailbox_forwards_mailbox_id_fkey">
+    <foreign-key foreignTable="mailboxes" name="mailbox_forwards_mailbox_id_fkey" onDelete="CASCADE" onUpdate="CASCADE">
       <reference local="mailbox_id" foreign="mailbox_id"/>
     </foreign-key>
   </table>
@@ -76,6 +82,38 @@
     <column name="value" phpName="Value" type="LONGVARCHAR" required="false"/>
     <unique name="settings_key_idx">
       <unique-column name="key"/>
+    </unique>
+  </table>
+  <table name="site_aliases" phpName="SiteAliases">
+    <column name="site_alias_id" phpName="SiteAliasId" type="INTEGER" primaryKey="true" autoIncrement="true" required="true"/>
+    <column name="name" phpName="Name" type="VARCHAR" size="255" required="true"/>
+    <column name="site_id" phpName="SiteId" type="INTEGER" required="true"/>
+    <foreign-key foreignTable="sites" name="site_aliases_site_id_fkey">
+      <reference local="site_id" foreign="site_id"/>
+    </foreign-key>
+    <unique name="site_aliases_name_idx">
+      <unique-column name="name"/>
+    </unique>
+  </table>
+  <table name="site_rewrites" phpName="SiteRewrites">
+    <column name="site_rewrite_id" phpName="SiteRewriteId" type="INTEGER" primaryKey="true" autoIncrement="true" required="true"/>
+    <column name="pattern" phpName="Pattern" type="VARCHAR" required="true"/>
+    <column name="replacement" phpName="Replacement" type="VARCHAR" required="true"/>
+    <column name="prio" phpName="Prio" type="VARCHAR" required="true"/>
+    <column name="continue" phpName="Continue" type="VARCHAR" required="true"/>
+    <column name="site_id" phpName="SiteId" type="INTEGER" required="false"/>
+    <foreign-key foreignTable="sites" name="site_rewrites_site_id_fkey">
+      <reference local="site_id" foreign="site_id"/>
+    </foreign-key>
+  </table>
+  <table name="sites" phpName="Sites">
+    <column name="site_id" phpName="SiteId" type="INTEGER" primaryKey="true" autoIncrement="true" required="true"/>
+    <column name="name" phpName="Name" type="VARCHAR" size="255" required="true"/>
+    <column name="server_ip" phpName="ServerIp" type="VARCHAR" size="15" required="true"/>
+    <column name="server_port" phpName="ServerPort" type="INTEGER" required="true" defaultValue="80"/>
+    <column name="enabled" phpName="Enabled" type="VARCHAR" required="true" defaultValue="1"/>
+    <unique name="sites_name_idx">
+      <unique-column name="name"/>
     </unique>
   </table>
   <table name="users" phpName="Users">
