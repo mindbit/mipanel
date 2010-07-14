@@ -100,7 +100,7 @@
     <column name="pattern" phpName="Pattern" type="VARCHAR" required="true"/>
     <column name="replacement" phpName="Replacement" type="VARCHAR" required="true"/>
     <column name="prio" phpName="Prio" type="VARCHAR" required="true"/>
-    <column name="continue" phpName="Continue" type="VARCHAR" required="true"/>
+    <column name="continu" phpName="Continu" type="VARCHAR" required="true"/>
     <column name="site_id" phpName="SiteId" type="INTEGER" required="false"/>
     <foreign-key foreignTable="sites" name="site_rewrites_site_id_fkey">
       <reference local="site_id" foreign="site_id"/>
