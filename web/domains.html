@@ -8,210 +8,11 @@
 <script src="/isomorphic/system/modules/ISC_Forms.js"></script>
 <script src="/isomorphic/system/modules/ISC_DataBinding.js"></script>
 <script src="/isomorphic/skins/TreeFrog/load_skin.js"></script>
-<style type="text/css">
-.cssButton {
-    
-    font-family:Verdana,Bitstream Vera Sans,sans-serif; font-size:11px; 
-    color:#000000;
-    background-image:none;
-}
-.cssButtonOver,
-.cssButtonFocusedOver,
-.cssButtonFocused  {
-  	 font-family:Verdana,Bitstream Vera Sans,sans-serif; font-size:11px; 
-    color:#000000;
-}
-.cssButtonDown,
-.cssButtonFocusedDown {
-    font-family:Verdana,Bitstream Vera Sans,sans-serif; font-size:11px;
-/*background-color:green;*/
-    color:#000000;
-}
-.myMenuButton {
-    
-    font-family:Verdana,Bitstream Vera Sans,sans-serif; font-size:11px; 
-    color:#000000;
-    background-image:none;
-}
-.myMenuButtonOver,
-.myMenuButtonFocusedOver,
-.myMenuButtonFocused {
-  	 font-family:Verdana,Bitstream Vera Sans,sans-serif; font-size:11px;background-color:#E0E0E0;
- border-top:1px solid #CCCCCC;
- border-bottom:1px solid #CCCCCC; 
-    color:#000000;
-}
-.myMenuButtonDown,
-.myMenuButtonFocusedDown {
-    font-family:Verdana,Bitstream Vera Sans,sans-serif; font-size:11px;
-background-color:#E0E0E0;
-    color:#000000;
-}
-</style>
+<script src="ds-all.js"></script>
+<link rel="stylesheet" type="text/css" href="css_mipanel.css" />
 </head>
 <body>
-<script> 
-isc.RestDataSource.create({
-    ID:"domains",
-    dataFormat:"json",
-    dataURL:"ds-domains.php",
-    transformResponse : function (dsResponse, dsRequest, data) {        
-    		var dsResponse = this.Super("transformResponse", arguments);
-		for (i=0; i<dsResponse.totalRows; i++)
-		{
-			if (dsResponse.data[i].enable_ftp!=true) 
-				dsResponse.data[i].ftp = "[SKIN]/actions/remove.png";
-			else dsResponse.data[i].ftp = "[SKIN]/actions/approve.png";
-                     	if (dsResponse.data[i].enable_mail!=true)
-				dsResponse.data[i].mail = "[SKIN]/actions/remove.png";
-			else dsResponse.data[i].mail = "[SKIN]/actions/approve.png";
-			//if (dsResponse.data[i].enable_mail!=true)
-				dsResponse.data[i].web = "[SKIN]/actions/remove.png";
-			//else dsResponse.data[i].mail = "[SKIN]/actions/approve.png";
-			dsResponse.data[i].dns = "[SKIN]/actions/remove.png";
-		}
-     		return dsResponse;
-		},
-    fields:[
-        {type: "sequence", name: "domain_id", primaryKey: true},
-	{name: "domain_id"},
-        {title:"Domain", name:"domain", type: "text",  required: true},
-	{name: "web", title: "Web", align:"center",  width:100, type:"image", canFilter:false},
-	{name: "enable_web", type:"checkbox"},   
-	{name: "enable_dns", type:"checkbox"},     
-	{name: "enable_ftp", type:"checkbox"},
-	{name: "ftp", title: "FTP", align:"center",  width:100, type:"image", canFilter:false},
-        {name: "dns", title: "DNS", align:"center",  width:100, type:"image", canFilter:false},
-        {name: "enable_mail", type:"checkbox"},
-	{name: "mail", title: "Mail", align:"center",  width:100, type:"image", canFilter:false},
-	{name: "site_id"},
-	{name: "mail_gid"},
-	{name: "mail_uid"},
-	{name: "username"},
-	{name:"nr_mailboxes"},
-	{name:"nr_aliases"}
-    ],
-    operationBindings:[
-       {operationType:"fetch", dataProtocol:"postMessage"},
-       {operationType:"add", dataProtocol:"postMessage"},
-       {operationType:"remove", dataProtocol:"postMessage"},
-       {operationType:"update", dataProtocol:"postMessage"}
-    ],
-}); 
-
-isc.RestDataSource.create({
-    ID:"mailboxes",
-    dataFormat:"json",
-    dataURL:"ds-mailboxes.php",
-    fields:[
-        {type: "sequence", name: "mailbox_id", primaryKey: true},
-	{name: "mailbox_id"},
-	{name: "domain_id"},
-	{name: "domain"},
-        {title:"Mailbox", name:"mailbox", type: "text",  required: true},
-	{name: "addressmail"},
-	{name: "copy_on_forward",type:"checkbox"}
-    ],
-    operationBindings:[
-       {operationType:"fetch", dataProtocol:"postMessage"},
-       {operationType:"add", dataProtocol:"postMessage"},
-       {operationType:"remove", dataProtocol:"postMessage"},
-       {operationType:"update", dataProtocol:"postMessage"}
-    ],
-});
-
-isc.RestDataSource.create({
-    ID:"forwards",
-    dataFormat:"json",
-    dataURL:"ds-forwards.php",
-    fields:[
-        {type: "sequence", name: "mailbox_forward_id", primaryKey: true},
-	{name: "mailbox_forward_id"},
-	{name: "mailbox_id"},
-	{name: "address",align:"center"}
-    ],
-    operationBindings:[
-       {operationType:"fetch", dataProtocol:"postMessage"},
-       {operationType:"add", dataProtocol:"postMessage"},
-       {operationType:"remove", dataProtocol:"postMessage"},
-       {operationType:"update", dataProtocol:"postMessage"}
-    ],
-});
-
-isc.RestDataSource.create({
-    ID:"aliases",
-    dataFormat:"json",
-    dataURL:"ds-aliases.php",
-    fields:[
-        {type: "sequence", name: "global_mail_alias_id", primaryKey: true},
-	{name: "global_mail_alias_id"},
-	{name: "domain_id"},
-        {name:"name", type: "text",  required: true},
-	{name: "addressalias", align:"center", canFilter:false}
-    ],
-    operationBindings:[
-       {operationType:"fetch", dataProtocol:"postMessage"},
-       {operationType:"add", dataProtocol:"postMessage"},
-       {operationType:"remove", dataProtocol:"postMessage"},
-       {operationType:"update", dataProtocol:"postMessage"}
-    ],
-});
-
-isc.RestDataSource.create({
-    ID:"aliasesto",
-    dataFormat:"json",
-    dataURL:"ds-aliasesto.php",
-    fields:[
-        {type: "sequence", name: "global_mail_alias_to_id", primaryKey: true},
-	{name: "global_mail_alias_to_id"},
-	{name: "global_mail_alias_id"},
-	{name: "address",align:"center"}
-    ],
-    operationBindings:[
-       {operationType:"fetch", dataProtocol:"postMessage"},
-       {operationType:"add", dataProtocol:"postMessage"},
-       {operationType:"remove", dataProtocol:"postMessage"},
-       {operationType:"update", dataProtocol:"postMessage"}
-    ],
-});
-isc.RestDataSource.create({
-    ID:"users",
-    dataFormat:"json",
-    dataURL:"ds-users.php",
-    fields:[
-        {type: "sequence", name: "user_id", primaryKey: true},
-	{name: "user_id"},
-	{name: "parent_id"},
-	{name: "username"},
-	{name: "password"}
-    ],
-    operationBindings:[
-       {operationType:"fetch", dataProtocol:"postMessage"},
-       {operationType:"add", dataProtocol:"postMessage"},
-       {operationType:"remove", dataProtocol:"postMessage"},
-       {operationType:"update", dataProtocol:"postMessage"}
-    ],
-});
-
-isc.RestDataSource.create({
-    ID:"sites",
-    dataFormat:"json",
-    dataURL:"ds-sites.php",
-    fields:[
-        {type: "sequence", name: "site_id", primaryKey: true},
-	{name: "site_id"},
-	{name: "name"},
-	{name: "server_id"},
-	{name: "server_port"},
-	{name: "enabled"}
-    ],
-    operationBindings:[
-       {operationType:"fetch", dataProtocol:"postMessage"},
-       {operationType:"add", dataProtocol:"postMessage"},
-       {operationType:"remove", dataProtocol:"postMessage"},
-       {operationType:"update", dataProtocol:"postMessage"}
-    ],
-});
+<script>
 
 isc.ClassFactory.defineClass("TabsPanel", isc.VLayout);
 
@@ -219,6 +20,8 @@ isc.TabsPanel.addProperties({
 	width: "80%",
 	height: "100%",
 	align:"center",
+	layoutTopMargin:10,
+	layoutRightMargin:10,
 	initWidget: function() {
 		this.Super("initWidget", arguments);
 	
@@ -243,13 +46,14 @@ isc.TabsPanel.addProperties({
 				enableMail.editRecord(record);
 				enableFtp.editRecord(record);
 				enableWebService.editRecord(record);
-				summary.show();
-				formLayout.hide();
-				wizardV.hide();
-				tabWeb.hide();
-				tabFTP.hide();
-				tabMail.hide();
+				this.container.summary.show();
+				this.container.formLayout.hide();
+				this.container.wizardV.hide();
+				this.container.tabWeb.hide();
+				this.container.tabFTP.hide();
+				this.container.tabMail.hide();
 				this.container.setLabelContents(record);
+				
 			},
 				fields: [
 					{name: "domain", title: "Domain",required:"true"},
@@ -269,9 +73,9 @@ isc.TabsPanel.addProperties({
 		this.TabWebDomain=isc.TabWebDomain.create();
 
 		this.tabWeb=isc.TabSet.create({
+			container:this,
                         ID:"tabWeb",
 			visibility:"hidden",
-			container:this,
 			tabs:[	
 				{title:"Settings", pane:this.TabWebDomain, ID:"settWebTab"}//,<-----Versiuni viitoare
 				/*{title:"VHOSTS", pane:label2, ID:"vhostWebTab"},
@@ -281,10 +85,9 @@ isc.TabsPanel.addProperties({
               	});
 
 		this.tabMail=isc.TabSet.create({
+			container:this,
 			ID:"tabMail",
 			visibility:"hidden",
-			
-			container:this,
 			tabs:[
 				{title:"Mailboxes", pane:this.TabMailboxes, ID:"mailboxMailTab"},
 				{title:"Global Aliases", pane:this.TabAliases, ID:"fwMailTab"}/*, <-----Versiuni viitoare
@@ -306,6 +109,7 @@ isc.TabsPanel.addProperties({
 		});
 		
 		this.label1=isc.Label.create({
+			container:this,
 			ID:"label1",
 			autoDraw: false,
 			width:"100%",
@@ -315,6 +119,7 @@ isc.TabsPanel.addProperties({
 		   	contents:"Web service is <span style='color:red;font-weight:bold'>not enabled </span>"
 		});
 		this.label1Button=isc.Button.create({
+			container:this,
 			title:"[ configure...]",
 			width:70,
 			height:12,
@@ -322,16 +127,29 @@ isc.TabsPanel.addProperties({
 			click: function() 
 				{
 					summary.hide();
-					unconfigV.show();
+					if (this.container.listGrid.getSelectedRecord().site_id!='')
+					{
+						tabWeb.show();					
+						configV.show();
+						unconfigV.hide();
+					}
+					else 
+					{
+						tabWeb.show();
+						configV.hide();
+						unconfigV.show();
+					}
 				}		
 		});
 		
 		this.webservice=isc.HLayout.create({
-			width:240,
+			container:this,
+			width:250,
 			height:10,
 			members:[this.label1,this.label1Button]		
 		});
 		this.label2=isc.Label.create({
+			container:this,
 			ID:"label2",
 			autoDraw: false,
 			width:"100%",
@@ -340,6 +158,7 @@ isc.TabsPanel.addProperties({
 		   	contents:"Web access is <span style='color:red;font-weight:bold'>not enabled </span>"
 		});
 		this.label2Button=isc.Button.create({
+			container:this,
 			title:"[ configure...]",
 			width:70,
 			height:12,
@@ -347,16 +166,29 @@ isc.TabsPanel.addProperties({
 			click: function() 
 				{
 					summary.hide();
-					configV.show();
+					if (this.container.listGrid.getSelectedRecord().site_id!='')
+					{
+						tabWeb.show();					
+						configV.show();
+						unconfigV.hide();
+					}
+					else 
+					{
+						tabWeb.show();
+						configV.hide();
+						unconfigV.show();
+					}
 				}		
 		});
 		
 		this.webaccess=isc.HLayout.create({
-			width:240,
+			container:this,
+			width:250,
 			height:10,
 			members:[this.label2,this.label2Button]		
 		});
 		this.label3=isc.Label.create({
+			container:this,
 			ID:"label3",
 			autoDraw: false,
 			width:"100%",
@@ -367,6 +199,7 @@ isc.TabsPanel.addProperties({
 		});
 		
 		this.label23V=isc.VLayout.create({
+			container:this,
 		    	layoutLeftMargin: 50,
 			height:40,
 		    	membersMargin: 10,
@@ -374,6 +207,7 @@ isc.TabsPanel.addProperties({
 		});
 
 		this.label4=isc.Label.create({
+			container:this,
 			ID:"label4",
 			autoDraw: false,
 			width:"100%",
@@ -383,6 +217,7 @@ isc.TabsPanel.addProperties({
 		   	contents:"FTP service is <span style='color:red;font-weight:bold'>not enabled </span>"
 		});
 		this.label4Button=isc.Button.create({
+			container:this,
 			title:"[ configure...]",
 			width:70,
 			height:12,
@@ -395,11 +230,13 @@ isc.TabsPanel.addProperties({
 		});
 		
 		this.ftp=isc.HLayout.create({
-			width:240,
+			container:this,
+			width:250,
 			height:10,
 			members:[this.label4,this.label4Button]		
 		});	
 		this.label5=isc.Label.create({
+			container:this,
 			ID:"label5",
 			autoDraw: false,
 			width:"100%",
@@ -408,6 +245,7 @@ isc.TabsPanel.addProperties({
 		   	contents:"Mail service is <span style='color:red;font-weight:bold'>not enabled </span>"
 		});
 		this.label5Button=isc.Button.create({
+			container:this,
 			title:"[ configure...]",
 			width:70,
 			height:12,
@@ -420,26 +258,34 @@ isc.TabsPanel.addProperties({
 		});
 		
 		this.mail=isc.HLayout.create({
-			width:240,
+			container:this,
+			width:250,
 			height:10,
 			members:[this.label5,this.label5Button]		
 		});
 
 		this.label6=isc.Label.create({
+			container:this,
 			ID:"label6",
 			autoDraw: false,
 			width:"100%",
 			height:10,
-		   	contents:"x Mailboxes"
+			setLabelContents : function (content) {
+      				this.setContents(content + " Mailboxes"); 
+   			}
 		});
 		this.label7=isc.Label.create({
+			container:this,
 			ID:"label7",
 			autoDraw: false,
 			width:"100%",
 			height:10,
-		   	contents:"y Global Aliases"
+		   	setLabelContents : function (content) {
+      				this.setContents(content + " Global Aliases"); 
+   			}
 		});
 		this.label67V=isc.VLayout.create({
+			container:this,
 		    	layoutLeftMargin: 50,
 			height:40,
 			visibility:"hidden",
@@ -447,6 +293,7 @@ isc.TabsPanel.addProperties({
 		    	members: [this.label6,this.label7]
 		});
 		this.label8=isc.Label.create({
+			container:this,
 			ID:"label8",
 			autoDraw: false,
 			width:"100%",
@@ -456,6 +303,7 @@ isc.TabsPanel.addProperties({
 		});
 
 		this.summary=isc.VLayout.create({
+			container:this,
 			ID:"summary",
 			visibility:"hidden",
 			layoutLeftMargin:80,
@@ -479,12 +327,11 @@ isc.TabsPanel.addProperties({
 			container: this,
 			title: "Save",
 			icon: "[SKIN]/actions/save.png",
-			click: 
-			function () 
-				{this.container.saveRecord();}
+			click: "this.container.saveRecord();"
 		});
 
 		this.formLayout=isc.VLayout.create({
+			container:this,
 			ID:"formLayout",
 			width:300,
 			height:200,
@@ -494,6 +341,7 @@ isc.TabsPanel.addProperties({
 			members: [this.dynamForm, this.saveButton]
 		});
 		this.wizardForm=isc.DynamicForm.create({
+			container:this,
 			ID:"wizardForm",
 			width:50,
 			container: this,
@@ -501,8 +349,9 @@ isc.TabsPanel.addProperties({
 			{name: "domain", type: "text", title: "Name",required:"true"}]
 		});
 		this.label=isc.HTMLFlow.create({
-		    ID:"statusReport",
-		    contents :"Select services to setup & enable " 
+			container:this,
+		   	ID:"statusReport",
+		    	contents :"Select services to setup & enable " 
 		 
 		});
 		this.wizardForm2=isc.DynamicForm.create({
@@ -531,6 +380,7 @@ isc.TabsPanel.addProperties({
 				{this.container.createDomain();}
 		});
 		this.wizardV=isc.VLayout.create({
+			container:this,
 			ID:"wizardV",
 			visibility:"hidden",
 			membersMargin:10,
@@ -539,6 +389,7 @@ isc.TabsPanel.addProperties({
 			members:[this.wizardForm,this.label, this.wizardForm2,this.createButton]	
 		});
 		this.hLayout=isc.HLayout.create({
+			container:this,
 			ID:"hLayout",
 			width:"100%",
 			height:"70%",
@@ -548,15 +399,13 @@ isc.TabsPanel.addProperties({
 		
 		this.addMember(this.listGrid);
 		this.addMember(this.hLayout);
+		
 	},
 	loadRecord: function(record) {
 		this.TabMailboxes.setDomainId(record.domain_id);
 		this.TabAliases.setDomainId(record.domain_id);
 		this.TabWebDomain.setDomainId(record.domain_id);
 		this.TabWebDomain.setSiteId(record.site_id);
-		//ptr refresh listGrid
-		this.TabMailboxes.setMailboxId(0);
-		this.TabAliases.setAliasId(0);
 		valuesManager.editNewRecord(record);
 		aliasForm.editNewRecord(record);
 	},
@@ -569,24 +418,25 @@ isc.TabsPanel.addProperties({
 		{
 			this.label5.setContents("Mail service is <span style='color:green;font-weight:bold'>enabled </span>");
 			this.label67V.show();	
-			this.label6.setContents(record.nr_mailboxes+" Mailboxes");
-			this.label7.setContents(record.nr_aliases+" Global Aliases");
+			
+			this.label6.setLabelContents(record.nr_mailboxes);
+			this.label7.setLabelContents(record.nr_aliases);
 		}
 		else
 		{	
 			this.label5.setContents("Mail service is <span style='color:red;font-weight:bold'>not enabled </span>");
 			this.label67V.hide();	
-			//this.label6.setContents(record.nr_mailboxes+" Mailboxes");
-			//this.label7.setContents(record.nr_aliases+" Global Aliases");
 		}
 	},
 	saveRecord: function() {
+		
 		this.dynamForm.saveData(function(dsResponse, data, dsRequest) {
 			if (dsResponse.status != 0)
 				return;
 			if (!this.isNewRecord())
 				return;
 			this.setSaveOperationType("update"); 
+			
 		});
 	this.dynamForm.editNewRecord();
 	},
@@ -612,6 +462,7 @@ isc.TabWebDomain.addProperties({
 	initWidget: function() {
 		this.Super("initWidget", arguments);
 		this.label_unconf=isc.Label.create({
+			container:this,
 			ID:"label_unconf",
 			autoDraw: false,
 			width:"100%",
@@ -620,6 +471,7 @@ isc.TabWebDomain.addProperties({
 		   	contents:"Web service for this domain is not configured. Click below to configure ..."
 		});
 		this.enableWebService=isc.DynamicForm.create({
+			container:this,
    			ID: "enableWebService",
     			dataSource: isc.DS.get("domains"),
 			fields: [
@@ -630,6 +482,7 @@ isc.TabWebDomain.addProperties({
 		});
 
 		this.enableWebAcces=isc.DynamicForm.create({
+			container:this,
    			ID: "enableWebAcces",
     			dataSource: isc.DS.get("sites"),
 			fields: [
@@ -679,7 +532,16 @@ isc.TabWebDomain.addProperties({
 	},
 	loadinit: function ()
 	{
-		if (this.siteId!=null) this.configV.show(); else this.unconfigV.show();
+		if (this.siteId!='')
+		{
+			this.configV.show();
+			this.unconfigV.hide();
+		}
+		else 
+		{
+			this.configV.hide();
+			this.unconfigV.show();
+		}
 	},
 	setSiteId: function(siteId) {
 		this.siteId = siteId;
@@ -756,11 +618,10 @@ isc.TabMailboxes.addProperties({
 			width:110,
 			title: "Apply",
 			icon: "[SKIN]/actions/approve.png",
-			click: function () {
-			       this.container.saveApplyRecord();
-			}
+			click: "this.container.saveApplyRecord();"
 		});
 		this.enableMailH=isc.HLayout.create({
+			container:this,
 			showResizeBar:false,
 			layoutLeftMargin:20,
 			layoutTopMargin:20,
@@ -783,6 +644,7 @@ isc.TabMailboxes.addProperties({
 			]
 		});
 		this.mailboxFormH=isc.HLayout.create({
+			container:this,
 			layoutTopMargin:30,
 			members:[this.mailboxForm]
 		});
@@ -799,8 +661,8 @@ isc.TabMailboxes.addProperties({
 					this.container.tabset_Mailboxes.show();
 					this.container.saveButton.setDisabled(false);
 					this.container.listGrid_Mailboxes.deselectAllRecords();
-					this.container.setMailboxId(0);
 					this.container.addButton.setDisabled(true);
+					this.container.listGrid_FwMailboxes.fetchData(0);
 				}
 		});
 		
@@ -830,6 +692,7 @@ isc.TabMailboxes.addProperties({
 		});
 
 		this.tabH=isc.HLayout.create({
+			container:this,
 			showResizeBar:true,
 			layoutLeftMargin:30,
 			layoutTopMargin:10,
@@ -893,7 +756,7 @@ isc.TabMailboxes.addProperties({
 			disabled:false,
 			icon: "[SKIN]/actions/add.png",
 			showDisabledIcon: "[SKIN]/actions/add.png",
-			click: function () {this.container.saveFwRecord();}
+			click: "this.container.saveFwRecord();"
 		});
 		
 		this.removeButton = isc.IButton.create({
@@ -906,6 +769,7 @@ isc.TabMailboxes.addProperties({
 		});
 		
 		this.fwGridH=isc.HLayout.create({
+			container:this,
 			showResizeBar:false,
 			width:"80%",
 			height:"60%",
@@ -916,6 +780,7 @@ isc.TabMailboxes.addProperties({
 		});
 
 		this.fwAddH = isc.HLayout.create({  
+			container:this,
 			showResizeBar:false,
 			width:"80%",
 			height:20,
@@ -925,6 +790,7 @@ isc.TabMailboxes.addProperties({
 		});
 		
 		this.fwTab=isc.VLayout.create({
+			container:this,
 			showResizeBar:false,
 			layoutLeftMargin:15,
 			membersMargin:10,
@@ -950,10 +816,10 @@ isc.TabMailboxes.addProperties({
 	},
 	loadFwRecord: function(record) {
 		this.setMailboxId(record.mailbox_id);
-		fwForm.editNewRecord({mailbox_id:record.mailbox_id});
+		this.fwForm.editNewRecord({mailbox_id:record.mailbox_id});
 	},
 	newRecord: function() {
-		this.fwForm.editNewRecord({mailbox_id:listGrid_FwMailboxes.container.mailId});
+		this.valuesManager.editNewRecord({domain_id: this.domainId});
 	},
 	setDomainId: function(domainId) {
 		this.domainId = domainId;
@@ -973,18 +839,20 @@ isc.TabMailboxes.addProperties({
 			if (!this.isNewRecord())
 				return;
 			this.setSaveOperationType("update");
+			this.container.valuesManager.editNewRecord({domain_id: this.container.domainId});
+			label6.setLabelContents(this.container.listGrid_Mailboxes.getTotalRows());
 		});
+		label6.setLabelContents(this.listGrid_Mailboxes.getTotalRows());
 	},
 	saveFwRecord: function() {
-		
 		fwForm.saveData(function(dsResponse, data, dsRequest) {
 			if (dsResponse.status != 0)
 				return;
 			if (!this.isNewRecord())
 				return;
 			this.setSaveOperationType("update");
+			this.container.fwForm.editNewRecord({mailbox_id:this.container.mailId});
 		});
-	this.newRecord();
 	},
 	saveApplyRecord: function() {
 		this.enableMail.saveData(function(dsResponse, data, dsRequest) {
@@ -1002,8 +870,8 @@ isc.TabMailboxes.addProperties({
 			{		
 				this.container.__deleteRecord();
 			}
+			
 		}, {container: this});
-		
 	},
 
 	__deleteRecord: function() {
@@ -1014,6 +882,7 @@ isc.TabMailboxes.addProperties({
 		if (dsResponse.status != 0)
 			return;
 		this.newRecord();
+		label6.setLabelContents(this.listGrid_Mailboxes.getTotalRows());
 	},
 	deleteFwRecord: function() {
 		
@@ -1085,7 +954,6 @@ isc.TabAliases.addProperties({
 		this.aliasForm=isc.DynamicForm.create({
 			ID:"aliasForm",
 			container: this,
-			
 			dataSource: isc.DS.get("aliases"),
 			fields: [
 			{name: "name",type: "text", required:"true"}],
@@ -1101,6 +969,7 @@ isc.TabAliases.addProperties({
 				}
 		});
 		this.AliasGridH = isc.HLayout.create({
+			container:this,
 			showResizeBar:false,
 			membersMargin:10,
 			height:"100%",
@@ -1108,6 +977,7 @@ isc.TabAliases.addProperties({
 			members: [this.listGrid_Aliases, this.deleteButton]
 		});
 		this.AliasAddH = isc.HLayout.create({
+			container:this,
 			showResizeBar:false,
 			membersMargin:10,
 			layoutTopMargin:10,
@@ -1115,6 +985,7 @@ isc.TabAliases.addProperties({
 		});
 
 		this.Alias=isc.VLayout.create({
+			container:this,
 			showResizeBar:true,
 			layoutLeftMargin:30,
 			width:"80%",
@@ -1168,6 +1039,7 @@ isc.TabAliases.addProperties({
 		});
 		
 		this.AliasToGridH=isc.HLayout.create({
+			container:this,
 			showResizeBar:false,
 			width:"80%",
 			height:"50%",
@@ -1177,6 +1049,7 @@ isc.TabAliases.addProperties({
 		});
 
 		this.AliasToAddH = isc.HLayout.create({
+			container:this,
 			showResizeBar:false,
 			width:"80%",
 			height:"40%",
@@ -1187,6 +1060,7 @@ isc.TabAliases.addProperties({
 		});
 		
 		this.AliasTo=isc.VLayout.create({
+			container:this,
 			showResizeBar:false,
 			height:"50%",
 			visibility:"hidden",
@@ -1221,8 +1095,10 @@ isc.TabAliases.addProperties({
 			if (!this.isNewRecord())
 				return;
 			this.setSaveOperationType("update");
+			this.container.aliasForm.editNewRecord({domain_id:this.container.domainId});
+			label7.setLabelContents(this.container.listGrid_Aliases.getTotalRows());
 		});
-	this.aliasForm.editNewRecord({domain_id:listGrid_Aliases.container.domainId});
+	label7.setLabelContents(this.listGrid_Aliases.getTotalRows());
 	},
 	saveToRecord: function() {
 		this.aliasToForm.saveData(function(dsResponse, data, dsRequest) {
@@ -1231,14 +1107,17 @@ isc.TabAliases.addProperties({
 			if (!this.isNewRecord())
 				return;
 			this.setSaveOperationType("update");
+			this.container.aliasToForm.editNewRecord({global_mail_alias_id:this.container.aliasId});
 		});
-	this.aliasToForm.editNewRecord({global_mail_alias_id:listGrid_AliasTo.container.aliasId});
+	
 	},
 	deleteRecord: function() {
 		if (listGrid_Aliases.getSelectedRecord()==null) isc.say("Select a alias first!");
-		else isc.ask("Really delete?", function (value) {
+		else isc.ask("Really delete? The associate addresses will be deleted too.", function (value) {
 			if (value)
 				this.container.__deleteRecord();
+			this.container.listGrid_AliasTo.fetchData(this.container.aliasId);
+			
 		}, {container: this});
 	},
 
@@ -1249,7 +1128,7 @@ isc.TabAliases.addProperties({
 	deleteRecordCallback: function(dsResponse, data, dsRequest) {
 		if (dsResponse.status != 0)
 			return;
-		//this.newRecord();
+	label7.setLabelContents(this.listGrid_Aliases.getTotalRows());
 	},
 	deleteToRecord: function() {
 		
@@ -1267,6 +1146,7 @@ isc.TabAliases.addProperties({
 		if (dsResponse.status != 0)
 			return;
 		this.aliasToForm.editNewRecord({global_mail_alias_id:listGrid_AliasTo.container.aliasId});
+		
 	},
 	domainId: null,
 	aliasId:null
@@ -1283,21 +1163,23 @@ isc.TabFTPSett.addProperties({
 	initWidget: function() {
 		this.Super("initWidget", arguments);
 		this.settForm=isc.DynamicForm.create({
-		    ID: "settForm",
-		    dataSource: isc.DS.get("users"),
-		    fields: [
-			{name:"username",canEdit:false},
-			{name: "password",required: true,type: "password"},
-			{name: "password_confirm", title: "Confirm", type: "password", required: true, 
-			 length: 20, validators: [{
-			     type: "matchesField",
-			     otherField: "password",
-			     errorMessage: "Passwords do not match"
-			 }]
-			}
-		    ],values:{username:"gigi"}
+			container:this,
+		    	ID: "settForm",
+		    	dataSource: isc.DS.get("users"),
+		    	fields: [
+				{name:"username",canEdit:false},
+				{name: "password",required: true,type: "password"},
+				{name: "password_confirm", title: "Confirm", type: "password", required: true, 
+			 		length: 20, validators: [{
+			   	  		type: "matchesField",
+			     			otherField: "password",
+			     			errorMessage: "Passwords do not match"
+					 }]
+				}
+		    	],values:{username:"gigi"}
 		});
 		this.enableFtp=isc.DynamicForm.create({
+			container:this,
 			ID:"enableFtp",
 			dataSource:isc.DS.get("domains"),
 			fields:[{name:"enable_ftp", type:"checkbox", title:"Enable FTP Access"}]
@@ -1310,6 +1192,7 @@ isc.TabFTPSett.addProperties({
 		});
 
 		this.TabSett=isc.VLayout.create({
+			container:this,
 			members:[this.settForm, this.enableFtp,this.saveButton]		
 		});
 		this.addMember(this.TabSett);
@@ -1341,6 +1224,7 @@ isc.MenuPanel.addProperties({
 	initWidget: function() {
 		this.Super("initWidget", arguments);
 		this.menu11=isc.Button.create({
+			container:this,
 			title:"Domains",
 			align:"left",
 			width:148,
@@ -1353,6 +1237,7 @@ isc.MenuPanel.addProperties({
 				}		
 		});
 		this.menu12=isc.Button.create({
+			container:this,
 			title:"Databases",
 			width:148,
 			height:20,
@@ -1365,6 +1250,7 @@ isc.MenuPanel.addProperties({
 				}		
 		});
 		this.menu13=isc.Button.create({
+			container:this,
 			title:"System",
 			width:148,
 			height:20,
@@ -1377,6 +1263,7 @@ isc.MenuPanel.addProperties({
 				}		
 		});
 		this.menu14=isc.Button.create({
+			container:this,
 			title:"Logout",
 			width:148,
 			height:20,
@@ -1389,6 +1276,7 @@ isc.MenuPanel.addProperties({
 				}		
 		});
 		this.treegrid1=isc.VLayout.create({
+			container:this,
 			ID:"treegrid1",
 			width:150,
 			height:80,
@@ -1400,6 +1288,7 @@ isc.MenuPanel.addProperties({
 			members:[this.menu11,this.menu12,this.menu13,this.menu14]
 		});
 		this.menu21=isc.Button.create({
+			container:this,
 			title:"New domain",
 			align:"left",
 			width:148,
@@ -1417,6 +1306,7 @@ isc.MenuPanel.addProperties({
 				}		
 		});
 		this.menu22=isc.Button.create({
+			container:this,
 			title:"Wizard",
 			width:148,
 			height:20,
@@ -1434,6 +1324,7 @@ isc.MenuPanel.addProperties({
 				}		
 		});
 		this.menu23=isc.Button.create({
+			container:this,
 			title:"Remove",
 			width:148,
 			height:20,
@@ -1451,18 +1342,21 @@ isc.MenuPanel.addProperties({
 				}		
 		});
 		this.treegrid2=isc.VLayout.create({
+			container:this,
 			ID:"treegrid2",
 			width:150,
 			height:60,
 			//membersMargin:5,
 			layoutTopMargin:10,
 			layoutBottomMargin:10,
+			align:"center",
 			//padding:10,
 			border:"1px solid gray",
 			members:[this.menu21,this.menu22,this.menu23]
 		});
 		
 		this.menu31=isc.Button.create({
+			container:this,
 			title:"Summary",
 			align:"left",
 			width:148,
@@ -1480,6 +1374,7 @@ isc.MenuPanel.addProperties({
 				}		
 		});
 		this.menu32=isc.Button.create({
+			container:this,
 			title:"Web",
 			width:148,
 			height:20,
@@ -1498,6 +1393,7 @@ isc.MenuPanel.addProperties({
 				}		
 		});
 		this.menu33=isc.Button.create({
+			container:this,
 			title:"FTP",
 			width:148,
 			height:20,
@@ -1516,6 +1412,7 @@ isc.MenuPanel.addProperties({
 				}		
 		});
 		this.menu34=isc.Button.create({
+			container:this,
 			title:"Mail",
 			width:148,
 			height:20,
@@ -1534,6 +1431,7 @@ isc.MenuPanel.addProperties({
 				}		
 		});
 		this.menu35=isc.Button.create({
+			container:this,
 			title:"DNS",
 			width:148,
 			height:20,
@@ -1550,9 +1448,11 @@ isc.MenuPanel.addProperties({
 				}		
 		});
 		this.treegrid3=isc.VLayout.create({
+			container:this,
 			ID:"treegrid3",
 			width:150,
 			height:100,
+			align:"center",
 			//membersMargin:5,
 			layoutTopMargin:10,
 			layoutBottomMargin:10,
@@ -1566,16 +1466,19 @@ isc.MenuPanel.addProperties({
 		   	ID: "stack1",
 			container:this,
 			visibilityMode: "multiple",
-		    	width:	152,
+		    	width:162,
 			height: 400,
-			align:"center",
+			//align:"bottom",
+			layoutLeftMargin:10,
+			layoutTopMargin:10,
+			//border:"1px solid green",
 		    	sections: [
 			{title: "MENU", expanded: true,width: 152,align:"center", items: [this.treegrid1]},
-			{title: "ACTIONS", expanded: true, items: [this.treegrid2]},
-			{title: "d", expanded: true, items: [this.treegrid3]}
+			{title: "ACTIONS", expanded: true, width: 152,items: [this.treegrid2]},
+			{title: "d", expanded: true, width: 152,items: [this.treegrid3]}
 		    ]
 		});
-	
+		
 		this.addMember(this.stack1);
 
 	},
@@ -1602,6 +1505,7 @@ isc.ClassFactory.defineClass("PanelView", isc.HLayout);
 isc.PanelView.addProperties({
 	width: "100%",
 	height: "100%",
+	align:"center",
 	initWidget: function() {
 		this.Super("initWidget", arguments);
 		this.MenuPanel=isc.MenuPanel.create();

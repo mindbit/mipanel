@@ -1,0 +1,39 @@
+.cssButton {
+    
+    font-family:Verdana,Bitstream Vera Sans,sans-serif; font-size:11px; 
+    color:#000000;
+    background-image:none;
+}
+.cssButtonOver,
+.cssButtonFocusedOver,
+.cssButtonFocused  {
+  	 font-family:Verdana,Bitstream Vera Sans,sans-serif; font-size:11px; 
+    color:#000000;
+}
+.cssButtonDown,
+.cssButtonFocusedDown {
+    font-family:Verdana,Bitstream Vera Sans,sans-serif; font-size:11px;
+/*background-color:green;*/
+    color:#000000;
+}
+.myMenuButton {
+    
+    font-family:Verdana,Bitstream Vera Sans,sans-serif; font-size:11px; 
+    color:#000000;
+    background-image:none;
+}
+.myMenuButtonOver,
+.myMenuButtonFocusedOver,
+.myMenuButtonFocused {
+  	 font-family:Verdana,Bitstream Vera Sans,sans-serif; font-size:11px;background-color:#E0E0E0;
+ border-top:1px solid #CCCCCC;
+ border-bottom:1px solid #CCCCCC; 
+    color:#000000;
+}
+.myMenuButtonDown,
+.myMenuButtonFocusedDown {
+    font-family:Verdana,Bitstream Vera Sans,sans-serif; font-size:11px;
+background-color:#E0E0E0;
+    color:#000000;
+}
+

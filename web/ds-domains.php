@@ -3,6 +3,7 @@ require_once "common.php";
 require_once "RestDataSource.php";
 
 class DomainsRequest extends RestRequest {
+	
 	function createOm() {
 		return new Domains();
 	}
@@ -18,20 +19,23 @@ class DomainsRequest extends RestRequest {
 	{	
 		//if ($_POST["enable_web"])
 		//{
-					
+			$this->om=$this->createOm();
+			parent::doSave();	
 			$site=new Sites();
 			$name="www.".$this->om->getDomain();
 			$site->setName($name);	
 			$site->setServerIp("127.0.0.1");
 			$site->setServerPort("80");
 			$site->setEnabled("1");	
+			$site->save();
 			$site_alias=new SiteAliases();
 			$site_alias->setName($this->om->getDomain());
+			$site_alias->setSiteId($site->getSiteId());
 			$site_alias->save();	
-			$this->om->setSiteId($site_alias->getSiteId()); //? 
-			
+			$this->om->setSiteId($site->getSiteId());  
+			$this->om->save();
 		//}
-		parent::doSave();
+		//parent::doSave();
 	}
 }
 
