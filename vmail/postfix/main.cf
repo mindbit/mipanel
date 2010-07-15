@@ -673,7 +673,7 @@ virtual_mailbox_maps = pgsql:/etc/postfix/pgsql-mbox-maps.cf
 virtual_minimum_uid = 100
 virtual_uid_maps = pgsql:/etc/postfix/pgsql-uid-maps.cf
 virtual_gid_maps = pgsql:/etc/postfix/pgsql-gid-maps.cf
-virtual_alias_maps = hash:/etc/postfix/virtual
+virtual_alias_maps = pgsql:/etc/postfix/pgsql-virtual-maps.cf
 
 smtpd_sasl_auth_enable = yes
 smtpd_sasl_type = dovecot

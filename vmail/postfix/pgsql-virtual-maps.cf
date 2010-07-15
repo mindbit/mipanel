@@ -1,0 +1,9 @@
+# SQL backend for the Postfix virtual alias table.
+#
+# See the VIRTUAL (5) man page for details.
+
+hosts = 192.168.56.1
+user = vmail
+password = 123
+dbname = mipanel
+query = SELECT * FROM get_virtual_mail('%s')

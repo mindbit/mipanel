@@ -20,3 +20,10 @@ alter table global_mail_aliases add FOREIGN KEY (domain_id) REFERENCES domains(d
 alter table global_mail_alias_to drop constraint global_mail_alias_to_global_mail_alias_id_fkey;
 alter table global_mail_alias_to add FOREIGN KEY (global_mail_alias_id) REFERENCES global_mail_aliases(global_mail_alias_id) on update cascade on delete cascade;
 
+create table domain_catch_all(domain_catch_all_id serial not null primary key, domain_id int not null, address varchar not null);
+alter table domain_catch_all add foreign key(domain_id) references domains(domain_id) on update cascade on delete cascade;
+
+GRANT SELECT ON mailbox_forwards TO vmail;
+GRANT SELECT ON global_mail_aliases TO vmail;
+GRANT SELECT ON global_mail_alias_to TO vmail;
+GRANT SELECT ON domain_catch_all TO vmail;

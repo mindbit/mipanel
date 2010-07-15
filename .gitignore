@@ -1,0 +1,3 @@
+*.swp
+*.o
+web/propel/build
