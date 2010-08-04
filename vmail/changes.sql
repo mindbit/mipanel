@@ -27,3 +27,8 @@ GRANT SELECT ON mailbox_forwards TO vmail;
 GRANT SELECT ON global_mail_aliases TO vmail;
 GRANT SELECT ON global_mail_alias_to TO vmail;
 GRANT SELECT ON domain_catch_all TO vmail;
+
+alter table global_mail_aliases owner to mipanel;
+alter table global_mail_alias_to owner to mipanel;
+alter table mailbox_forwards OWNER TO mipanel;
+alter TABLE domain_catch_all OWNER TO mipanel;
