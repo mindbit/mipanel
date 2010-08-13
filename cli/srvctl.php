@@ -4,14 +4,9 @@ Env::setup();
 
 require_once "GetOpt.php";
 
-define("SAFE_MIN_UID",		500);
-
 set_time_limit(0);
 
-/**
- * MiPanel class for controlling anything that needs root privileges.
- */
-abstract class SrvCtl {
+abstract class SrvCtlCli {
 	protected $argv;
 	protected $uid;
 
@@ -21,7 +16,7 @@ abstract class SrvCtl {
 		$declaredClasses = get_declared_classes();
 		$cls = null;
 		foreach ($declaredClasses as $_cls) {
-			if ($_cls == $argv[1] && is_subclass_of($_cls, "SrvCtl")) {
+			if ($_cls == $argv[1] && is_subclass_of($_cls, "SrvCtlCli")) {
 				$cls = $_cls;
 				break;
 			}
@@ -62,12 +57,12 @@ abstract class SrvCtl {
 	abstract function run();
 }
 
-class ServerSetup extends SrvCtl {
+class ServerSetup extends SrvCtlCli {
 	function run() {
 		var_dump($this);
 	}
 }
 
-$srvCtl = SrvCtl::getInstance($_SERVER["argv"]);
+$srvCtl = SrvCtlCli::getInstance($_SERVER["argv"]);
 $srvCtl->run();
 ?>

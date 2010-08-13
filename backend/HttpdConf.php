@@ -3,10 +3,10 @@
 class HttpdConf {
 	protected $name;
 	protected $port;
-	protected $basePath = "/var/www/sites";
-	protected $serverRoot = null;
+	protected $serverRoot;
 	protected $documentRoot = "web";
 	protected $allModules = array(
+			// apache bundled modules
 			"auth_basic_module" => "modules/mod_auth_basic.so",
 			"auth_digest_module" => "modules/mod_auth_digest.so",
 			"authn_file_module" => "modules/mod_authn_file.so",
@@ -58,7 +58,10 @@ class HttpdConf {
 			"file_cache_module" => "modules/mod_file_cache.so",
 			"mem_cache_module" => "modules/mod_mem_cache.so",
 			"cgi_module" => "modules/mod_cgi.so",
-			"version_module" => "modules/mod_version.so"
+			"version_module" => "modules/mod_version.so",
+			// additional modules
+			"php5_module" => "modules/libphp5.so",
+			"extract_forwarded_module" => "modules/mod_extract_forwarded.so"
 				);
 
 	function setName($name) {
@@ -70,8 +73,11 @@ class HttpdConf {
 	}
 
 	function getServerRoot() {
-		return $this->serverRoot !== null ? $this->serverRoot:
-			$this->basePath . "/" . $this->name;
+		return $this->serverRoot;
+	}
+
+	function setServerRoot($serverRoot) {
+		$this->serverRoot = $serverRoot;
 	}
 
 	function prefork() {
@@ -106,7 +112,7 @@ class HttpdConf {
 		return
 			"AddHandler php5-script .php\n" .
 			"AddType text/html .php\n" .
-			"php_value session.save_path " . $this->getServerRoot() . "/tmp\n"
+			"php_value session.save_path " . $this->serverRoot . "/tmp\n"
 			;
 	}
 
@@ -120,14 +126,14 @@ class HttpdConf {
 	function create() {
 		return
 			"ServerTokens OS\n" .
-			"ServerRoot \"" . $this->getServerRoot() . "\"\n" .
+			"ServerRoot \"" . $this->serverRoot . "\"\n" .
 			"PidFile run/httpd.pid\n" .
 			"Timeout 120\n" .
 			"KeepAlive Off\n" .
 			"\n" .
 			$this->prefork() .
 			"\n" .
-			"Listen 8016\n" .
+			"Listen " . $this->port . "\n" .
 			"\n" .
 			$this->modules() .
 			"\n" .
@@ -157,4 +163,3 @@ class HttpdConf {
 }
 
 ?>
-
