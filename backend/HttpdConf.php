@@ -4,6 +4,7 @@ class HttpdConf {
 	protected $name;
 	protected $port;
 	protected $serverRoot;
+	protected $processModel = "small";
 	protected $documentRoot = "web";
 	protected $allModules = array(
 			// apache bundled modules
@@ -64,6 +65,30 @@ class HttpdConf {
 			"extract_forwarded_module" => "modules/mod_extract_forwarded.so"
 				);
 
+	protected $processModels = array(
+			"small"		=> array(
+				"StartServers"		=> 3,
+				"MinSpareServers"	=> 2,
+				"MaxSpareServers"	=> 5,
+				"ServerLimit"		=> 10,
+				"MaxClients"		=> 10
+				),
+			"medium"	=> array(
+				"StartServers"		=> 5,
+				"MinSpareServers"	=> 3,
+				"MaxSpareServers"	=> 10,
+				"ServerLimit"		=> 25,
+				"MaxClients"		=> 25
+				),
+			"large"		=> array(
+				"StartServers"		=> 8,
+				"MinSpareServers"	=> 5,
+				"MaxSpareServers"	=> 20,
+				"ServerLimit"		=> 256,
+				"MaxClients"		=> 256
+				)
+				);
+
 	function setName($name) {
 		$this->name = $name;
 	}
@@ -80,13 +105,13 @@ class HttpdConf {
 		$this->serverRoot = $serverRoot;
 	}
 
-	function prefork() {
+	function prefork($model) {
 		return
-			"StartServers 8\n" .
-			"MinSpareServers 5\n" .
-			"MaxSpareServers 20\n" .
-			"ServerLimit 256\n" .
-			"MaxClients 256\n" .
+			"StartServers " . $model["StartServers"] . "\n" .
+			"MinSpareServers " . $model["MinSpareServers"] . "\n" .
+			"MaxSpareServers " . $model["MaxSpareServers"] . "\n" .
+			"ServerLimit " . $model["ServerLimit"] . "\n" .
+			"MaxClients " . $model["MaxClients"] . "\n" .
 			"MaxRequestsPerChild 4000\n"
 			;
 	}
@@ -131,7 +156,7 @@ class HttpdConf {
 			"Timeout 120\n" .
 			"KeepAlive Off\n" .
 			"\n" .
-			$this->prefork() .
+			$this->prefork($this->processModels[$this->processModel]) .
 			"\n" .
 			"Listen " . $this->port . "\n" .
 			"\n" .
