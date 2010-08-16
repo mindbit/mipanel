@@ -7,6 +7,17 @@ class SrvCtl {
 	// for security reasons, this is defined as a constant
 	const ROOT = "/var/www/mipanel";
 
+	const SAFE_MIN_UID = 500;
+	const SAFE_MIN_GID = 500;
+
+	protected $httpdModulesPath;
+
+	function __construct() {
+		$this->httpdModulesPath = "/usr/lib/httpd/modules";
+		if (file_exists("/usr/lib64/httpd/modules"))
+			$this->httpdModulesPath = "/usr/lib64/httpd/modules";
+	}
+
 	protected static $validHttpdSignals =
 		array("start", "restart", "graceful", "stop", "graceful-stop");
 
@@ -14,7 +25,7 @@ class SrvCtl {
 		return self::ROOT;
 	}
 
-	function runQuiet($cmd, $cwd = null, $env = null) {
+	protected function runQuiet($cmd, $cwd = null, $env = null) {
 		$descriptorspec = array(
 				0 => array("pipe", "r"),
 				1 => array("file", "/dev/null", "a"),
@@ -47,6 +58,8 @@ class SrvCtl {
 
 		$uinfo = posix_getpwnam($username);
 		assert($uinfo !== false);
+		assert($uinfo["uid"] >= self::SAFE_MIN_UID);
+		assert($uinfo["gid"] >= self::SAFE_MIN_GID);
 
 		return array(
 				"uid" => $uinfo["uid"],
@@ -54,16 +67,16 @@ class SrvCtl {
 				);
 	}
 
-	function mkdir($path, $mode, $user, $group) {
+	protected function mkdir($path, $mode, $user, $group) {
 		if (!mkdir($path, $mode))
 			throw new Exception("Cannot create directory " . $path);
 		$this->chown($path, $user, $group);
 	}
 
-	function chown($path, $user, $group) {
+	protected function chown($path, $user, $group) {
 		if (!chown($path, $user))
 			throw new Exception("Cannot change ownership of " . $path);
-		if (!chmod($path, $group))
+		if (!chgrp($path, $group))
 			throw new Exception("Cannot change group of " . $path);
 	}
 
@@ -72,6 +85,8 @@ class SrvCtl {
 		$gid = (int)$gid;
 		if (!preg_match("/^[a-zA-Z0-9._-]+$/", $siteName))
 			throw new Exception("Invalid site name");
+		if ($uid < self::SAFE_MIN_UID || $gid < self::SAFE_MIN_GID)
+			throw new Exception("Bad uid/gid");
 
 		$siteRoot = self::ROOT . "/" . $siteName;
 		
@@ -82,7 +97,7 @@ class SrvCtl {
 		$this->mkdir($siteRoot . "/tmp", 0755, $uid, $gid);
 		$this->mkdir($siteRoot . "/web", 0755, $uid, $gid);
 
-		if (!symlink("/usr/lib64/httpd/modules", $siteRoot . "/modules"))
+		if (!symlink($this->httpdModulesPath, $siteRoot . "/modules"))
 			throw new Exception("Cannot create modules symlink in " . $siteRoot);
 	}
 
@@ -93,7 +108,7 @@ class SrvCtl {
 			" " . escapeshellarg($username);
 	}
 
-	function __checkServerConfig($configFile, $username) {
+	protected function __checkServerConfig($configFile, $username) {
 		$cmd = $this->getHttpdCmd($configFile, "-t", $username);
 
 		$descriptorspec = array(
