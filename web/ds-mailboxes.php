@@ -12,6 +12,7 @@ class MailboxesRequest extends RestRequest {
 		$ret=parent::omToArray($om);
 		$domain=DomainsPeer::retrieveByPK($om->getDomainId());
 		$ret["addressmail"]=$om->getMailbox().'@'.$domain->getDomain();
+		$ret["nr_forwards"]=$om->countMailboxForwardss();
 		return $ret;
 	}
 }

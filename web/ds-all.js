@@ -15,7 +15,8 @@ isc.RestDataSource.create({
 			else dsResponse.data[i].mail = "[SKIN]/actions/approve.png";
 			if (dsResponse.data[i].site_id=='')
 				dsResponse.data[i].web = "[SKIN]/actions/remove.png";
-			else dsResponse.data[i].web = "[SKIN]/actions/approve.png";
+			else
+				dsResponse.data[i].web = "[SKIN]/actions/approve.png";
 			dsResponse.data[i].dns = "[SKIN]/actions/remove.png";
 		}
      		return dsResponse;
@@ -33,11 +34,31 @@ isc.RestDataSource.create({
         {name: "enable_mail", type:"checkbox"},
 	{name: "mail", title: "Mail", align:"center",  width:100, type:"image", canFilter:false},
 	{name: "site_id"},
+	{name: "enabled",type:"integer"},
 	{name: "mail_gid"},
 	{name: "mail_uid"},
 	{name: "username"},
 	{name:"nr_mailboxes"},
 	{name:"nr_aliases"}
+    ],
+    operationBindings:[
+       {operationType:"fetch", dataProtocol:"postMessage"},
+       {operationType:"add", dataProtocol:"postMessage"},
+       {operationType:"remove", dataProtocol:"postMessage"},
+       {operationType:"update", dataProtocol:"postMessage"}
+    ],
+}); 
+
+isc.RestDataSource.create({
+    ID:"domainsWS",
+    dataFormat:"json",
+    dataURL:"ds-domainsWS.php",
+   
+    fields:[
+        {type: "sequence", name: "domain_id", primaryKey: true},
+	{name: "domain_id"},
+        {title:"Domain", name:"domain", type: "text",  required: true},
+	{name: "site_id"}
     ],
     operationBindings:[
        {operationType:"fetch", dataProtocol:"postMessage"},
@@ -58,7 +79,8 @@ isc.RestDataSource.create({
 	{name: "domain"},
         {title:"Mailbox", name:"mailbox", type: "text",  required: true},
 	{name: "addressmail"},
-	{name: "copy_on_forward",type:"checkbox"}
+	{name: "copy_on_forward",type:"checkbox"},
+	{name: "nr_forwards"}
     ],
     operationBindings:[
        {operationType:"fetch", dataProtocol:"postMessage"},
@@ -135,7 +157,7 @@ isc.RestDataSource.create({
     ],
     operationBindings:[
        {operationType:"fetch", dataProtocol:"postMessage"},
-       {operationType:"add", dataProtocol:"postMessage"},
+       {operationType:"add", dataProtocol:"postMessage"}, 
        {operationType:"remove", dataProtocol:"postMessage"},
        {operationType:"update", dataProtocol:"postMessage"}
     ],
@@ -145,13 +167,14 @@ isc.RestDataSource.create({
     ID:"sites",
     dataFormat:"json",
     dataURL:"ds-sites.php",
+   
     fields:[
         {type: "sequence", name: "site_id", primaryKey: true},
 	{name: "site_id"},
 	{name: "name"},
 	{name: "server_id"},
 	{name: "server_port"},
-	{name: "enabled"}
+	{name: "enabled",type:"checkbox"}
     ],
     operationBindings:[
        {operationType:"fetch", dataProtocol:"postMessage"},
