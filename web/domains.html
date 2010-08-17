@@ -173,7 +173,7 @@ isc.TabsPanel.addProperties({
 					{
 						tabWeb.show();					
 						configV.show();
-						if (this.container.listGrid.getSelectedRecord().enabled==0) 
+						if (this.container.listGrid.getSelectedRecord().enabled=="-1") 
 							enableWebAccesButton.show();
 						else enableWebAccesButton.hide();
 						unconfigV.hide();
@@ -418,10 +418,16 @@ isc.TabsPanel.addProperties({
 		{
 			this.label1.setContents("Web service is enabled");
 			this.label1.setIcon("[SKIN]/actions/approve.png");	
-			//if (record.enabled==1) 
-			this.label2.setContents("Web access is enabled");
-			this.label2.setIcon("[SKIN]/actions/approve.png");		
-			//else this.label2.setContents("Web access is <span style='color:red;font-weight:bold'>not enabled </span>");
+			if (record.enabled==1)
+			{ 
+				this.label2.setContents("Web access is enabled");
+				this.label2.setIcon("[SKIN]/actions/approve.png");
+			}		
+			else 
+			{
+				this.label2.setContents("Web access is not enabled");
+				this.label2.setIcon("[SKIN]/actions/remove.png");
+			}
 		}
 		else 
 		{
@@ -458,6 +464,7 @@ isc.TabsPanel.addProperties({
 		else
 		{	
 			this.label5.setContents("Mail service is not enabled");
+			this.label5.setIcon("[SKIN]/actions/remove.png");
 			this.label67V.hide();	
 		}
 	},
@@ -526,9 +533,11 @@ isc.TabWebDomain.addProperties({
 			container: this,
 			title: "Save",
 			width:100,
-			visibility:"false",
+			visibility:"hidden",
 			icon: "[SKIN]/actions/approve.png",
-			click: function () {this.container.saveAccessWeb();}
+			click: function () {this.container.saveAccessWeb();
+				label2.setContents("Web access is enabled");
+				label2.setIcon("[SKIN]/actions/approve.png");}
 		});
 
 		this.configButton=isc.IButton.create({
@@ -537,7 +546,9 @@ isc.TabWebDomain.addProperties({
 			title: "Enable Web Service",
 			width:150,
 			icon: "[SKIN]/actions/approve.png",
-			click: function () {this.container.saveconfigWeb();}
+			click: function () {this.container.saveconfigWeb();
+				label1.setContents("Web service is enabled");
+				label1.setIcon("[SKIN]/actions/approve.png"); }
 		});
 		this.unconfigButtonV=isc.VLayout.create({
 			container:this,
@@ -568,22 +579,8 @@ isc.TabWebDomain.addProperties({
 		this.addMember(this.configV);
 		this.addMember(this.unconfigV);
 
-		this.loadinit();
 	},
-	loadinit: function ()
-	{
-		if (this.siteId!='')
-		{
-			this.configV.show();
-			this.enableWebAccesButton.show();
-			this.unconfigV.hide();
-		}
-		else 
-		{
-			this.configV.hide();
-			this.unconfigV.show();
-		}
-	},
+
 	setSiteId: function(siteId) {
 		this.siteId = siteId;
 		
@@ -593,27 +590,41 @@ isc.TabWebDomain.addProperties({
 	},
 	saveconfigWeb: function()
 	{ 
-		this.enableWebService.saveData(function(dsResponse, data, dsRequest) {
+		this.enableWebService.saveData({ target: this, methodName: "saveconfigWebCallback" },
+		function(dsResponse, data, dsRequest) {
 			if (dsResponse.status != 0)
 				return;
 			if (!this.isNewRecord())
 				return;
 			this.setSaveOperationType("update");
 		});
+	},
+	saveconfigWebCallback: function() {
 		this.unconfigV.hide();
 		this.configV.show();
 		this.enableWebAccesButton.show();
-		listGrid.fetchData();
+
+		listGrid.setData([]);
+		listGrid.fetchData(); 
+
 	},
+		
 	saveAccessWeb: function()
 	{ 
-		this.enableWebAcces.saveData(function(dsResponse, data, dsRequest) {
+		this.enableWebAcces.saveData({ target: this, methodName: "saveAccessWebCallback" },
+		function(dsResponse, data, dsRequest) {
 			if (dsResponse.status != 0)
 				return;
 			if (!this.isNewRecord())
 				return;
 			this.setSaveOperationType("update");
 		});
+	},
+	saveAccessWebCallback: function()
+	{ 
+		listGrid.setData([]);
+		listGrid.fetchData(); 
+		enableWebAccesButton.hide();
 	},
 	domainId:null,
 	siteId:null
@@ -731,7 +742,7 @@ isc.TabMailboxes.addProperties({
 			title: "Save",
 			icon: "[SKIN]/actions/save.png",
 			showDisabledIcon: "[SKIN]/actions/save.png",
-			click: function () {this.container.saveRecord();},
+			click: function () { this.container.saveRecord();},
 			disabled: true
 		});
 		
@@ -1021,7 +1032,7 @@ isc.TabAliases.addProperties({
 			icon: "[SKIN]/TabSet/close.png",
 			showDisabledIcon: "[SKIN]/TabSet/close_Disabled.png",
 			disabled: true,
-			click: "this.container.deleteRecord();"
+			click: function () { this.container.deleteRecord();}
 		});
 		this.aliasForm=isc.DynamicForm.create({
 			ID:"aliasForm",
@@ -1408,6 +1419,7 @@ isc.MenuPanel.addProperties({
 					tabFTP.hide();
 					tabMail.hide();
 					formLayout.hide();
+					summary.hide();
 					if (listGrid.getSelectedRecord() != null) this.container.deleteRecord(); 
 						else isc.say('Select a domain first!');
 				}		
@@ -1459,6 +1471,21 @@ isc.MenuPanel.addProperties({
 					summary.hide();
 		                        tabWeb.selectTab(0);
 					wizardV.hide();
+
+					if (listGrid.getSelectedRecord().site_id!='')
+					{
+						configV.show();
+						if (listGrid.getSelectedRecord().enabled=="-1") 
+							enableWebAccesButton.show();
+						else enableWebAccesButton.hide();
+						unconfigV.hide();
+					}
+					else 
+					{
+						configV.hide();
+						enableWebAccesButton.show();
+						unconfigV.show();
+					}
 				}		
 		});
 		this.menu33=isc.Button.create({
@@ -1494,7 +1521,7 @@ isc.MenuPanel.addProperties({
 					tabFTP.hide();
 					tabMail.show();
 					formLayout.hide();  
-					summary.hide();                                	
+					summary.hide();   	
 					tabMail.selectTab(0);
 					wizardV.hide();
 				}		
