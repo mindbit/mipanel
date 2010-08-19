@@ -1,0 +1,5 @@
+#%PAM-1.0
+auth        required    pam_pgsql.so config_file=/etc/pam-pgsql-proftpd.conf
+account     required    pam_pgsql.so config_file=/etc/pam-pgsql-proftpd.conf
+password    required    pam_pgsql.so config_file=/etc/pam-pgsql-proftpd.conf
+session     required    pam_pgsql.so config_file=/etc/pam-pgsql-proftpd.conf
