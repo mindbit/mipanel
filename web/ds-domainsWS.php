@@ -20,10 +20,10 @@ class DomainsWSRequest extends RestRequest {
 		$c->setLimit(1);	
 		$mysites=SitesPeer::doSelect($c);
 		if ($mysites)	
-			foreach($mysites as $mysite)
-			{
-				$max_server_port=$mysite->getServerPort()+1;
-			}
+		foreach($mysites as $mysite)
+		{
+			$max_server_port=$mysite->getServerPort()+1;
+		}
 		else $max_server_port='8000';
 
 		$domain=DomainsPeer::retrieveByPK($this->data["domain_id"]);

@@ -17,7 +17,10 @@ isc.RestDataSource.create({
 				dsResponse.data[i].web = "[SKIN]/actions/remove.png";
 			else
 				dsResponse.data[i].web = "[SKIN]/actions/approve.png";
-			dsResponse.data[i].dns = "[SKIN]/actions/remove.png";
+			if (dsResponse.data[i].soa_id=='')
+				dsResponse.data[i].dns = "[SKIN]/actions/remove.png";
+			else
+				dsResponse.data[i].dns = "[SKIN]/actions/approve.png";
 		}
      		return dsResponse;
 		},
@@ -37,9 +40,11 @@ isc.RestDataSource.create({
 	{name: "enabled"},
 	{name: "mail_gid"},
 	{name: "mail_uid"},
-	{name: "username"},
+	{name: "username",type: "text"},
+	{name: "password"},
 	{name:"nr_mailboxes"},
-	{name:"nr_aliases"}
+	{name:"nr_aliases"},
+	{name:"soa_id"}
     ],
     operationBindings:[
        {operationType:"fetch", dataProtocol:"postMessage"},
@@ -59,6 +64,25 @@ isc.RestDataSource.create({
 	{name: "domain_id"},
         {title:"Domain", name:"domain", type: "text",  required: true},
 	{name: "site_id"}
+    ],
+    operationBindings:[
+       {operationType:"fetch", dataProtocol:"postMessage"},
+       {operationType:"add", dataProtocol:"postMessage"},
+       {operationType:"remove", dataProtocol:"postMessage"},
+       {operationType:"update", dataProtocol:"postMessage"}
+    ],
+}); 
+
+isc.RestDataSource.create({
+    ID:"domainsDNS",
+    dataFormat:"json",
+    dataURL:"ds-domainsDNS.php",
+   
+    fields:[
+        {type: "sequence", name: "domain_id", primaryKey: true},
+	{name: "domain_id"},
+        {title:"Domain", name:"domain", type: "text",  required: true},
+	{name: "soa_id"}
     ],
     operationBindings:[
        {operationType:"fetch", dataProtocol:"postMessage"},

@@ -43,9 +43,12 @@ isc.TabsPanel.addProperties({
 				fwForm.clearErrors(true);
 				aliasForm.clearErrors(true);
 				aliasToForm.clearErrors(true);
+				settForm.clearErrors(true);
+				dnsForm.clearErrors(true);
 				//pentru a pastra numele domeniului 
+				settForm.editRecord(record);
+				dnsForm.editRecord(record);
 				enableMail.editRecord(record);
-				enableFtp.editRecord(record);
 				enableWebService.editRecord(record);
 				enableWebAcces.editRecord(record);
 				this.container.summary.show();
@@ -54,6 +57,7 @@ isc.TabsPanel.addProperties({
 				this.container.tabWeb.hide();
 				this.container.tabFTP.hide();
 				this.container.tabMail.hide();
+				this.container.tabDNS.hide();
 				this.container.setLabelContents(record);
 				//face clear la listgrid
 				listGrid_FwMailboxes.setData([]);
@@ -74,8 +78,9 @@ isc.TabsPanel.addProperties({
 		this.TabMailboxes=isc.TabMailboxes.create();
 		this.TabAliases=isc.TabAliases.create();
 		this.TabFTPSett=isc.TabFTPSett.create();
+		this.TabDNSSett=isc.TabDNSSett.create();
 		this.TabWebDomain=isc.TabWebDomain.create();
-
+		
 		this.tabWeb=isc.TabSet.create({
 			container:this,
                         ID:"tabWeb",
@@ -111,6 +116,16 @@ isc.TabsPanel.addProperties({
 				{title:"Logs", pane:label7, ID:"logsFTPTab"}*/
 			]
 		});
+
+		this.tabDNS=isc.TabSet.create({
+			ID:"tabDNS",
+			visibility:"hidden",
+			container:this,
+			tabs:[
+				{title:"Settings", pane:this.TabDNSSett, ID:"settDNSTab"}
+			]
+		});
+
 		
 		this.label1=isc.Label.create({
 			container:this,
@@ -305,6 +320,36 @@ isc.TabsPanel.addProperties({
 			icon:"[SKIN]/actions/remove.png",
 		   	contents:"DNS service is not enabled"
 		});
+		this.label8Button=isc.Button.create({
+			container:this,
+			title:"[ configure...]",
+			width:80,
+			height:14,
+			baseStyle: "cssButton",
+			click: function() 
+				{
+					summary.hide();
+					this.container.tabDNS.show();
+					if (this.container.listGrid.getSelectedRecord().soa_id!='')
+					{
+						label_dns_enabled.show();
+						label_dns.hide();
+						saveButtonDNS.hide();
+					}
+					else 
+					{
+						label_dns_enabled.hide();
+						label_dns.show();
+						saveButtonDNS.show();
+					}
+				}		
+		});
+		this.dns=isc.HLayout.create({
+			container:this,
+			width:300,
+			height:10,
+			members:[this.label8,this.label8Button]		
+		});
 
 		this.summary=isc.VLayout.create({
 			container:this,
@@ -313,7 +358,7 @@ isc.TabsPanel.addProperties({
 			layoutLeftMargin:80,
 			layoutTopMargin:50,
 			membersMargin:15,
-			members:[this.webservice,this.label23V,this.ftp,this.mail,this.label67V,this.label8]
+			members:[this.webservice,this.label23V,this.ftp,this.mail,this.label67V,this.dns]
 		});
 		this.dynamForm=isc.DynamicForm.create({
 			ID:"dynamForm",
@@ -365,23 +410,71 @@ isc.TabsPanel.addProperties({
 			{name: "enable_web", type: "checkbox", title: "Web"},
 			{name: "enable_ftp", type: "checkbox", title: "FTP"},
 			{name: "enable_mail", type: "checkbox", title: "Mail"},
-			{name: "enable_dns", type: "checkbox", title: "DNS"},
+			{name: "enable_dns", type: "checkbox", title: "DNS"}
 			]
+		});
+		
+		this.wizardFormFTP=isc.DynamicForm.create({
+			ID:"wizardFormFTP",
+			container:this,
+		    	fields: [
+				{name: "username",title:"Username",height:"20",type:"text",required:true},
+				{name: "password",title:"Password",type: "password",required:true},
+				{name: "password_confirm", title: "Confirm", type: "password", required:true,
+			 		length: 20, validators: [{
+			   	  		type: "matchesField",
+			     			otherField: "password",
+			     			errorMessage: "Passwords do not match"
+					 }]
+				}
+				]
+		});
+		this.createButtonFTP = isc.IButton.create({
+			container: this,
+			title: "Create Domain",
+			width:150,
+			icon: "[SKIN]/actions/approve.png",
+			click: function () 
+			{ 
+				if (wizardFormFTP.validate()) this.container.createDomainFTP();
+			}
+		});
+
+		this.wizardFTPV=isc.VLayout.create({
+			container:this,
+			ID:"wizardFTPV",
+			visibility:"hidden",
+			membersMargin:10,
+			layoutLeftMargin:30,
+			layoutTopMargin:30,
+			members:[this.wizardFormFTP,this.createButtonFTP]	
 		});
 		this.valuesmanager_wizardForm=isc.ValuesManager.create({
 			ID:"valuesmanager_wizardForm",
 			container:this,
 			dataSource: isc.DS.get("domains"),
-			members:[this.wizardForm,this.wizardForm2]		
+			members:[this.wizardForm,this.wizardForm2,this.wizardFormFTP]		
+		});
+		this.valuesmanager_wizardFormFTP=isc.ValuesManager.create({
+			ID:"valuesmanager_wizardFormFTP",
+			container:this,
+			dataSource: isc.DS.get("domains"),
+			members:[this.wizardFormFTP]		
 		});
 		this.createButton = isc.IButton.create({
 			container: this,
 			title: "Create Domain",
 			width:150,
 			icon: "[SKIN]/actions/approve.png",
-			click: 
-			function () 
-				{this.container.createDomain();}
+			click: function () 
+			{ 
+				if (wizardForm2.items[1]._value==true)
+				{
+					this.container.wizardV.hide();					
+					this.container.wizardFTPV.show();
+				}
+				else this.container.createDomain();
+			}
 		});
 		this.wizardV=isc.VLayout.create({
 			container:this,
@@ -390,7 +483,7 @@ isc.TabsPanel.addProperties({
 			membersMargin:10,
 			layoutLeftMargin:30,
 			layoutTopMargin:30,
-			members:[this.wizardForm,this.label, this.wizardForm2,this.createButton]	
+			members:[this.wizardForm,this.label, this.wizardForm2,this.createButton]
 		});
 		this.hLayout=isc.HLayout.create({
 			container:this,
@@ -398,7 +491,7 @@ isc.TabsPanel.addProperties({
 			width:"100%",
 			height:"70%",
 			border:"1px solid gray",
-			members: [this.tabWeb,this.tabMail, this.tabFTP,this.formLayout,this.summary,this.wizardV]
+			members: [this.tabWeb,this.tabMail, this.tabFTP,this.tabDNS,this.formLayout,this.summary,this.wizardV,this.wizardFTPV]
 		});	
 		
 		this.addMember(this.listGrid);
@@ -410,6 +503,8 @@ isc.TabsPanel.addProperties({
 		this.TabAliases.setDomainId(record.domain_id);
 		this.TabWebDomain.setDomainId(record.domain_id);
 		this.TabWebDomain.setSiteId(record.site_id);
+		this.TabDNSSett.setDomainId(record.domain_id);
+		this.TabDNSSett.setSoaId(record.soa_id);
 		valuesManager.editNewRecord(record);
 		aliasForm.editNewRecord(record);
 	},
@@ -441,7 +536,11 @@ isc.TabsPanel.addProperties({
 			this.label4.setContents("FTP service is enabled");
 			this.label4.setIcon("[SKIN]/actions/approve.png");	
 		}	
-		else this.label4.setContents("FTP service is not enabled");		
+		else 
+		{
+			this.label4.setContents("FTP service is not enabled");
+			this.label4.setIcon("[SKIN]/actions/remove.png");
+		}		
 		if (record.enable_mail==true) 
 		{
 			this.label5.setContents("Mail service is enabled");
@@ -467,6 +566,16 @@ isc.TabsPanel.addProperties({
 			this.label5.setIcon("[SKIN]/actions/remove.png");
 			this.label67V.hide();	
 		}
+		if (record.soa_id!='') 
+		{
+			this.label8.setContents("DNS service is enabled");
+			this.label8.setIcon("[SKIN]/actions/approve.png");	
+		}	
+		else 
+		{
+			this.label8.setContents("DNS service is not enabled");
+			this.label8.setIcon("[SKIN]/actions/remove.png");
+		}	
 	},
 	saveRecord: function() {
 		this.dynamForm.saveData(function(dsResponse, data, dsRequest) {
@@ -489,7 +598,19 @@ isc.TabsPanel.addProperties({
 			this.container.valuesmanager_wizardForm.editNewRecord();
 		});
 		this.valuesmanager_wizardForm.editNewRecord();
-		
+		//this.wizardFTPV.hide();
+	},
+	createDomainFTP: function() {
+		this.valuesmanager_wizardFormFTP.saveData(function(dsResponse, data, dsRequest) {
+			if (dsResponse.status != 0)
+				return;
+			if (!this.isNewRecord())
+				return;
+			this.setSaveOperationType("update"); 
+			this.container.valuesmanager_wizardFormFTP.editNewRecord();
+		});
+		this.valuesmanager_wizardFormFTP.editNewRecord();
+		this.wizardFTPV.hide();
 	}
 
 });
@@ -741,9 +862,9 @@ isc.TabMailboxes.addProperties({
 			width:110,
 			title: "Save",
 			icon: "[SKIN]/actions/save.png",
-			showDisabledIcon: "[SKIN]/actions/save.png",
 			click: function () { this.container.saveRecord();},
-			disabled: true
+			disabled: true,
+			showDisabledIcon: false
 		});
 		
 		this.deleteButton = isc.IButton.create({
@@ -751,7 +872,7 @@ isc.TabMailboxes.addProperties({
 			width:110,
 			title: "Delete",
 			icon: "[SKIN]/TabSet/close.png",
-			showDisabledIcon: "[SKIN]/TabSet/close_Disabled.png",
+			showDisabledIcon: false,
 			disabled: true,
 			click: "this.container.deleteRecord();"
 		});
@@ -825,7 +946,7 @@ isc.TabMailboxes.addProperties({
 			title: "Add",
 			disabled:false,
 			icon: "[SKIN]/actions/add.png",
-			showDisabledIcon: "[SKIN]/actions/add.png",
+			showDisabledIcon: false,
 			click: "this.container.saveFwRecord();"
 		});
 		
@@ -833,7 +954,7 @@ isc.TabMailboxes.addProperties({
 			container: this,
 			title: "Remove",
 			icon: "[SKIN]/TabSet/close.png",
-			showDisabledIcon: "[SKIN]/TabSet/close_Disabled.png",
+			showDisabledIcon: false,
 			disabled: true,
 			click: "this.container.deleteFwRecord();"
 		});
@@ -1030,7 +1151,7 @@ isc.TabAliases.addProperties({
 			container: this,
 			title: "Remove",
 			icon: "[SKIN]/TabSet/close.png",
-			showDisabledIcon: "[SKIN]/TabSet/close_Disabled.png",
+			showDisabledIcon: false,
 			disabled: true,
 			click: function () { this.container.deleteRecord();}
 		});
@@ -1106,7 +1227,7 @@ isc.TabAliases.addProperties({
 		this.addButton = isc.IButton.create({
 			container: this,
 			title: "Add",
-			showDisabledIcon: "[SKIN]/actions/add.png",
+			showDisabledIcon: false,
 			disabled:true,
 			icon: "[SKIN]/actions/add.png",
 			click: function () {this.container.saveToRecord();}
@@ -1115,7 +1236,7 @@ isc.TabAliases.addProperties({
 			container: this,
 			title: "Remove",
 			icon: "[SKIN]/TabSet/close.png",
-			showDisabledIcon: "[SKIN]/TabSet/close_Disabled.png",
+			showDisabledIcon: false,
 			disabled: true,
 			click: "this.container.deleteToRecord();"
 		});
@@ -1248,35 +1369,40 @@ isc.TabFTPSett.addProperties({
 		this.settForm=isc.DynamicForm.create({
 			container:this,
 		    	ID: "settForm",
-		    	dataSource: isc.DS.get("users"),
+		    	dataSource: isc.DS.get("domains"),
 		    	fields: [
-				{name:"username",canEdit:false},
-				{name: "password",required: true,type: "password"},
-				{name: "password_confirm", title: "Confirm", type: "password", required: true, 
+				{name: "username",canEdit:false,width:50,height:"20",type:"text"},
+				{name: "password",type: "password"},
+				{name: "password_confirm", title: "Confirm", type: "password", 
 			 		length: 20, validators: [{
-			   	  		type: "matchesField",
-			     			otherField: "password",
-			     			errorMessage: "Passwords do not match"
+			   	  		type: "requiredIf",
+            					expression: "settForm.getValue('password') != settForm.getValue('password_confirm')",
+            					errorMessage: "Field is required"
 					 }]
-				}
-		    	],values:{username:"gigi"}
-		});
-		this.enableFtp=isc.DynamicForm.create({
-			container:this,
-			ID:"enableFtp",
-			dataSource:isc.DS.get("domains"),
-			fields:[{name:"enable_ftp", type:"checkbox", title:"Enable FTP Access"}]
+				},
+				{name:"enable_ftp", type:"checkbox", title:"Enable FTP Access"}]
 		});
 		this.saveButton = isc.IButton.create({
 			container: this,
 			title: "Save",
 			icon: "[SKIN]/actions/save.png",
-			click: function () {this.container.saveRecord();},
+			click: function () 
+			{	settForm.validate();
+				/*if (settForm.items[1]!='') 
+				{
+					if (settForm.items[1]._value!=settForm.items[2]._value)  
+					{
+						settForm.items[2].validators[0].errorMessage="Passwords do not match";
+						settForm.validate();
+					}
+					else this.container.saveRecord();
+				} 
+				else*/ this.container.saveRecord();},
 		});
 
 		this.TabSett=isc.VLayout.create({
 			container:this,
-			members:[this.settForm, this.enableFtp,this.saveButton]		
+			members:[this.settForm, this.saveButton]		
 		});
 		this.addMember(this.TabSett);
 	},
@@ -1288,15 +1414,93 @@ isc.TabFTPSett.addProperties({
 				return;
 			this.setSaveOperationType("update");
 		});
-		this.enableFtp.saveData(function(dsResponse, data, dsRequest) {
+	}
+});
+
+isc.ClassFactory.defineClass("TabDNSSett", isc.VLayout);
+
+isc.TabDNSSett.addProperties({
+	width: "100%",
+	height: "100%",
+	padding:30,
+	align:"center",
+	showResizeBar:false,
+	initWidget: function() {
+		this.Super("initWidget", arguments);
+		this.label_dns=isc.Label.create({
+			container:this,
+			ID:"label_dns",
+			autoDraw: false,
+			width:"100%",
+			align:"center",
+		   	contents:"DNS service for this domain is not configured. Click below to configure ..."
+		});
+		this.label_dns_enabled=isc.Label.create({
+			container:this,
+			ID:"label_dns_enabled",
+			autoDraw: false,
+			width:"100%",
+			visibility:"hidden",
+			align:"center",
+		   	contents:"DNS service for this domain is enabled."
+		});
+		this.dnsForm=isc.DynamicForm.create({
+			container:this,
+   			ID: "dnsForm",
+    			dataSource: isc.DS.get("domainsDNS"),
+			fields: [
+				{name: "domain_id",showIf:"false"},
+				]
+		});
+
+		this.saveButtonDNS = isc.IButton.create({
+			ID:"saveButtonDNS",
+			container: this,
+			title: "Enable DNS Service",
+			icon: "[SKIN]/actions/approve.png",
+			click: function () {this.container.saveRecord();
+				label8.setContents("DNS service is enabled");
+				label8.setIcon("[SKIN]/actions/approve.png");},
+		});
+
+		this.TabDNS=isc.VLayout.create({
+			container:this,
+			layoutLeftMargin:400,
+			members:[this.dnsForm, this.saveButtonDNS]		
+		});
+
+		this.addMember(this.label_dns);
+		this.addMember(this.label_dns_enabled);
+		this.addMember(this.TabDNS);
+	},
+	saveRecord: function() {
+		this.dnsForm.saveData({ target: this, methodName: "saveRecordCallback" },
+		function(dsResponse, data, dsRequest) {
 			if (dsResponse.status != 0)
 				return;
 			if (!this.isNewRecord())
 				return;
 			this.setSaveOperationType("update");
 		});
+	},
+	saveRecordCallback: function() {
+		this.label_dns.hide();
+		this.label_dns_enabled.show();
+		this.saveButtonDNS.hide();
+
+		listGrid.setData([]);
+		listGrid.fetchData(); 
+
+	},
+	setDomainId: function(domainId) {
+		this.domainId = domainId;
+	},
+	setSoaId: function(soaId) {
+		this.soaId = soaId;
+		
 	}
 });
+
 isc.ClassFactory.defineClass("MenuPanel", isc.VLayout);
 
 isc.MenuPanel.addProperties({
@@ -1385,6 +1589,7 @@ isc.MenuPanel.addProperties({
 					summary.hide();
 					formLayout.show();
 					wizardV.hide();	
+					tabDNS.hide();
 				}		
 		});
 		this.menu22=isc.Button.create({
@@ -1403,6 +1608,7 @@ isc.MenuPanel.addProperties({
 					summary.hide();
 					formLayout.hide();
 					wizardV.show();
+					tabDNS.hide();
 				}		
 		});
 		this.menu23=isc.Button.create({
@@ -1420,6 +1626,7 @@ isc.MenuPanel.addProperties({
 					tabMail.hide();
 					formLayout.hide();
 					summary.hide();
+					tabDNS.hide();
 					if (listGrid.getSelectedRecord() != null) this.container.deleteRecord(); 
 						else isc.say('Select a domain first!');
 				}		
@@ -1451,6 +1658,7 @@ isc.MenuPanel.addProperties({
 					tabMail.hide();
 					formLayout.hide();
 					wizardV.hide();
+					tabDNS.hide();
 					summary.show();
 				}		
 		});
@@ -1471,6 +1679,7 @@ isc.MenuPanel.addProperties({
 					summary.hide();
 		                        tabWeb.selectTab(0);
 					wizardV.hide();
+					tabDNS.hide();
 
 					if (listGrid.getSelectedRecord().site_id!='')
 					{
@@ -1504,6 +1713,7 @@ isc.MenuPanel.addProperties({
 					formLayout.hide();
 					summary.hide();
 		                        tabFTP.selectTab(0);
+					tabDNS.hide();
 					wizardV.hide();
 				}		
 		});
@@ -1524,6 +1734,7 @@ isc.MenuPanel.addProperties({
 					summary.hide();   	
 					tabMail.selectTab(0);
 					wizardV.hide();
+					tabDNS.hide();
 				}		
 		});
 		this.menu35=isc.Button.create({
@@ -1539,8 +1750,24 @@ isc.MenuPanel.addProperties({
 					tabWeb.hide();
 					tabFTP.hide();
 					tabMail.hide();
+					summary.hide();
+					tabDNS.show();
+					if (listGrid.getSelectedRecord().soa_id!='')
+					{
+						label_dns_enabled.show();
+						label_dns.hide();
+						saveButtonDNS.hide();
+					}
+					else 
+					{
+						label_dns_enabled.hide();
+						label_dns.show();
+						saveButtonDNS.show();
+					}
+					
 					formLayout.hide();
-					summary.hide();wizardV.hide();
+					summary.hide();
+					wizardV.hide();
 				}		
 		});
 		this.treegrid3=isc.VLayout.create({
