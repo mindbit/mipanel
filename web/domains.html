@@ -15,6 +15,7 @@
 <script>
 nr_mail=0;
 dom_id=0;
+myrecord='';
 isc.ClassFactory.defineClass("TabsPanel", isc.VLayout);
 
 isc.TabsPanel.addProperties({
@@ -503,8 +504,6 @@ isc.TabsPanel.addProperties({
 		this.TabDNSSett.setDomainId(record.domain_id);
 		this.TabDNSSett.setSoaId(record.soa_id);
 		
-		//this.MenuPanel=isc.MenuPanel.create();
-		//this.MenuPanel.setRecord(record);
 		this.TabWebDomain.setRecord(record);
 		this.TabDNSSett.setRecord(record);
 		this.TabFTPSett.setRecord(record);
@@ -650,7 +649,6 @@ isc.TabWebDomain.addProperties({
    			ID: "enableWebAcces",
     			dataSource: isc.DS.get("sites"),
 			width:100,
-			//border:"1px solid gray",
 			fields: [
 				{name: "site_id",showIf:"false"},
 				{name: "enabled",type:"checkbox", title:"Enable web access",valueMap:{1:"true",0:"false"}, align:"left"}
@@ -1420,24 +1418,24 @@ isc.TabFTPSett.addProperties({
 	},
 	saveRecord: function() {
 		this.settForm.saveData(function(dsResponse, data, dsRequest) {
-			listGrid.selectRecord(this.container.record);
 			if (dsResponse.status != 0)
 				return;
 			if (!this.isNewRecord())
 				return;
-			listGrid.selectRecord(this.container.record);
+			this.container.settForm.editRecord(myrecord);
 			this.setSaveOperationType("update");
 		});
-		listGrid.selectRecord(this.record);
+		this.settForm.editRecord(myrecord);
 	},
 	setDomainId: function(domainId) {
 		this.domainId = domainId;
 	},
 	setRecord: function(record) {
-		this.record = record;
+		this.myrecord = record;
+		myrecord = record;
 	},
 	domainId:null,
-	record:null
+	myrecord:null
 });
 
 isc.ClassFactory.defineClass("TabDNSSett", isc.VLayout);
@@ -1526,9 +1524,10 @@ isc.TabDNSSett.addProperties({
 	},
 	setRecord: function(record)
 	{
-		this.record=record;
+		this.myrecord=record;
+		myrecord = record;
 	},
-	record:null
+	myrecord:null
 });
 
 isc.ClassFactory.defineClass("MenuPanel", isc.VLayout);
@@ -1711,8 +1710,12 @@ isc.MenuPanel.addProperties({
 					wizardV.hide();
 					tabDNS.hide();
 
-					if (listGrid.getSelectedRecord())
-					if (listGrid.getSelectedRecord().site_id!='')
+					if (!listGrid.getSelectedRecord())
+					{
+						record = myrecord;
+					}
+					else record = listGrid.getSelectedRecord();
+					if (record.site_id!='')
 					{
 						configV.show();
 						/*if (listGrid.getSelectedRecord().enabled=="-1") 
@@ -1783,8 +1786,12 @@ isc.MenuPanel.addProperties({
 					tabMail.hide();
 					summary.hide();
 					tabDNS.show();
-					if (listGrid.getSelectedRecord())
-					if (listGrid.getSelectedRecord().soa_id!='')
+					if (!listGrid.getSelectedRecord())
+					{
+						record = myrecord;
+					}
+					else record = listGrid.getSelectedRecord();
+					if (record.soa_id!='')
 					{
 						label_dns_enabled.show();
 						label_dns.hide();
