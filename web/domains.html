@@ -1,3 +1,6 @@
+<?
+require_once "auth.php";
+?>
 <html>
 <head>
 <script>var isomorphicDir="/isomorphic/";</script>
@@ -8,6 +11,8 @@
 <script src="/isomorphic/system/modules/ISC_Forms.js"></script>
 <script src="/isomorphic/system/modules/ISC_DataBinding.js"></script>
 <script src="/isomorphic/skins/TreeFrog/load_skin.js"></script>
+<script src="/isomorphic/login/reloginFlow.js"></script>
+<script src="/mpl/web/js/MplAuthenticator.js"></script>
 <script src="ds-all.js"></script>
 <link rel="stylesheet" type="text/css" href="css_mipanel.css" />
 </head>
@@ -1589,6 +1594,9 @@ isc.MenuPanel.addProperties({
 			baseStyle: "myMenuButton",
 			click: function() 
 				{
+					isc.MplAuthenticator.logout(function () {
+						document.location.href = document.location.href;
+					});
 				
 				}		
 		});
