@@ -3,8 +3,8 @@
 # This table maps a fully-qualified mailbox address (such as
 # user@domain) to a local user id.
 
-hosts = 192.168.56.1
-user = vmail
-password = 123
-dbname = mipanel
+hosts = ${DB_HOST}
+user = ${DB_USER}
+password = ${DB_PASSWORD}
+dbname = ${DB_NAME}
 query = SELECT uid FROM get_mailbox_properties('%u', '%d')

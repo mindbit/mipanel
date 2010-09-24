@@ -3,8 +3,8 @@
 # This is not a map. See "Postfix lists versus tables" in the
 # DATABASE_README document for a discussion.
 
-hosts = 192.168.56.1
-user = vmail
-password = 123
-dbname = mipanel
+hosts = ${DB_HOST}
+user = ${DB_USER}
+password = ${DB_PASSWORD}
+dbname = ${DB_NAME}
 query = SELECT domain FROM domains WHERE domain='%s'
