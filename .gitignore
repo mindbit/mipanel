@@ -3,3 +3,5 @@
 backend/model/build
 backend/model/build.properties
 backend/model/runtime-conf.xml
+web/config/config.php
+web/mpl
