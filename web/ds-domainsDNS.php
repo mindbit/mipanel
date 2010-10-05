@@ -8,13 +8,13 @@ class DomainsWSRequest extends RestRequest {
 	function createOm() {
 		return new Domains();
 	}
-	function omToArray($om)
-	{
+
+	function omToArray($om) {
 		$ret=parent::omToArray($om);
 		return $ret;
 	}
-	function doSave()
-	{	
+
+	function doSave() {
 		$domain=DomainsPeer::retrieveByPK($this->data["domain_id"]);
 		$soa=new Soa();
 		$name=$domain->getDomain().".";

@@ -8,13 +8,12 @@ class DomainsRequest extends RestRequest {
 	function createOm() {
 		return new Domains();
 	}
-	function omToArray($om)
-	{
+
+	function omToArray($om) {
 		$ret=parent::omToArray($om);
 		$domain=DomainsPeer::retrieveByPK($om->getDomainId());
 		$ret["enabled"]="-1";
-		if ($om->getSiteId()!=null)
-		{
+		if ($om->getSiteId()!=null) {
 			$site=SitesPeer::retrieveByPK($om->getSiteId());
 			if ($site->getEnabled()=="0")
 				$ret["enabled"]="-1";
@@ -25,18 +24,16 @@ class DomainsRequest extends RestRequest {
 		
 		return $ret;
 	}
-	function doSave()
-	{	
-		if (isset($this->data["enable_web"]) && $this->data["enable_web"]==true)
-		{
+
+	function doSave() {
+		if (isset($this->data["enable_web"]) && $this->data["enable_web"]==true) {
 			$c = new Criteria();
 			$c->addDescendingOrderByColumn(SitesPeer::SERVER_PORT);
 			$c->setLimit(1);	
 			$mysites=SitesPeer::doSelect($c);
 			$max_server_port='8000';
 			if ($mysites)	
-			foreach($mysites as $mysite)
-			{
+			foreach($mysites as $mysite) {
 				$max_server_port=$mysite->getServerPort()+1;
 			}
 			$site=new Sites();
@@ -54,8 +51,7 @@ class DomainsRequest extends RestRequest {
 			
 		}
 		
-		if (isset($this->data["enable_dns"]) && $this->data["enable_dns"]==true)
-		{
+		if (isset($this->data["enable_dns"]) && $this->data["enable_dns"]==true) {
 			$soa=new Soa();
 			$name=$this->data["domain"].".";
 			$soa->setOrigin($name);	
@@ -110,20 +106,18 @@ class DomainsRequest extends RestRequest {
 		
 			$this->om->setSoaId($soa->getId());  		
 		}
-		if (!isset($this->data["username"]))
-		{
+		if (!isset($this->data["username"])) {
 			$username=explode(".",$this->data["domain"]);
 			$this->om->setUsername($username[0]);
 		}
 		parent::doSave();
 	}
-	function doRemove() 
-	{
+
+	function doRemove() {
 		$domain=DomainsPeer::retrieveByPK($this->data["domain_id"]);
 		$id=$domain->getSiteId();
 		parent::doRemove();
-		if ($id)
-		{
+		if ($id) {
 			$sites=SitesPeer::retrieveByPK($domain->getSiteId());		
 			SitesPeer::doDelete($sites);
 

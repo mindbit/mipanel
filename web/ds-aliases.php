@@ -6,8 +6,8 @@ class AliasesRequest extends RestRequest {
 	function createOm() {
 		return new GlobalMailAliases();
 	}
-	function omToArray($om)
-	{
+
+	function omToArray($om) {
 		$ret=parent::omToArray($om);
 		$domain=DomainsPeer::retrieveByPK($om->getDomainId());
 		$ret["addressalias"]=$om->getName().'@'.$domain->getDomain();

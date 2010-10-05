@@ -7,8 +7,8 @@ class MailboxesRequest extends RestRequest {
 		return new Mailboxes();
 
 	}
-	function omToArray($om)
-	{
+
+	function omToArray($om) {
 		$ret=parent::omToArray($om);
 		$domain=DomainsPeer::retrieveByPK($om->getDomainId());
 		$ret["addressmail"]=$om->getMailbox().'@'.$domain->getDomain();
