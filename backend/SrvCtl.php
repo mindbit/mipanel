@@ -4,11 +4,19 @@
  * MiPanel class for controlling anything that needs root privileges.
  */
 class SrvCtl {
-	// for security reasons, this is defined as a constant
-	const ROOT = "/var/www/mipanel";
+	// for security reasons, these are defined as constants
+	const SAFE_MIN_UID			= 500;
+	const SAFE_MIN_GID			= 500;
 
-	const SAFE_MIN_UID = 500;
-	const SAFE_MIN_GID = 500;
+	const MIPANEL_ROOT			= "/var/www/mipanel";
+	const POSTFIX_ROOT			= "/etc/postfix";
+	const TEMPLATES_ROOT		= "/usr/lib/mipanel/templates";
+	const DOVECOT_CONF			= "/etc/dovecot.conf";
+	const DOVECOT_SQL_CONF		= "/etc/dovecot-sql.conf";
+	const PROFTPD_PAM_CONF		= "/etc/pam.d/proftpd";
+	const PROFTPD_PAM_SQL		= "/etc/pam-pgsql-proftpd.conf";
+	const REDIRECT_CONF			= "/etc/redirect.conf";
+	const MYDNS_CONF			= "/etc/mydns.conf";
 
 	protected $httpdModulesPath;
 
@@ -21,8 +29,8 @@ class SrvCtl {
 	protected static $validHttpdSignals =
 		array("start", "restart", "graceful", "stop", "graceful-stop");
 
-	function getRoot() {
-		return self::ROOT;
+	function getMipanelRoot() {
+		return self::MIPANEL_ROOT;
 	}
 
 	protected function runQuiet($cmd, $cwd = null, $env = null) {
@@ -47,7 +55,7 @@ class SrvCtl {
 			throw new Exception("Invalid home directory");
 
 		$cmd = "useradd -M -U -s /sbin/nologin -d " .
-			escapeshellarg(self::ROOT . "/" . $homeDir) . " " .
+			escapeshellarg(self::MIPANEL_ROOT . "/" . $homeDir) . " " .
 			escapeshellarg($username);
 		$res = $this->runQuiet($cmd);
 
@@ -88,7 +96,7 @@ class SrvCtl {
 		if ($uid < self::SAFE_MIN_UID || $gid < self::SAFE_MIN_GID)
 			throw new Exception("Bad uid/gid");
 
-		$siteRoot = self::ROOT . "/" . $siteName;
+		$siteRoot = self::MIPANEL_ROOT . "/" . $siteName;
 		
 		$this->mkdir($siteRoot, 0750, $uid, $gid);
 		$this->mkdir($siteRoot . "/conf", 0755, $uid, $gid);
@@ -129,7 +137,7 @@ class SrvCtl {
 	}
 
 	function getServerConfigPath($siteName) {
-		return self::ROOT . "/" . $siteName . "/conf/httpd.conf";
+		return self::MIPANEL_ROOT . "/" . $siteName . "/conf/httpd.conf";
 	}
 
 	function checkServerConfig($siteName, $username) {
@@ -165,7 +173,82 @@ class SrvCtl {
 		$cmd = $this->getHttpdCmd($cfg, "-k " . escapeshellarg($signal), $username);
 		return $this->runQuiet($cmd);
 	}
-}
 
+	protected function templateReplace($dest, $src, $params) {
+		$pairs = array();
+		foreach ($params as $k => $v)
+			$pairs['$' . '{' . $k . '}'] = $v;
+		$buf = file_get_contents($src);
+		file_put_contents($dest, strtr($buf, $pairs));
+	}
+
+	protected function backupFile($path) {
+		if (!file_exists($path))
+			return true;
+		$backupPath = $path . ".mipanel.bak";
+		if (file_exists($backupPath))
+			return false;
+		rename($path, $backupPath);
+	}
+
+	function setupDovecot($params) {
+		// dovecot config file
+		$this->backupFile(self::DOVECOT_CONF);
+		$this->templateReplace(self::DOVECOT_CONF, self::TEMPLATE_ROOT . "/templates/dovecot/dovecot.conf", array());
+		chmod(self::DOVECOT_CONF, 0644);
+
+		// database access file
+		$this->templateReplace(self::DOVECOT_SQL_CONF, self::TEMPLATE_ROOT . "/templates/dovecot/dovecot-sql.conf", $params);
+		chmod(self::DOVECOT_SQL_CONF, 0600);
+	}
+
+	function setupPostfix($params) {
+		$path = self::POSTFIX_ROOT . "/main.cf";
+		$this->backupFile($path);
+		$this->templateReplace($path, self::TEMPLATE_ROOT . "/templates/postfix/main.cf", array());
+		chmod($path, 0644);
+
+		$path = self::POSTFIX_ROOT . "/master.cf";
+		$this->backupFile($path);
+		$this->templateReplace($path, self::TEMPLATE_ROOT . "/templates/postfix/master.cf", array());
+		chmod($path, 0644);
+
+		$files = array(
+				"pgsql-gid-maps.cf",
+				"pgsql-mbox-domains.cf",
+				"pgsql-mbox-maps.cf",
+				"pgsql-uid-maps.cf",
+				"pgsql-virtual-maps.cf"
+				);
+		foreach ($files as $file) {
+			$path = self::POSTFIX_ROOT . "/" . $file;
+			$this->templateReplace($path, self::TEMPLATE_ROOT . "/templates/postfix/" . $file, $params);
+			chgrp($path, "postfix");
+			chmod($path, 0640);
+		}
+	}
+
+	function setupProftpd($params) {
+		$this->backupFile(self::PROFTPD_PAM_CONF);
+		$this->templateReplace(self::PROFTPD_PAM_CONF, self::TEMPLATE_ROOT . "/templates/pam.d/proftpd", array());
+		chmod(self::PROFTPD_PAM_CONF, 0644);
+
+		$this->templateReplace(self::PROFTPD_PAM_SQL, self::TEMPLATE_ROOT . "/templates/pam-pgsql/pam-pgsql-proftpd.conf", $params);
+		chmod(self::PROFTPD_PAM_SQL, 0600);
+	}
+
+	function setupRedirect($params) {
+		$this->backupFile(self::REDIRECT_CONF);
+		$this->templateReplace(self::REDIRECT_CONF, self::TEMPLATE_ROOT . "/templates/redirect/redirect.conf", $params);
+		chgrp(self::REDIRECT_CONF, "squid");
+		chmod(self::REDIRECT_CONF, 0640);
+	}
+
+	function setupMydns() {
+		$this->backupFile(self::MYDNS_CONF);
+		$this->templateReplace(self::MYDNS_CONF, self::TEMPLATE_ROOT . "/templates/mydns/mydns.conf", $params);
+		chmod(self::MYDNS_CONF, 0600);
+	}
+}
 
 ?>
