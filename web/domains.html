@@ -71,7 +71,7 @@ isc.TabsPanel.addProperties({
 				listGrid_AliasTo.setData([]);
 			},
 				fields: [
-					{name: "domain", title: "Domain",required:"true"},
+					{name: "domain", title: "Domain",required:"true",filterOnKeypress:true},
 					{name: "web", title: "Web", align:"center",  width:100, type:"image", canFilter:false},
 		      			{name: "ftp", title: "FTP", align:"center",  width:100, type:"image",canFilter:false},
                        			{name: "dns", title: "DNS", align:"center",  width:100, type:"image", canFilter:false},
@@ -397,7 +397,6 @@ isc.TabsPanel.addProperties({
 			container:this,
 			ID:"wizardForm",
 			width:50,
-			
 			container: this,
 			fields: [{name: "domain", type: "text", title: "Name",required:"true"}]
 		});
@@ -440,7 +439,12 @@ isc.TabsPanel.addProperties({
 			icon: "[SKIN]/actions/approve.png",
 			click: function () 
 			{ 
-				if (wizardFormFTP.validate()) this.container.createDomainFTP();
+				if (wizardFormFTP.validate()) 
+				{ 
+					valuesmanager_wizardForm.addMember(wizardFormFTP);
+					wizardFTPV.hide();
+					this.container.createDomain();
+				}
 			}
 		});
 
@@ -457,14 +461,9 @@ isc.TabsPanel.addProperties({
 			ID:"valuesmanager_wizardForm",
 			container:this,
 			dataSource: isc.DS.get("domains"),
-			members:[this.wizardForm,this.wizardForm2,this.wizardFormFTP]		
+			members:[this.wizardForm,this.wizardForm2]		
 		});
-		this.valuesmanager_wizardFormFTP=isc.ValuesManager.create({
-			ID:"valuesmanager_wizardFormFTP",
-			container:this,
-			dataSource: isc.DS.get("domains"),
-			members:[this.wizardFormFTP]		
-		});
+		
 		this.createButton = isc.IButton.create({
 			container: this,
 			title: "Create Domain",
@@ -472,12 +471,15 @@ isc.TabsPanel.addProperties({
 			icon: "[SKIN]/actions/approve.png",
 			click: function () 
 			{ 
+				if (wizardForm.validate())
+				{
 				if (wizardForm2.items[1]._value==true)
 				{
 					this.container.wizardV.hide();					
 					this.container.wizardFTPV.show();
 				}
 				else this.container.createDomain();
+				}
 			}
 		});
 		this.wizardV=isc.VLayout.create({
@@ -607,21 +609,7 @@ isc.TabsPanel.addProperties({
 			this.container.valuesmanager_wizardForm.editNewRecord();
 		});
 		this.valuesmanager_wizardForm.editNewRecord();
-		//this.wizardFTPV.hide();
-	},
-	createDomainFTP: function() {
-		this.valuesmanager_wizardFormFTP.saveData(function(dsResponse, data, dsRequest) {
-			if (dsResponse.status != 0)
-				return;
-			if (!this.isNewRecord())
-				return;
-			this.setSaveOperationType("update"); 
-			this.container.valuesmanager_wizardFormFTP.editNewRecord();
-		});
-		this.valuesmanager_wizardFormFTP.editNewRecord();
-		this.wizardFTPV.hide();
 	}
-
 });
 isc.ClassFactory.defineClass("TabWebDomain", isc.VLayout);
 
@@ -1424,11 +1412,24 @@ isc.TabFTPSett.addProperties({
 	},
 	saveRecord: function() {
 		this.settForm.saveData(function(dsResponse, data, dsRequest) {
+			if (data.enable_ftp==false)
+			{
+				this.container.settForm.setValue("enable_ftp",false);
+				label4.setContents("FTP service is not enabled");
+				label4.setIcon("[SKIN]/actions/remove.png");
+			}
+			else
+			{
+				this.container.settForm.setValue("enable_ftp",true);
+				label4.setContents("FTP service is enabled");
+				label4.setIcon("[SKIN]/actions/approve.png");
+			}
 			if (dsResponse.status != 0)
 				return;
 			if (!this.isNewRecord())
 				return;
 			this.container.settForm.editRecord(myrecord);
+			
 			this.setSaveOperationType("update");
 		});
 		this.settForm.editRecord(myrecord);
@@ -1626,7 +1627,8 @@ isc.MenuPanel.addProperties({
 					tabMail.hide();
 					summary.hide();
 					formLayout.show();
-					wizardV.hide();	
+					wizardV.hide();
+					wizardFTPV.hide();	
 					tabDNS.hide();
 				}		
 		});
@@ -1646,6 +1648,7 @@ isc.MenuPanel.addProperties({
 					summary.hide();
 					formLayout.hide();
 					wizardV.show();
+					wizardFTPV.hide();
 					tabDNS.hide();
 				}		
 		});
@@ -1664,6 +1667,7 @@ isc.MenuPanel.addProperties({
 					tabMail.hide();
 					formLayout.hide();
 					summary.hide();
+					wizardFTPV.hide();
 					tabDNS.hide();
 					if (listGrid.getSelectedRecord() != null) this.container.deleteRecord(); 
 						else isc.say('Select a domain first!');
