@@ -1,24 +1,3 @@
-<?
-require_once "auth.php";
-?>
-<html>
-<head>
-<script>var isomorphicDir="/isomorphic/";</script>
-<script src="/isomorphic/system/modules/ISC_Core.js"></script>
-<script src="/isomorphic/system/modules/ISC_Foundation.js"></script>
-<script src="/isomorphic/system/modules/ISC_Containers.js"></script>
-<script src="/isomorphic/system/modules/ISC_Grids.js"></script>
-<script src="/isomorphic/system/modules/ISC_Forms.js"></script>
-<script src="/isomorphic/system/modules/ISC_DataBinding.js"></script>
-<script src="/isomorphic/skins/TreeFrog/load_skin.js"></script>
-<script src="/isomorphic/login/reloginFlow.js"></script>
-<script src="/mpl/web/js/MplAuthenticator.js"></script>
-<script src="ds-all.js"></script>
-<link rel="stylesheet" type="text/css" href="css_mipanel.css" />
-<title>MiPanel</title>
-</head>
-<body>
-<script>
 nr_mail=0;
 dom_id=0;
 myrecord='';
@@ -1896,9 +1875,7 @@ isc.PanelView.addProperties({
              if (listGrid.getSelectedRecord() == null) stack1.hideSection(2); 
         }
 });
-isc.PanelView.create();
 
-</script>
-</body>
-</html>
-
+function showInterface() {
+	isc.PanelView.create();
+}
