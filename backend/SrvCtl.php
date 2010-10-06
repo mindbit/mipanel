@@ -8,7 +8,7 @@ class SrvCtl {
 	const SAFE_MIN_UID			= 500;
 	const SAFE_MIN_GID			= 500;
 
-	const MIPANEL_ROOT			= "/var/www/mipanel";
+	const WEB_ROOT				= "/var/www/mipanel";
 	const POSTFIX_ROOT			= "/etc/postfix";
 	const TEMPLATES_ROOT		= "/usr/lib/mipanel/templates";
 	const DOVECOT_CONF			= "/etc/dovecot.conf";
@@ -17,6 +17,8 @@ class SrvCtl {
 	const PROFTPD_PAM_SQL		= "/etc/pam-pgsql-proftpd.conf";
 	const REDIRECT_CONF			= "/etc/redirect.conf";
 	const MYDNS_CONF			= "/etc/mydns.conf";
+	const HTTPD_ROOT			= "/etc/httpd";
+	const MIPANEL_ROOT			= "/usr/lib/mipanel";
 
 	protected $httpdModulesPath;
 
@@ -29,8 +31,8 @@ class SrvCtl {
 	protected static $validHttpdSignals =
 		array("start", "restart", "graceful", "stop", "graceful-stop");
 
-	function getMipanelRoot() {
-		return self::MIPANEL_ROOT;
+	function getWebRoot() {
+		return self::WEB_ROOT;
 	}
 
 	protected function runQuiet($cmd, $cwd = null, $env = null) {
@@ -55,7 +57,7 @@ class SrvCtl {
 			throw new Exception("Invalid home directory");
 
 		$cmd = "useradd -M -U -s /sbin/nologin -d " .
-			escapeshellarg(self::MIPANEL_ROOT . "/" . $homeDir) . " " .
+			escapeshellarg(self::WEB_ROOT . "/" . $homeDir) . " " .
 			escapeshellarg($username);
 		$res = $this->runQuiet($cmd);
 
@@ -96,7 +98,7 @@ class SrvCtl {
 		if ($uid < self::SAFE_MIN_UID || $gid < self::SAFE_MIN_GID)
 			throw new Exception("Bad uid/gid");
 
-		$siteRoot = self::MIPANEL_ROOT . "/" . $siteName;
+		$siteRoot = self::WEB_ROOT . "/" . $siteName;
 		
 		$this->mkdir($siteRoot, 0750, $uid, $gid);
 		$this->mkdir($siteRoot . "/conf", 0755, $uid, $gid);
@@ -137,7 +139,7 @@ class SrvCtl {
 	}
 
 	function getServerConfigPath($siteName) {
-		return self::MIPANEL_ROOT . "/" . $siteName . "/conf/httpd.conf";
+		return self::WEB_ROOT . "/" . $siteName . "/conf/httpd.conf";
 	}
 
 	function checkServerConfig($siteName, $username) {
@@ -244,10 +246,23 @@ class SrvCtl {
 		chmod(self::REDIRECT_CONF, 0640);
 	}
 
-	function setupMydns() {
+	function setupMydns($params) {
 		$this->backupFile(self::MYDNS_CONF);
 		$this->templateReplace(self::MYDNS_CONF, self::TEMPLATE_ROOT . "/templates/mydns/mydns.conf", $params);
 		chmod(self::MYDNS_CONF, 0600);
+	}
+
+	function setupHttpd() {
+		$path = self::HTTPD_ROOT . "/conf.d/ssl.conf";
+		$this->backupFile($path);
+		$this->templateReplace($path, self::TEMPLATE_ROOT . "/templates/httpd/ssl.conf", array());
+	}
+
+	function setupMipanel($params) {
+		$path = self::MIPANEL_ROOT . "/backend/model/build/conf/mipanel-conf.php";
+		$this->templateReplace($path, self::TEMPLATE_ROOT . "/templates/mipanel/mipanel-conf.php", $params);
+		chgrp($path, "apache");
+		chmod($path, 0640);
 	}
 }
 

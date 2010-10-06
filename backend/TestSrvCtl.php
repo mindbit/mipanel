@@ -25,7 +25,7 @@ $client = new ProcOpenRmiClient($cmd);
 $srvCtl = $client->createInstance("SrvCtl");
 
 // ------- begin server configuration code -------
-$root = $srvCtl->getRoot();
+$root = $srvCtl->getWebRoot();
 $serverRoot = $root . "/" . $siteName;
 
 $udata = $srvCtl->userAdd($username, $siteName);
