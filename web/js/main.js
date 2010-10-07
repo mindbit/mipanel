@@ -91,6 +91,7 @@ isc.TabsPanel.addProperties({
 				{title:"Logs", pane:label12, ID:"logsMailTab"}*/
 			]
 		});
+	
 
 		this.tabFTP=isc.TabSet.create({
 			ID:"tabFTP",
@@ -1297,6 +1298,9 @@ isc.TabAliases.addProperties({
 			this.container.aliasToForm.editNewRecord({global_mail_alias_id:this.container.aliasId});
 		});
 	
+	listGrid.setData([]);
+	listGrid.fetchData(); 
+
 	},
 	deleteRecord: function() {
 		if (listGrid_Aliases.getSelectedRecord()==null) isc.say("Select a alias first!");
@@ -1412,6 +1416,10 @@ isc.TabFTPSett.addProperties({
 			this.setSaveOperationType("update");
 		});
 		this.settForm.editRecord(myrecord);
+
+		listGrid.setData([]);
+		listGrid.fetchData(); 
+
 	},
 	setDomainId: function(domainId) {
 		this.domainId = domainId;
@@ -1680,6 +1688,21 @@ isc.MenuPanel.addProperties({
 					formLayout.hide();
 					wizardV.hide();
 					tabDNS.hide();
+					
+					if (!listGrid.getSelectedRecord())
+					{
+						record = myrecord;
+					}
+					
+					for (i=0; i<listGrid.getTotalRows();i++)
+					{
+						if (myrecord.domain_id==listGrid.data.localData[i].domain_id)
+						{
+							myrecord.enable_mail=listGrid.data.localData[i].enable_mail;
+							listGrid.selectSingleRecord(i);
+							listGrid.recordClick(listGrid,listGrid.data.localData[i]);
+						}
+					}
 					summary.show();
 				}		
 		});
@@ -1710,9 +1733,6 @@ isc.MenuPanel.addProperties({
 					if (record.site_id!='')
 					{
 						configV.show();
-						/*if (listGrid.getSelectedRecord().enabled=="-1") 
-							enableWebAccesButton.show();
-						else enableWebAccesButton.hide();*/
 						unconfigV.hide();
 					}
 					else 
@@ -1839,8 +1859,6 @@ isc.MenuPanel.addProperties({
 	},
 
 	__deleteRecord: function() {
-		//mydata=isc.DS.get("sites");
-		//mydata.removeData();
 		listGrid.dataSource.removeData(listGrid.getSelectedRecord(), { target: this, methodName: "deleteRecordCallback" });
 		
 	},
@@ -1848,6 +1866,7 @@ isc.MenuPanel.addProperties({
 	deleteRecordCallback: function(dsResponse, data, dsRequest) {
 		if (dsResponse.status != 0)
 			return;
+		listGrid.fetchData();
 		stack1.hideSection(2);
 	},
 	setRecord: function(record) {
