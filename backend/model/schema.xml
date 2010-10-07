@@ -10,8 +10,13 @@
     <column name="enable_ftp" phpName="EnableFtp" type="BOOLEAN" required="true" defaultValue="false"/>
     <column name="site_id" phpName="SiteId" type="INTEGER" required="false"/>
     <column name="enable_mail" phpName="EnableMail" type="BOOLEAN" required="true" defaultValue="false"/>
+    <column name="password" phpName="Password" type="VARCHAR" size="64" required="false"/>
+    <column name="soa_id" phpName="SoaId" type="INTEGER" required="false"/>
     <foreign-key foreignTable="sites" name="domains_site_id_fkey">
       <reference local="site_id" foreign="site_id"/>
+    </foreign-key>
+    <foreign-key foreignTable="soa" name="domains_soa_id_fkey" onDelete="SET NULL" onUpdate="CASCADE">
+      <reference local="soa_id" foreign="id"/>
     </foreign-key>
     <index name="domains_domain_idx">
       <index-column name="domain"/>
@@ -76,6 +81,24 @@
       <reference local="mailbox_id" foreign="mailbox_id"/>
     </foreign-key>
   </table>
+  <table name="rr" phpName="Rr">
+    <column name="id" phpName="Id" type="INTEGER" primaryKey="true" autoIncrement="true" required="true"/>
+    <column name="zone" phpName="Zone" type="INTEGER" required="true"/>
+    <column name="name" phpName="Name" type="VARCHAR" size="64" required="true"/>
+    <column name="data" phpName="Data" type="BLOB" required="true"/>
+    <column name="aux" phpName="Aux" type="INTEGER" required="true" defaultValue="0"/>
+    <column name="ttl" phpName="Ttl" type="INTEGER" required="true" defaultValue="86400"/>
+    <column name="type" phpName="Type" type="VARCHAR" size="5" required="true"/>
+    <foreign-key foreignTable="soa" name="rr_zone_fkey" onDelete="CASCADE">
+      <reference local="zone" foreign="id"/>
+    </foreign-key>
+    <unique name="rr_zone_key">
+      <unique-column name="zone"/>
+      <unique-column name="name"/>
+      <unique-column name="type"/>
+      <unique-column name="data"/>
+    </unique>
+  </table>
   <table name="settings" phpName="Settings">
     <column name="setting_id" phpName="SettingId" type="INTEGER" primaryKey="true" autoIncrement="true" required="true"/>
     <column name="key" phpName="Key" type="VARCHAR" size="32" required="true"/>
@@ -88,7 +111,7 @@
     <column name="site_alias_id" phpName="SiteAliasId" type="INTEGER" primaryKey="true" autoIncrement="true" required="true"/>
     <column name="name" phpName="Name" type="VARCHAR" size="255" required="true"/>
     <column name="site_id" phpName="SiteId" type="INTEGER" required="true"/>
-    <foreign-key foreignTable="sites" name="site_aliases_site_id_fkey">
+    <foreign-key foreignTable="sites" name="site_aliases_site_id_fkey" onDelete="CASCADE" onUpdate="CASCADE">
       <reference local="site_id" foreign="site_id"/>
     </foreign-key>
     <unique name="site_aliases_name_idx">
@@ -102,7 +125,7 @@
     <column name="prio" phpName="Prio" type="VARCHAR" required="true"/>
     <column name="continu" phpName="Continu" type="VARCHAR" required="true"/>
     <column name="site_id" phpName="SiteId" type="INTEGER" required="false"/>
-    <foreign-key foreignTable="sites" name="site_rewrites_site_id_fkey">
+    <foreign-key foreignTable="sites" name="site_rewrites_site_id_fkey" onDelete="CASCADE" onUpdate="CASCADE">
       <reference local="site_id" foreign="site_id"/>
     </foreign-key>
   </table>
@@ -114,6 +137,23 @@
     <column name="enabled" phpName="Enabled" type="VARCHAR" required="true" defaultValue="1"/>
     <unique name="sites_name_idx">
       <unique-column name="name"/>
+    </unique>
+  </table>
+  <table name="soa" phpName="Soa">
+    <column name="id" phpName="Id" type="INTEGER" primaryKey="true" autoIncrement="true" required="true"/>
+    <column name="origin" phpName="Origin" type="VARCHAR" size="255" required="true"/>
+    <column name="ns" phpName="Ns" type="VARCHAR" size="255" required="true"/>
+    <column name="mbox" phpName="Mbox" type="VARCHAR" size="255" required="true"/>
+    <column name="serial" phpName="Serial" type="INTEGER" required="true" defaultValue="1"/>
+    <column name="refresh" phpName="Refresh" type="INTEGER" required="true" defaultValue="28800"/>
+    <column name="retry" phpName="Retry" type="INTEGER" required="true" defaultValue="7200"/>
+    <column name="expire" phpName="Expire" type="INTEGER" required="true" defaultValue="604800"/>
+    <column name="minimum" phpName="Minimum" type="INTEGER" required="true" defaultValue="86400"/>
+    <column name="ttl" phpName="Ttl" type="INTEGER" required="true" defaultValue="86400"/>
+    <column name="active" phpName="Active" type="VARCHAR" size="1" required="true"/>
+    <column name="xfer" phpName="Xfer" type="CHAR" size="255" required="false" defaultValue="NULL"/>
+    <unique name="soa_origin_key">
+      <unique-column name="origin"/>
     </unique>
   </table>
   <table name="users" phpName="Users">
