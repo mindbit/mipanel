@@ -1,7 +1,6 @@
 <?
 require_once "common.php";
 require_once "BaseForm.php";
-require_once "controller/Session.php";
 require_once "controller/MipanelAuthRequest.php";
 require_once "SmartClientAuthForm.php";
 
