@@ -1,4 +1,5 @@
 <?
+require_once "auth.php";
 require_once "config/config.php";
 require_once "common.php";
 require_once "RestDataSource.php";

@@ -1,9 +1,10 @@
 <?
+require_once "auth.php";
 require_once "config/config.php";
 require_once "common.php";
 require_once "RestDataSource.php";
 
-class DomainsWSRequest extends RestRequest {
+class DomainsDNSRequest extends RestRequest {
 	
 	function createOm() {
 		return new Domains();
@@ -74,7 +75,7 @@ class DomainsWSRequest extends RestRequest {
 	}
 }
 
-$request = new DomainsWSRequest();
+$request = new DomainsDNSRequest();
 $request->dispatch();
 echo $request->getResponse()->jsonEncode();
 ?>
