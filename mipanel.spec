@@ -3,12 +3,12 @@ Name:           mipanel
 Version:        0.1
 Release:        1
 License:        AGPL
-BuildArch:		i386
 Packager:       Radu Rendec
 Group:			Applications/Internet
 Vendor:         Mindbit SRL
 Source:			%{name}-%{version}.tar.gz
 BuildRoot:      %{_tmppath}/%{name}-%{version}-root
+BuildRequires:	libconfig-devel
 
 Requires:		php >= 5.2.0
 Requires:		php-mysql php-ldap
@@ -27,18 +27,25 @@ as basic priorities.
 
 %build
 
-pushd backend/model
-propel-gen
-popd
+sh autogen.sh
+%configure
+make
 
-pushd redirect
-%make
+pushd backend/model
+mv build.properties.default build.properties
+mv runtime-conf.xml.default runtime-conf.xml
+propel-gen
 popd
 
 %install
 rm -rf $RPM_BUILD_ROOT
 
-find backend/model/build \
+find \
+	backend/HttpdConf.php \
+	backend/SrvCtl.php \
+	backend/SrvCtlRmiServer.php \
+	backend/install.php \
+	backend/model/build \
 	sql/schema.sql \
 	sql/changelog.sql \
 	-type f -exec install -m 644 -D \{\} ${RPM_BUILD_ROOT}%{_libdir}/mipanel/\{\} \;
@@ -47,7 +54,8 @@ find backend \
 	web \
 	-type f -exec install -m 644 -D \{\} ${RPM_BUILD_ROOT}%{_libdir}/mipanel/\{\} \;
 
-install -m 755 -D redirect/redirect ${RPM_BUILD_ROOT}%{_bindir}/redirect
+install -m 755 -D src/redirect/redirect ${RPM_BUILD_ROOT}%{_bindir}/redirect
+install -m 640 -D src/redirect/redirect.conf.default ${RPM_BUILD_ROOT}%{_sysconfdir}/mipanel/redirect.conf
 
 for dir in "in" "out"; do
 	install -m 640 -D templates/squid-$dir/squid.conf ${RPM_BUILD_ROOT}%{_sysconfdir}/mipanel/squid-$dir/squid.conf
@@ -65,7 +73,7 @@ find dovecot \
 	postfix \
 	redirect \
 	-type f -exec install -m 644 -D \{\} ${RPM_BUILD_ROOT}%{_libdir}/mipanel/templates/\{\} \;
-install -m 644 -D templates/httpd/ssl.conf ${RPM_BUILD_ROOT}%{_libdir}/mipanel/templates/httpd/ssl.conf
+install -m 644 -D httpd/ssl.conf ${RPM_BUILD_ROOT}%{_libdir}/mipanel/templates/httpd/ssl.conf
 popd
 
 %clean
@@ -88,16 +96,16 @@ rm -rf $RPM_BUILD_DIR/%{name}-%{version}
 %defattr(-,root,squid)
 %config(noreplace) %{_sysconfdir}/mipanel/squid-in/squid.conf
 %config(noreplace) %{_sysconfdir}/mipanel/squid-out/squid.conf
+%config(noreplace) %{_sysconfdir}/mipanel/redirect.conf
 
 %defattr(-,squid,squid)
-%dir %{_var}/spool/mipanel/squid-$dir
-%dir %{_var}/log/mipanel/squid-$dir
+%dir %{_var}/spool/mipanel/squid-in
+%dir %{_var}/log/mipanel/squid-out
 
 # %doc scripts/sql/schema.sql
 # %doc scripts/sql/update-db.sql
 
 %defattr(-,root,apache)
-%config(noreplace) %{_sysconfdir}/redirect.conf
 
 %changelog
 * Tue Oct  5 2010 Radu Rendec <radu.rendec@mindbit.ro> - 0.1-1

@@ -1,3 +1,6 @@
+#define _BSD_SOURCE
+#define _POSIX_C_SOURCE 2
+
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -148,7 +151,7 @@ static int sql_reload_rewrites(struct host_info *host, char *site_id)
 	struct list_head old_lh;
 	struct site_rewrite *entry, *tmp;
 	char *pattern, *replacement;
-	int i, ret = 0, rewrite_id, prio, cont;
+	int i, ret = 0, prio, cont;
 
 	res = _PQexecPrepared(PSTMT_GET_SITE_REWRITES, 1,
 			(const char * const[]){site_id},
@@ -501,7 +504,7 @@ static void process_line(char *s)
 {
 	struct host_info s1, *s2;
 	size_t hostl;
-	char ip[MAX_IP_LENGTH+1], *host, *path, *new_url, save_host;
+	char ip[MAX_IP_LENGTH+1], *host, *path, *new_url = NULL, save_host;
 	int r, port;
 	char *site_id = NULL;
 

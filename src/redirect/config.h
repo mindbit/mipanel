@@ -34,4 +34,14 @@ int parse_config(void);
 
 extern struct config config;
 
+#ifdef HAVE_CONFIG_H
+#include "../../config.h"
+#endif
+
+#ifndef LIBCONFIG_NEW_API
+#define CONFIG_LOOKUP_STRING(config, path, value) (*(value) = config_lookup_string(config, path))
+#else
+#define CONFIG_LOOKUP_STRING(config, path, value) (config_lookup_string(config, path, value) == CONFIG_TRUE)
+#endif
+
 #endif

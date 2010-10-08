@@ -14,7 +14,7 @@
  * Server configuration initializer.
  */
 struct config config = {
-	.path = "/etc/redirect.conf",
+	.path = "/etc/mipanel/redirect.conf",
 	.logging_type = LOGGING_TYPE_STDERR,
 	.logging_level = LOG_INFO,
 	.logging_facility = LOG_DAEMON,
@@ -91,8 +91,7 @@ int parse_config(void)
 	/*
 	 * Logging configuration
 	 */
-	value = config_lookup_string(&cf, "logging.type");
-	if (value) {
+	if (CONFIG_LOOKUP_STRING(&cf, "logging.type", &value)) {
 		if (!strcmp(value, "file"))
 			local.logging_type = LOGGING_TYPE_LOGFILE;
 		else if (!strcmp(value, "stderr"))
@@ -106,21 +105,21 @@ int parse_config(void)
 	}
 
 	if (local.logging_type == LOGGING_TYPE_LOGFILE) {
-		if (!(value = config_lookup_string(&cf, "logging.path"))) {
+		if (!CONFIG_LOOKUP_STRING(&cf, "logging.path", &value)) {
 			log(LOG_ERR, "logging.path not found in config file.\n");
 			goto out_err;
 		}
 		local.logging_path = strdup(value);
 	}
 
-	if ((value = config_lookup_string(&cf, "logging.level"))) {
+	if (CONFIG_LOOKUP_STRING(&cf, "logging.level", &value)) {
 		if ((local.logging_level = str_2_val(log_levels, value)) < 0) {
 			log(LOG_ERR, "Invalid logging.level value: '%s'.\n", value);
 			goto out_err;
 		}
 	}
 
-	if ((value = config_lookup_string(&cf, "logging.facility"))) {
+	if (CONFIG_LOOKUP_STRING(&cf, "logging.facility", &value)) {
 		if ((local.logging_facility = str_2_val(log_facilities, value)) < 0) {
 			log(LOG_ERR, "Invalid logging.facility value: '%s'\n", value);
 			goto out_err;
@@ -161,15 +160,16 @@ int parse_config(void)
 	/*
 	 * Redirect specific configuration
 	 */
-	if (!(value = config_lookup_string(&cf, "redirect.err_url"))) {
+	if (!CONFIG_LOOKUP_STRING(&cf, "redirect.err_url", &value)) {
 		log(LOG_ERR, "redirect.err_url not found in config file.\n");
 		goto out_err;
 	}
 	local.err_url = strdup(value);
-	if (!(local.cache_timeout = config_lookup_int(&cf, "redirect.cache_timeout"))) {
+	if (!CONFIG_LOOKUP_STRING(&cf, "redirect.cache_timeout", &value)) {
 		log(LOG_ERR, "redirect.cache_timeout not found in config file.\n");
 		goto out_err;
 	}
+	local.cache_timeout = atoi(value);
 
 	/* TODO parse the SQL prepared statements */
 
