@@ -1,3 +1,5 @@
+%define mipanel_root %{_prefix}/lib/mipanel
+
 Summary:        Mindbit Webhosting Platform
 Name:           mipanel
 Version:        0.1
@@ -52,7 +54,7 @@ find \
 
 find backend \
 	web \
-	-type f -exec install -m 644 -D \{\} ${RPM_BUILD_ROOT}%{_libdir}/mipanel/\{\} \;
+	-type f -exec install -m 644 -D \{\} ${RPM_BUILD_ROOT}%{mipanel_root}/\{\} \;
 
 install -m 755 -D src/redirect/redirect ${RPM_BUILD_ROOT}%{_bindir}/redirect
 install -m 640 -D src/redirect/redirect.conf.default ${RPM_BUILD_ROOT}%{_sysconfdir}/mipanel/redirect.conf
@@ -72,8 +74,8 @@ find dovecot \
 	pam-pgsql \
 	postfix \
 	redirect \
-	-type f -exec install -m 644 -D \{\} ${RPM_BUILD_ROOT}%{_libdir}/mipanel/templates/\{\} \;
-install -m 644 -D httpd/ssl.conf ${RPM_BUILD_ROOT}%{_libdir}/mipanel/templates/httpd/ssl.conf
+	-type f -exec install -m 644 -D \{\} ${RPM_BUILD_ROOT}%{mipanel_root}/templates/\{\} \;
+install -m 644 -D httpd/ssl.conf ${RPM_BUILD_ROOT}%{mipanel_root}/templates/httpd/ssl.conf
 popd
 
 %clean
@@ -83,15 +85,18 @@ rm -rf $RPM_BUILD_DIR/%{name}-%{version}
 %files
 %defattr(-,root,root)
 %config(noreplace) %{_sysconfdir}/httpd/conf/mipanel.conf
-%{_libdir}/mipanel/backend/model/build/classes
-%{_libdir}/mipanel/backend/model/build/conf/classmap-mipanel-conf.php
-%{_libdir}/mipanel/backend/model/build/sql
-%{_libdir}/mipanel/backend/install.php
-%{_libdir}/mipanel/backend/HttpdConf.php
-%{_libdir}/mipanel/backend/SrvCtl.php
-%{_libdir}/mipanel/sql
-%{_libdir}/mipanel/templates
-%{_libdir}/mipanel/web
+%config(noreplace) %{mipanel_root}/backend/model/build/conf/mipanel-conf.php
+%{_bindir}/redirect
+%{mipanel_root}/backend/model/build/classes
+%{mipanel_root}/backend/model/build/conf/classmap-mipanel-conf.php
+%{mipanel_root}/backend/model/build/sql
+%{mipanel_root}/backend/install.php
+%{mipanel_root}/backend/HttpdConf.php
+%{mipanel_root}/backend/SrvCtl.php
+%{mipanel_root}/backend/SrvCtlRmiServer.php
+%{mipanel_root}/sql
+%{mipanel_root}/templates
+%{mipanel_root}/web
 
 %defattr(-,root,squid)
 %config(noreplace) %{_sysconfdir}/mipanel/squid-in/squid.conf
