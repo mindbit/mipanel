@@ -10,7 +10,7 @@ class SrvCtl {
 
 	const WEB_ROOT				= "/var/www/mipanel";
 	const POSTFIX_ROOT			= "/etc/postfix";
-	const TEMPLATES_ROOT		= "/usr/lib/mipanel/templates";
+	const TEMPLATE_ROOT			= "/usr/lib/mipanel/templates";
 	const DOVECOT_CONF			= "/etc/dovecot.conf";
 	const DOVECOT_SQL_CONF		= "/etc/dovecot-sql.conf";
 	const PROFTPD_PAM_CONF		= "/etc/pam.d/proftpd";
@@ -196,23 +196,23 @@ class SrvCtl {
 	function setupDovecot($params) {
 		// dovecot config file
 		$this->backupFile(self::DOVECOT_CONF);
-		$this->templateReplace(self::DOVECOT_CONF, self::TEMPLATE_ROOT . "/templates/dovecot/dovecot.conf", array());
+		$this->templateReplace(self::DOVECOT_CONF, self::TEMPLATE_ROOT . "/dovecot/dovecot.conf", array());
 		chmod(self::DOVECOT_CONF, 0644);
 
 		// database access file
-		$this->templateReplace(self::DOVECOT_SQL_CONF, self::TEMPLATE_ROOT . "/templates/dovecot/dovecot-sql.conf", $params);
+		$this->templateReplace(self::DOVECOT_SQL_CONF, self::TEMPLATE_ROOT . "/dovecot/dovecot-sql.conf", $params);
 		chmod(self::DOVECOT_SQL_CONF, 0600);
 	}
 
 	function setupPostfix($params) {
 		$path = self::POSTFIX_ROOT . "/main.cf";
 		$this->backupFile($path);
-		$this->templateReplace($path, self::TEMPLATE_ROOT . "/templates/postfix/main.cf", array());
+		$this->templateReplace($path, self::TEMPLATE_ROOT . "/postfix/main.cf", array());
 		chmod($path, 0644);
 
 		$path = self::POSTFIX_ROOT . "/master.cf";
 		$this->backupFile($path);
-		$this->templateReplace($path, self::TEMPLATE_ROOT . "/templates/postfix/master.cf", array());
+		$this->templateReplace($path, self::TEMPLATE_ROOT . "/postfix/master.cf", array());
 		chmod($path, 0644);
 
 		$files = array(
@@ -224,7 +224,7 @@ class SrvCtl {
 				);
 		foreach ($files as $file) {
 			$path = self::POSTFIX_ROOT . "/" . $file;
-			$this->templateReplace($path, self::TEMPLATE_ROOT . "/templates/postfix/" . $file, $params);
+			$this->templateReplace($path, self::TEMPLATE_ROOT . "/postfix/" . $file, $params);
 			chgrp($path, "postfix");
 			chmod($path, 0640);
 		}
@@ -232,35 +232,35 @@ class SrvCtl {
 
 	function setupProftpd($params) {
 		$this->backupFile(self::PROFTPD_PAM_CONF);
-		$this->templateReplace(self::PROFTPD_PAM_CONF, self::TEMPLATE_ROOT . "/templates/pam.d/proftpd", array());
+		$this->templateReplace(self::PROFTPD_PAM_CONF, self::TEMPLATE_ROOT . "/pam.d/proftpd", array());
 		chmod(self::PROFTPD_PAM_CONF, 0644);
 
-		$this->templateReplace(self::PROFTPD_PAM_SQL, self::TEMPLATE_ROOT . "/templates/pam-pgsql/pam-pgsql-proftpd.conf", $params);
+		$this->templateReplace(self::PROFTPD_PAM_SQL, self::TEMPLATE_ROOT . "/pam-pgsql/pam-pgsql-proftpd.conf", $params);
 		chmod(self::PROFTPD_PAM_SQL, 0600);
 	}
 
 	function setupRedirect($params) {
 		$this->backupFile(self::REDIRECT_CONF);
-		$this->templateReplace(self::REDIRECT_CONF, self::TEMPLATE_ROOT . "/templates/redirect/redirect.conf", $params);
+		$this->templateReplace(self::REDIRECT_CONF, self::TEMPLATE_ROOT . "/redirect/redirect.conf", $params);
 		chgrp(self::REDIRECT_CONF, "squid");
 		chmod(self::REDIRECT_CONF, 0640);
 	}
 
 	function setupMydns($params) {
 		$this->backupFile(self::MYDNS_CONF);
-		$this->templateReplace(self::MYDNS_CONF, self::TEMPLATE_ROOT . "/templates/mydns/mydns.conf", $params);
+		$this->templateReplace(self::MYDNS_CONF, self::TEMPLATE_ROOT . "/mydns/mydns.conf", $params);
 		chmod(self::MYDNS_CONF, 0600);
 	}
 
 	function setupHttpd() {
 		$path = self::HTTPD_ROOT . "/conf.d/ssl.conf";
 		$this->backupFile($path);
-		$this->templateReplace($path, self::TEMPLATE_ROOT . "/templates/httpd/ssl.conf", array());
+		$this->templateReplace($path, self::TEMPLATE_ROOT . "/httpd/ssl.conf", array());
 	}
 
 	function setupMipanel($params) {
 		$path = self::MIPANEL_ROOT . "/backend/model/build/conf/mipanel-conf.php";
-		$this->templateReplace($path, self::TEMPLATE_ROOT . "/templates/mipanel/mipanel-conf.php", $params);
+		$this->templateReplace($path, self::TEMPLATE_ROOT . "/mipanel/mipanel-conf.php", $params);
 		chgrp($path, "apache");
 		chmod($path, 0640);
 	}

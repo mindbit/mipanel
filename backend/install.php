@@ -2,7 +2,7 @@
 require_once "Env.php";
 require_once "SrvCtl.php";
 
-function mkpasswd($len = 10) {
+function mkpasswd($len = 16) {
 	$ret = "";
 	for ($i = 0; $i < $len; $i++) {
 		$asc = mt_rand(0, 61);
@@ -20,7 +20,7 @@ function mkpasswd($len = 10) {
 }
 
 function sqlUserPass($params) {
-	echo "CREATE USER " . $params["DB_USER"] . "\n";
+	echo "CREATE USER " . $params["DB_USER"] . ";\n";
 	echo "ALTER USER " . $params["DB_USER"] . " PASSWORD '" .
 		$params["DB_PASSWORD"] . "';\n";
 }
@@ -51,6 +51,8 @@ function main() {
 	$params["DB_PASSWORD"] = mkpasswd();
 	$sc->setupProftpd($params);
 	sqlUserPass($params);
+
+	$sc->setupHttpd();
 }
 
 main();

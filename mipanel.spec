@@ -13,9 +13,10 @@ BuildRoot:      %{_tmppath}/%{name}-%{version}-root
 BuildRequires:	libconfig-devel
 
 Requires:		php >= 5.2.0
-Requires:		php-mysql php-ldap
+Requires:		php-mysql php-pear php-pgsql
 Requires:		mpl
-Requires:		dovecot squid postgresql-server mydns
+Requires:		dovecot mod_extract_forwarded mod_ssl mydns mydns-pgsql
+Requires:		postfix postgresql-server proftpd squid
 
 %description
 Mipanel is an integrated system for the administration of web servers
@@ -55,6 +56,8 @@ find \
 find backend \
 	web \
 	-type f -exec install -m 644 -D \{\} ${RPM_BUILD_ROOT}%{mipanel_root}/\{\} \;
+mv ${RPM_BUILD_ROOT}%{mipanel_root}/web/config/config.php.default \
+	${RPM_BUILD_ROOT}%{mipanel_root}/web/config/config.php
 
 install -m 755 -D src/redirect/redirect ${RPM_BUILD_ROOT}%{_bindir}/redirect
 install -m 640 -D src/redirect/redirect.conf.default ${RPM_BUILD_ROOT}%{_sysconfdir}/mipanel/redirect.conf
@@ -69,6 +72,7 @@ install -m 644 -D templates/httpd/mipanel.conf ${RPM_BUILD_ROOT}%{_sysconfdir}/h
 
 pushd templates
 find dovecot \
+	mipanel \
 	mydns \
 	pam.d \
 	pam-pgsql \
