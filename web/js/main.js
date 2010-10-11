@@ -40,6 +40,7 @@ isc.TabsPanel.addProperties({
 				this.container.summary.show();
 				this.container.formLayout.hide();
 				this.container.wizardV.hide();
+				this.container.wizardFTPV.hide();
 				this.container.tabWeb.hide();
 				this.container.tabFTP.hide();
 				this.container.tabMail.hide();
@@ -1687,6 +1688,7 @@ isc.MenuPanel.addProperties({
 					tabMail.hide();
 					formLayout.hide();
 					wizardV.hide();
+					wizardFTPV.hide();
 					tabDNS.hide();
 					
 					if (!listGrid.getSelectedRecord())
@@ -1723,6 +1725,7 @@ isc.MenuPanel.addProperties({
 					summary.hide();
 		                        tabWeb.selectTab(0);
 					wizardV.hide();
+					wizardFTPV.hide();
 					tabDNS.hide();
 
 					if (!listGrid.getSelectedRecord())
@@ -1761,6 +1764,7 @@ isc.MenuPanel.addProperties({
 		                        tabFTP.selectTab(0);
 					tabDNS.hide();
 					wizardV.hide();
+					wizardFTPV.hide();
 				}		
 		});
 		this.menu34=isc.Button.create({
@@ -1819,6 +1823,7 @@ isc.MenuPanel.addProperties({
 					formLayout.hide();
 					summary.hide();
 					wizardV.hide();
+					wizardFTPV.hide();
 				}		
 		});
 		this.treegrid3=isc.VLayout.create({
