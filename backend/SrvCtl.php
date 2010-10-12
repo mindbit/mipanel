@@ -192,7 +192,7 @@ class SrvCtl {
 		if (!file_exists($pidFile))
 			return false;
 
-		$pid = file_get_contents($pidFile);
+		$pid = (int)file_get_contents($pidFile);
 
 		return posix_kill($pid, 0);
 	}

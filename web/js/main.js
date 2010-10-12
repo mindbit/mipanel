@@ -21,7 +21,32 @@ isc.TabsPanel.addProperties({
 			dataSource: isc.DS.get("domains"),
 			autoFetchData: true,
 			showResizeBar: true,
-			recordClick: function (viewer, record){
+			recordClick: function (viewer, record) {
+				isc.RPCManager.sendRequest({
+					containsCredentials: false,
+					actionURL: "MipanelHttpd.php",
+					useSimpleHttp: true,
+					evalResult: true,
+					showPrompt: false,
+					params: {
+						operationType: "status",
+						domain_id: record.domain_id
+					},
+					callback: function (rpcResponse) {
+						var text = "Web server is ";
+						var icon = "[SKIN]/actions/";
+						if (rpcResponse.data.status) {
+							text += "started";
+							icon += "approve.png";
+						}
+						else {
+							text += "stopped";
+							icon += "remove.png";
+						}
+						viewer.container.label3.setContents(text);
+						viewer.container.label3.setIcon(icon);
+					}
+				});
 				stack1.setSectionTitle(2,record.domain.toUpperCase());
 				stack1.showSection(2);
 				this.container.loadRecord(record);
