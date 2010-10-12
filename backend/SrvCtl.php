@@ -71,6 +71,15 @@ class SrvCtl {
 		assert($uinfo["uid"] >= self::SAFE_MIN_UID);
 		assert($uinfo["gid"] >= self::SAFE_MIN_GID);
 
+		/*
+		 * Manually create the home directory, even if web is not
+		 * enabled. This is required for ftp.
+		 */
+		$siteRoot = self::WEB_ROOT . "/" . $homeDir;
+		mkdir($siteRoot, 0755, true);
+		chmod($siteRoot, 0750);
+		$this->chown($siteRoot, $uinfo["uid"], $uinfo["gid"]);
+
 		return array(
 				"uid" => $uinfo["uid"],
 				"gid" => $uinfo["gid"]
@@ -100,7 +109,8 @@ class SrvCtl {
 
 		$siteRoot = self::WEB_ROOT . "/" . $siteName;
 		
-		$this->mkdir($siteRoot, 0750, $uid, $gid);
+		if (!is_dir($siteRoot))
+			$this->mkdir($siteRoot, 0750, $uid, $gid);
 		$this->mkdir($siteRoot . "/conf", 0755, $uid, $gid);
 		$this->mkdir($siteRoot . "/logs", 0755, $uid, $gid);
 		$this->mkdir($siteRoot . "/run", 0755, $uid, $gid);
@@ -174,6 +184,17 @@ class SrvCtl {
 		$cfg = $this->getServerConfigPath($siteName);
 		$cmd = $this->getHttpdCmd($cfg, "-k " . escapeshellarg($signal), $username);
 		return $this->runQuiet($cmd);
+	}
+
+	function httpdAlive($siteName) {
+		$pidFile = self::WEB_ROOT . "/" . $siteName . "/run/httpd.pid";
+
+		if (!file_exists($pidFile))
+			return false;
+
+		$pid = file_get_contents($pidFile);
+
+		return posix_kill($pid, 0);
 	}
 
 	protected function templateReplace($dest, $src, $params) {

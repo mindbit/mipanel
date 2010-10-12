@@ -1,0 +1,9 @@
+#!/bin/bash
+
+#
+# You need to add the following line to /etc/sudoers to give apache
+# rights to run this script as root:
+#
+# apache   ALL=(root)  NOPASSWD: /usr/bin/rmiserver
+#
+/usr/bin/php -q -dinclude_path=.:/usr/share/pear:/usr/share/php:/usr/share/mpl:/usr/lib/mipanel/backend /usr/lib/mipanel/backend/SrvCtlRmiServer.php

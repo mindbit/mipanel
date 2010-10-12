@@ -3,6 +3,8 @@ require_once "auth.php";
 require_once "config/config.php";
 require_once "common.php";
 require_once "RestDataSource.php";
+require_once "Rmi.php";
+require_once "HttpdConf.php";
 
 class DomainsRequest extends RestRequest {
 	
@@ -27,29 +29,51 @@ class DomainsRequest extends RestRequest {
 	}
 
 	function doSave() {
-		if (isset($this->data["enable_web"]) && $this->data["enable_web"]==true) {
+		if (!isset($this->data["username"])) {
+			$username = explode(".",$this->data["domain"]);
+			$this->data["username"] = $username[0];
+		}
+
+		/* create the system user */
+		$client = new ProcOpenRmiClient("sudo ".RMI_SERVER_PATH." 2>&1");
+
+		$srvCtl = $client->createInstance("SrvCtl");
+		$siteName = "www.".$this->data["domain"];
+		$user = $srvCtl->userAdd($this->data["username"], $siteName);
+
+		if (isset($this->data["enable_web"]) && $this->data["enable_web"] == true) {
 			$c = new Criteria();
 			$c->addDescendingOrderByColumn(SitesPeer::SERVER_PORT);
 			$c->setLimit(1);	
 			$mysites=SitesPeer::doSelect($c);
-			$max_server_port='8000';
+			$max_server_port = 8000;
 			if ($mysites)	
-			foreach($mysites as $mysite) {
-				$max_server_port=$mysite->getServerPort()+1;
-			}
-			$site=new Sites();
-			$name="www.".$this->data["domain"];
-			$site->setName($name);	
-			$site->setServerIp("127.0.0.1");
+				foreach ($mysites as $mysite) {
+					$max_server_port = $mysite->getServerPort() + 1;
+				}
+			$site = new Sites();
+			$site->setName($siteName);
+			$site->setServerIp(IP_DEFAULT);
 			$site->setServerPort($max_server_port);
 			$site->setEnabled("0");	
 			$site->save();
-			$site_alias=new SiteAliases();
+			$site_alias = new SiteAliases();
 			$site_alias->setName($this->data["domain"]);
 			$site_alias->setSiteId($site->getSiteId());
 			$site_alias->save();	
 			$this->om->setSiteId($site->getSiteId());  
-			
+
+			/* setup httpd root folder */
+			$serverRoot = $srvCtl->getWebRoot() . "/".$siteName;
+			$srvCtl->serverSetup($siteName, $user["uid"], $user["gid"]);
+
+			$httpdConf = new HttpdConf();
+			$httpdConf->setName($siteName);
+			$httpdConf->setPort($max_server_port);
+			$httpdConf->setServerRoot($serverRoot);
+
+			$srvCtl->updateServerConfig($siteName, $httpdConf->create(), $this->data["username"]);
+			$srvCtl->sendHttpdSignal($siteName, "start", $this->data["username"]);
 		}
 		
 		if (isset($this->data["enable_dns"]) && $this->data["enable_dns"]==true) {
@@ -107,10 +131,7 @@ class DomainsRequest extends RestRequest {
 		
 			$this->om->setSoaId($soa->getId());  		
 		}
-		if (!isset($this->data["username"])) {
-			$username=explode(".",$this->data["domain"]);
-			$this->om->setUsername($username[0]);
-		}
+
 		parent::doSave();
 	}
 
