@@ -2,7 +2,7 @@
 isc.RestDataSource.create({
     ID:"domains",
     dataFormat:"json",
-    dataURL:"ds-domains.php",
+    dataURL:"ds_domains.php",
     transformResponse : function (dsResponse, dsRequest, data) {        
     		var dsResponse = this.Super("transformResponse", arguments);
 		for (i=0; i<dsResponse.totalRows; i++)
@@ -57,7 +57,7 @@ isc.RestDataSource.create({
 isc.RestDataSource.create({
     ID:"domainsWS",
     dataFormat:"json",
-    dataURL:"ds-domainsWS.php",
+    dataURL:"ds_domainsWS.php",
    
     fields:[
         {type: "sequence", name: "domain_id", primaryKey: true},
@@ -76,7 +76,7 @@ isc.RestDataSource.create({
 isc.RestDataSource.create({
     ID:"domainsDNS",
     dataFormat:"json",
-    dataURL:"ds-domainsDNS.php",
+    dataURL:"ds_domainsDNS.php",
    
     fields:[
         {type: "sequence", name: "domain_id", primaryKey: true},
@@ -95,7 +95,7 @@ isc.RestDataSource.create({
 isc.RestDataSource.create({
     ID:"mailboxes",
     dataFormat:"json",
-    dataURL:"ds-mailboxes.php",
+    dataURL:"ds_mailboxes.php",
     fields:[
         {type: "sequence", name: "mailbox_id", primaryKey: true},
 	{name: "mailbox_id"},
@@ -117,7 +117,7 @@ isc.RestDataSource.create({
 isc.RestDataSource.create({
     ID:"forwards",
     dataFormat:"json",
-    dataURL:"ds-forwards.php",
+    dataURL:"ds_forwards.php",
     fields:[
         {type: "sequence", name: "mailbox_forward_id", primaryKey: true},
 	{name: "mailbox_forward_id"},
@@ -135,7 +135,7 @@ isc.RestDataSource.create({
 isc.RestDataSource.create({
     ID:"aliases",
     dataFormat:"json",
-    dataURL:"ds-aliases.php",
+    dataURL:"ds_aliases.php",
     fields:[
         {type: "sequence", name: "global_mail_alias_id", primaryKey: true},
 	{name: "global_mail_alias_id"},
@@ -154,7 +154,7 @@ isc.RestDataSource.create({
 isc.RestDataSource.create({
     ID:"aliasesto",
     dataFormat:"json",
-    dataURL:"ds-aliasesto.php",
+    dataURL:"ds_aliasesto.php",
     fields:[
         {type: "sequence", name: "global_mail_alias_to_id", primaryKey: true},
 	{name: "global_mail_alias_to_id"},
@@ -171,7 +171,7 @@ isc.RestDataSource.create({
 isc.RestDataSource.create({
     ID:"users",
     dataFormat:"json",
-    dataURL:"ds-users.php",
+    dataURL:"ds_users.php",
     fields:[
         {type: "sequence", name: "user_id", primaryKey: true},
 	{name: "user_id"},
@@ -190,7 +190,7 @@ isc.RestDataSource.create({
 isc.RestDataSource.create({
     ID:"sites",
     dataFormat:"json",
-    dataURL:"ds-sites.php",
+    dataURL:"ds_sites.php",
    
     fields:[
         {type: "sequence", name: "site_id", primaryKey: true},
