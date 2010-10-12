@@ -1,5 +1,4 @@
-
-isc.RestDataSource.create({
+isc.MplDataSource.create({
     ID:"domains",
     dataFormat:"json",
     dataURL:"ds_domains.php",
@@ -45,16 +44,10 @@ isc.RestDataSource.create({
 	{name:"nr_mailboxes"},
 	{name:"nr_aliases"},
 	{name:"soa_id"}
-    ],
-    operationBindings:[
-       {operationType:"fetch", dataProtocol:"postMessage"},
-       {operationType:"add", dataProtocol:"postMessage"},
-       {operationType:"remove", dataProtocol:"postMessage"},
-       {operationType:"update", dataProtocol:"postMessage"}
-    ],
+    ]
 }); 
 
-isc.RestDataSource.create({
+isc.MplDataSource.create({
     ID:"domainsWS",
     dataFormat:"json",
     dataURL:"ds_domainsWS.php",
@@ -64,16 +57,10 @@ isc.RestDataSource.create({
 	{name: "domain_id"},
         {title:"Domain", name:"domain", type: "text",  required: true},
 	{name: "site_id"}
-    ],
-    operationBindings:[
-       {operationType:"fetch", dataProtocol:"postMessage"},
-       {operationType:"add", dataProtocol:"postMessage"},
-       {operationType:"remove", dataProtocol:"postMessage"},
-       {operationType:"update", dataProtocol:"postMessage"}
-    ],
+    ]
 }); 
 
-isc.RestDataSource.create({
+isc.MplDataSource.create({
     ID:"domainsDNS",
     dataFormat:"json",
     dataURL:"ds_domainsDNS.php",
@@ -83,16 +70,10 @@ isc.RestDataSource.create({
 	{name: "domain_id"},
         {title:"Domain", name:"domain", type: "text",  required: true},
 	{name: "soa_id"}
-    ],
-    operationBindings:[
-       {operationType:"fetch", dataProtocol:"postMessage"},
-       {operationType:"add", dataProtocol:"postMessage"},
-       {operationType:"remove", dataProtocol:"postMessage"},
-       {operationType:"update", dataProtocol:"postMessage"}
-    ],
+    ]
 }); 
 
-isc.RestDataSource.create({
+isc.MplDataSource.create({
     ID:"mailboxes",
     dataFormat:"json",
     dataURL:"ds_mailboxes.php",
@@ -105,16 +86,10 @@ isc.RestDataSource.create({
 	{name: "addressmail"},
 	{name: "copy_on_forward",type:"checkbox"},
 	{name: "nr_forwards"}
-    ],
-    operationBindings:[
-       {operationType:"fetch", dataProtocol:"postMessage"},
-       {operationType:"add", dataProtocol:"postMessage"},
-       {operationType:"remove", dataProtocol:"postMessage"},
-       {operationType:"update", dataProtocol:"postMessage"}
-    ],
+    ]
 });
 
-isc.RestDataSource.create({
+isc.MplDataSource.create({
     ID:"forwards",
     dataFormat:"json",
     dataURL:"ds_forwards.php",
@@ -123,16 +98,10 @@ isc.RestDataSource.create({
 	{name: "mailbox_forward_id"},
 	{name: "mailbox_id"},
 	{name: "address",align:"center"}
-    ],
-    operationBindings:[
-       {operationType:"fetch", dataProtocol:"postMessage"},
-       {operationType:"add", dataProtocol:"postMessage"},
-       {operationType:"remove", dataProtocol:"postMessage"},
-       {operationType:"update", dataProtocol:"postMessage"}
-    ],
+    ]
 });
 
-isc.RestDataSource.create({
+isc.MplDataSource.create({
     ID:"aliases",
     dataFormat:"json",
     dataURL:"ds_aliases.php",
@@ -142,16 +111,10 @@ isc.RestDataSource.create({
 	{name: "domain_id"},
         {name:"name", type: "text",  required: true},
 	{name: "addressalias", align:"center", canFilter:false}
-    ],
-    operationBindings:[
-       {operationType:"fetch", dataProtocol:"postMessage"},
-       {operationType:"add", dataProtocol:"postMessage"},
-       {operationType:"remove", dataProtocol:"postMessage"},
-       {operationType:"update", dataProtocol:"postMessage"}
-    ],
+    ]
 });
 
-isc.RestDataSource.create({
+isc.MplDataSource.create({
     ID:"aliasesto",
     dataFormat:"json",
     dataURL:"ds_aliasesto.php",
@@ -160,15 +123,10 @@ isc.RestDataSource.create({
 	{name: "global_mail_alias_to_id"},
 	{name: "global_mail_alias_id"},
 	{name: "address",align:"center"}
-    ],
-    operationBindings:[
-       {operationType:"fetch", dataProtocol:"postMessage"},
-       {operationType:"add", dataProtocol:"postMessage"},
-       {operationType:"remove", dataProtocol:"postMessage"},
-       {operationType:"update", dataProtocol:"postMessage"}
-    ],
+    ]
 });
-isc.RestDataSource.create({
+
+isc.MplDataSource.create({
     ID:"users",
     dataFormat:"json",
     dataURL:"ds_users.php",
@@ -178,16 +136,10 @@ isc.RestDataSource.create({
 	{name: "parent_id"},
 	{name: "username"},
 	{name: "password"}
-    ],
-    operationBindings:[
-       {operationType:"fetch", dataProtocol:"postMessage"},
-       {operationType:"add", dataProtocol:"postMessage"}, 
-       {operationType:"remove", dataProtocol:"postMessage"},
-       {operationType:"update", dataProtocol:"postMessage"}
-    ],
+    ]
 });
 
-isc.RestDataSource.create({
+isc.MplDataSource.create({
     ID:"sites",
     dataFormat:"json",
     dataURL:"ds_sites.php",
@@ -199,13 +151,5 @@ isc.RestDataSource.create({
 	{name: "server_id"},
 	{name: "server_port"},
 	{name: "enabled",type:"checkbox"}
-    ],
-    operationBindings:[
-       {operationType:"fetch", dataProtocol:"postMessage"},
-       {operationType:"add", dataProtocol:"postMessage"},
-       {operationType:"remove", dataProtocol:"postMessage"},
-       {operationType:"update", dataProtocol:"postMessage"}
-    ],
+    ]
 });
-
-
