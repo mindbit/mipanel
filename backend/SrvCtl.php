@@ -223,6 +223,8 @@ class SrvCtl {
 		// database access file
 		$this->templateReplace(self::DOVECOT_SQL_CONF, self::TEMPLATE_ROOT . "/dovecot/dovecot-sql.conf", $params);
 		chmod(self::DOVECOT_SQL_CONF, 0600);
+
+		$this->runQuiet("chkconfig dovecot on");
 	}
 
 	function setupPostfix($params) {
@@ -249,6 +251,8 @@ class SrvCtl {
 			chgrp($path, "postfix");
 			chmod($path, 0640);
 		}
+
+		$this->runQuiet("chkconfig postfix on");
 	}
 
 	function setupProftpd($params) {
@@ -258,6 +262,8 @@ class SrvCtl {
 
 		$this->templateReplace(self::PROFTPD_PAM_SQL, self::TEMPLATE_ROOT . "/pam-pgsql/pam-pgsql-proftpd.conf", $params);
 		chmod(self::PROFTPD_PAM_SQL, 0600);
+
+		$this->runQuiet("chkconfig proftpd on");
 	}
 
 	function setupRedirect($params) {
@@ -271,12 +277,14 @@ class SrvCtl {
 		$this->backupFile(self::MYDNS_CONF);
 		$this->templateReplace(self::MYDNS_CONF, self::TEMPLATE_ROOT . "/mydns/mydns.conf", $params);
 		chmod(self::MYDNS_CONF, 0600);
+		$this->runQuiet("chkconfig mydns on");
 	}
 
 	function setupHttpd() {
 		$path = self::HTTPD_ROOT . "/conf.d/ssl.conf";
 		$this->backupFile($path);
 		$this->templateReplace($path, self::TEMPLATE_ROOT . "/httpd/ssl.conf", array());
+		$this->runQuiet("chkconfig httpd on");
 	}
 
 	function setupMipanel($params) {
