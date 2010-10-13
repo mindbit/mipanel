@@ -285,6 +285,21 @@ class SrvCtl {
 		chgrp($path, "apache");
 		chmod($path, 0640);
 	}
+
+	function serverCleanup($userName, $siteName, $removeUser=true) {
+		if ($this->httpdAlive($siteName)) {
+			/*
+			 * FIXME: we need to add a delay, because if the start process
+			 * hasn't finished the stop command will not work.
+			 */
+			sleep(1);
+			$this->sendHttpdSignal($siteName, "stop", $userName);
+		}
+		if ($removeUser === true)
+			$this->runQuiet("userdel -r ".escapeshellarg($userName));
+		else
+			$this->runQuiet("rm -rf ".escapeshellarg(self::WEB_ROOT . "/" . $siteName) . "/*");
+	}
 }
 
 ?>
