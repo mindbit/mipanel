@@ -38,13 +38,18 @@ isc.TabsPanel.addProperties({
 						if (rpcResponse.data.status) {
 							text += "started";
 							icon += "approve.png";
+							op_type = "stop";
 						}
 						else {
 							text += "stopped";
 							icon += "remove.png";
+							op_type = "start";
 						}
 						viewer.container.label3.setContents(text);
 						viewer.container.label3.setIcon(icon);
+						viewer.container.label3Button.setTitle("[ " + op_type + " ]");
+						viewer.container.label3Button.operationType = op_type;
+						viewer.container.label3Button.domainId = record.domain_id;
 					}
 				});
 				stack1.setSectionTitle(2,record.domain.toUpperCase());
@@ -227,13 +232,65 @@ isc.TabsPanel.addProperties({
 			icon:"[SKIN]/actions/remove.png",
 		   	contents:"Web server is stopped"
 		});
+		this.label3Button=isc.Button.create({
+			container:this,
+			title:"[ start ]",
+			width:80,
+			height:14,
+			baseStyle: "cssButton",
+			operationType: "start",
+			domainId: 0,
+			click: function() {
+				var label3Button = this;
+				isc.RPCManager.sendRequest({
+					containsCredentials: false,
+					actionURL: "MipanelHttpd.php",
+					useSimpleHttp: true,
+					evalResult: true,
+					showPrompt: false,
+					params: {
+						operationType: this.operationType,
+						domain_id: this.domainId
+					},
+					callback: function (rpcResponse) {
+						if (rpcResponse.data.status != 0) {
+							alert("An error has occured.");
+							return;
+						}
+						var label3 = label3Button.container.label3;
+						var text = "Web server is ";
+						var icon = "[SKIN]/actions/";
+						if (label3Button.operationType == "start") {
+							text += "started";
+							icon += "approve.png";
+							op_type = "stop";
+						}
+						else {
+							text += "stopped";
+							icon += "remove.png";
+							op_type = "start";
+						}
+						label3.setContents(text);
+						label3.setIcon(icon);
+						label3Button.setTitle("[ " + op_type + " ]");
+						label3Button.operationType = op_type;
+					}
+				});
+			}
+		});
+		this.webcontrol=isc.HLayout.create({
+			container: this,
+			width: 300,
+			height: 10,
+			members: [this.label3, this.label3Button]
+		});
 		
 		this.label23V=isc.VLayout.create({
 			container:this,
 		    	layoutLeftMargin: 50,
 			height:40,
 		    	membersMargin: 10,
-		    	members: [this.webaccess,this.label3]
+				members: [this.webaccess,this.webcontrol]
 		});
 
 		this.label4=isc.Label.create({
