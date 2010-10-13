@@ -1,6 +1,8 @@
 <?
-require_once "auth.php";
 require_once "common.php";
+ErrorHandler::setHandler(new ThrowErrorHandler());
+
+require_once "auth.php";
 require_once "RestDataSource.php";
 require_once "Rmi.php";
 require_once "HttpdConf.php";

@@ -1,5 +1,6 @@
 <?
 require_once "Env.php";
+require_once "ThrowErrorHandler.php";
 ENV::setup();
 
 $path = dirname($_SERVER["SCRIPT_FILENAME"]);
