@@ -43,7 +43,7 @@ class SrvCtl {
 				);
 		$process = proc_open($cmd, $descriptorspec, $pipes, $cwd, $env);
 		if ($process === false)
-			return false;
+			throw new Exception("Failed executing: " . $cmd);
 
 		fclose($pipes[0]);
 		return proc_close($process);
