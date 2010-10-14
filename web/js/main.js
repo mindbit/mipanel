@@ -163,11 +163,12 @@ isc.TabsPanel.addProperties({
 			click: function() 
 				{
 					summary.hide();
-					if (listGrid.getSelectedRecord() && this.container.listGrid.getSelectedRecord().site_id!='')
-					{
+					
+					if (this.container.listGrid.getSelectedRecord() && this.container.listGrid.getSelectedRecord().site_id!='')
+					{						
 						tabWeb.show();					
 						configV.show();
-						//unconfigV.show();
+						unconfigV.hide();
 					}
 					else 
 					{
@@ -202,6 +203,7 @@ isc.TabsPanel.addProperties({
 			click: function() 
 				{
 					summary.hide();
+
 					if (this.container.listGrid.getSelectedRecord().site_id!='')
 					{
 						tabWeb.show();					
@@ -722,17 +724,24 @@ isc.TabWebDomain.addProperties({
 				label2.setContents("Web access is enabled");
 				label2.setIcon("[SKIN]/actions/approve.png");}
 		});
-
+		var ok=false;
 		this.configButton=isc.IButton.create({
 			ID:"configButton",
 			container: this,
 			title: "Enable Web Service",
 			width:150,
 			icon: "[SKIN]/actions/approve.png",
-			click: function () {this.container.saveconfigWeb();
+			click: function (){
+			
+				this.container.saveconfigWeb();
+				listGrid.setData([]);
+				listGrid.fetchData();
 				label1.setContents("Web service is enabled");
-				label1.setIcon("[SKIN]/actions/approve.png"); }
+				label1.setIcon("[SKIN]/actions/approve.png"); 
+				
+				}
 		});
+		
 		this.unconfigButtonV=isc.VLayout.create({
 			container:this,
 			align:"center",
@@ -773,25 +782,30 @@ isc.TabWebDomain.addProperties({
 	setDomainId: function(domainId) {
 		this.domainId = domainId;
 	},
+	
 	saveconfigWeb: function()
 	{ 
-		this.enableWebService.saveData({ target: this, methodName: "saveconfigWebCallback" },
+		this.enableWebService.saveData(
 		function(dsResponse, data, dsRequest) {
 			if (dsResponse.status != 0)
-				return;
+				return ;
+			else this.container.config2();
 			if (!this.isNewRecord())
 				return;
 			this.setSaveOperationType("update");
 		});
+
 	},
-	saveconfigWebCallback: function() {
-		this.unconfigV.hide();
-		this.configV.show();
-		this.enableWebAccesButton.show();
-
+	saveconfigWebCallback: function() 
+	{
 		listGrid.setData([]);
-		listGrid.fetchData(); 
-
+		listGrid.fetchData();
+	},
+	config2: function()
+	{
+		unconfigV.hide();
+		configV.show();
+		enableWebAccesButton.show();
 	},
 		
 	saveAccessWeb: function()
@@ -809,7 +823,7 @@ isc.TabWebDomain.addProperties({
 	{ 
 		listGrid.setData([]);
 		listGrid.fetchData(); 
-		//enableWebAccesButton.hide();
+		
 	},
 	setRecord: function(record) {
 		this.record = record;
