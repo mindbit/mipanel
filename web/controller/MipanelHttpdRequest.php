@@ -1,5 +1,6 @@
 <?
 require_once "common.php";
+ErrorHandler::setHandler(new ThrowErrorHandler());
 require_once "config/config.php";
 require_once "BaseRequest.php";
 require_once "Rmi.php";
@@ -18,25 +19,7 @@ class MipanelHttpdRequest extends BaseRequest {
 			);
 
 	function __construct($response) {
-		$this->decode();
-
-		$domain = DomainsPeer::retrieveByPk($_REQUEST["domain_id"]);
-		if ($domain === null)
-			throw new Exception("Invalid domain id");
-
-
 		$this->response = $response;
-		/* web service disabled for this domain */
-		if ($domain->getSiteId() === null) {
-			$this->response->status = false;
-			$this->srvCtl = null;
-			return;
-		}
-
-		$client = new ProcOpenRmiClient("sudo ".RMI_SERVER_PATH." 2>&1");
-		$this->srvCtl = $client->createInstance("SrvCtl");
-		$this->username = $domain->getUsername();
-		$this->siteName = "www.".$domain->getDomain();
 	}
 
 	function getResponse() {
@@ -51,20 +34,37 @@ class MipanelHttpdRequest extends BaseRequest {
 	}
 
 	function dispatch() {
-		/* web service disabled for this domain */
-		if (!$this->srvCtl)
-			return;
+		try {
+			$this->decode();
 
-		/* perform the requested operation */
-		switch ($this->operationType) {
-		case "start":
-		case "stop":
-			$this->response->status = $this->srvCtl->sendHttpdSignal(
-					$this->siteName, $this->operationType, $this->username);
-			break;
-		case "status":
-			$this->response->status = $this->srvCtl->httpdAlive($this->siteName);
-			break;
+			$domain = DomainsPeer::retrieveByPk($_REQUEST["domain_id"]);
+			if ($domain === null)
+				throw new Exception("Invalid domain id");
+
+			/* web service disabled for this domain */
+			if ($domain->getSiteId() === null) {
+				$this->response->status = false;
+				return;
+			}
+
+			$client = new ProcOpenRmiClient("sudo ".RMI_SERVER_PATH." 2>&1");
+			$this->srvCtl = $client->createInstance("SrvCtl");
+			$this->username = $domain->getUsername();
+			$this->siteName = "www.".$domain->getDomain();
+
+			/* perform the requested operation */
+			switch ($this->operationType) {
+				case "start":
+				case "stop":
+					$this->response->status = $this->srvCtl->sendHttpdSignal(
+							$this->siteName, $this->operationType, $this->username);
+				break;
+				case "status":
+					$this->response->status = $this->srvCtl->httpdAlive($this->siteName);
+				break;
+			}
+		} catch (Exception $e) {
+			$this->response->failure($e);
 		}
 	}
 }
