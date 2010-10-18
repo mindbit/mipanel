@@ -1,4 +1,4 @@
 <?
 define("IP_DEFAULT",		"127.0.0.1");
-define("RMI_SERVER_PATH", "/usr/bin/rmiserver");
+define("RMI_SERVER_PATH", "/usr/lib/mipanel/scripts/rmiserver");
 ?>

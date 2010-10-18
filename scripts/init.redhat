@@ -1,0 +1,127 @@
+#!/bin/bash
+#
+# mipanel        Startup script for the Mipanel Webhosting Platform
+#
+# chkconfig: - 85 15
+# description: Mipanel is an integrated system for the administration of web servers \
+#	allowing for the unitary management of all services: HTTP, SMTP/POP/IMAP, \
+#	DNS, FTP, databases, etc.
+#
+# FIXME ### BEGIN INIT INFO
+# Provides: mipanel
+# Required-Start: $local_fs $remote_fs $network $named
+# Required-Stop: $local_fs $remote_fs $network
+# Should-Start: distcache
+# Short-Description: start and stop the Mipanel Webhosting Platform
+# Description: Mipanel is an integrated system for the administration of web servers
+#  allowing for the unitary management of all services: HTTP, SMTP/POP/IMAP,
+#  DNS, FTP, databases, etc.
+# ### END INIT INFO
+
+# Source function library.
+. /etc/rc.d/init.d/functions
+
+myphp="php -q -d include_path=.:/usr/lib/mipanel/backend:/usr/lib/mipanel/lib:/usr/share/mpl:/usr/share/pear:/usr/share/php -d short_open_tag=on"
+
+squid_dir() {
+	if [ "$1" = "in" ]; then
+		echo "incoming"
+	else
+		echo "outgoing"
+	fi
+}
+
+
+start_squid() {
+	local RETVAL
+
+	dir=$(squid_dir $1)
+	swap="/var/spool/mipanel/squid-$1"
+	cfg="/etc/mipanel/squid-$1/squid.conf"
+	log="/var/log/mipanel/squid-$1/squid.out"
+
+	if [ ! -d $swap ]; then
+		echo -n "Initializing $dir squid cache: "
+		squid -f $cfg -z -F -D &> $log
+		success
+		echo
+	fi
+
+	echo -n "Starting $dir squid service: "
+	squid -f $cfg >> $log 2>&1
+	RETVAL=$?
+
+	# FIXME wait for pid file
+	# FIXME create lockfile
+
+	[ $RETVAL -eq 0 ] && success
+	[ $RETVAL -ne 0 ] && failure
+	echo
+	return $RETVAL
+}
+
+stop_squid() {
+	local RETVAL
+
+	dir=$(squid_dir $1)
+	cfg="/etc/mipanel/squid-$1/squid.conf"
+	log="/var/log/mipanel/squid-$1/squid.out"
+
+	echo -n "Stopping $dir squid service: "
+	squid -f $cfg -k shutdown >> $log 2>&1
+	RETVAL=$?
+
+	# FIXME remove lockfile
+
+	[ $RETVAL -eq 0 ] && success
+	[ $RETVAL -ne 0 ] && failure
+	echo
+	return $RETVAL
+}
+
+start() {
+	start_squid out
+
+	# FIXME show status for each website
+	echo -n "Starting web sites (may take a while): "
+	$myphp /usr/lib/mipanel/scripts/webctl.php start
+	echo
+	success
+
+	start_squid in
+}
+
+stop() {
+	stop_squid in
+
+	# FIXME show status for each website
+	echo -n "Stopping web sites (may take a while): "
+	$myphp /usr/lib/mipanel/scripts/webctl.php stop
+	echo
+	success
+
+	stop_squid out
+}
+
+RETVAL=0
+
+# See how we were called.
+case "$1" in
+  start)
+	start
+	;;
+  stop)
+	stop
+	;;
+  status)
+	;;
+  restart)
+	stop
+	start
+	;;
+  *)
+	echo $"Usage: $prog {start|stop|restart|status}"
+	RETVAL=3
+esac
+
+exit $RETVAL

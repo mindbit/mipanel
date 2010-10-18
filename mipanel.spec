@@ -47,8 +47,9 @@ find \
 	backend/HttpdConf.php \
 	backend/SrvCtl.php \
 	backend/SrvCtlRmiServer.php \
-	backend/install.php \
 	backend/model/build \
+	scripts/install.php \
+	scripts/webctl.php \
 	sql/schema.sql \
 	sql/changelog.sql \
 	-type f -exec install -m 644 -D \{\} ${RPM_BUILD_ROOT}%{_libdir}/mipanel/\{\} \;
@@ -59,6 +60,8 @@ find backend \
 mv ${RPM_BUILD_ROOT}%{mipanel_root}/web/config/config.php.default \
 	${RPM_BUILD_ROOT}%{mipanel_root}/web/config/config.php
 
+install -m 755 -D scripts/rmiserver.default ${RPM_BUILD_ROOT}%{mipanel_root}/scripts/rmiserver
+install -m 755 -D scripts/init.redhat ${RPM_BUILD_ROOT}%{_sysconfdir}/rc.d/init.d/mipanel
 install -m 755 -D src/redirect/redirect ${RPM_BUILD_ROOT}%{_bindir}/redirect
 install -m 640 -D src/redirect/redirect.conf.default ${RPM_BUILD_ROOT}%{_sysconfdir}/mipanel/redirect.conf
 
@@ -94,13 +97,14 @@ rm -rf $RPM_BUILD_DIR/%{name}-%{version}
 %{mipanel_root}/backend/model/build/classes
 %{mipanel_root}/backend/model/build/conf/classmap-mipanel-conf.php
 %{mipanel_root}/backend/model/build/sql
-%{mipanel_root}/backend/install.php
 %{mipanel_root}/backend/HttpdConf.php
 %{mipanel_root}/backend/SrvCtl.php
 %{mipanel_root}/backend/SrvCtlRmiServer.php
+%{mipanel_root}/scripts
 %{mipanel_root}/sql
 %{mipanel_root}/templates
 %{mipanel_root}/web
+%{_sysconfdir}/rc.d/init.d/mipanel
 
 %defattr(-,root,squid)
 %config(noreplace) %{_sysconfdir}/mipanel/squid-in/squid.conf
@@ -109,12 +113,24 @@ rm -rf $RPM_BUILD_DIR/%{name}-%{version}
 
 %defattr(-,squid,squid)
 %dir %{_var}/spool/mipanel/squid-in
+%dir %{_var}/spool/mipanel/squid-out
+%dir %{_var}/log/mipanel/squid-in
 %dir %{_var}/log/mipanel/squid-out
 
 # %doc scripts/sql/schema.sql
 # %doc scripts/sql/update-db.sql
 
 %defattr(-,root,apache)
+
+%post
+/sbin/chkconfig --add mipanel
+
+%preun
+if [ "$1" = 0 ] ; then
+	/sbin/service mipanel stop > /dev/null 2>&1
+	/sbin/chkconfig --del mipanel
+fi
+exit 0
 
 %changelog
 * Tue Oct  5 2010 Radu Rendec <radu.rendec@mindbit.ro> - 0.1-1
