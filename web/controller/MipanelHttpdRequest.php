@@ -54,17 +54,19 @@ class MipanelHttpdRequest extends BaseRequest {
 
 			/* perform the requested operation */
 			switch ($this->operationType) {
-				case "start":
-				case "stop":
-					$this->response->status = $this->srvCtl->sendHttpdSignal(
-							$this->siteName, $this->operationType, $this->username);
+			case 'start':
+			case 'stop':
+				if ($this->srvCtl->sendHttpdSignal($this->siteName, $this->operationType, $this->username))
+					$this->setFailure("Could not perform operation '" . $this->operationType . "'");
 				break;
-				case "status":
-					$this->response->status = $this->srvCtl->httpdAlive($this->siteName);
+			case 'status':
+				$this->response->httpdStatus = $this->srvCtl->httpdAlive($this->siteName);
 				break;
 			}
+		} catch (RemoteException $e) {
+			$this->response->setFailure($e->getMessage() . ": " . $e->getPrevious()->getMessage());
 		} catch (Exception $e) {
-			$this->response->failure($e);
+			$this->response->setFailure($e->getMessage());
 		}
 	}
 }

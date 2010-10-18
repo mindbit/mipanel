@@ -33,9 +33,13 @@ isc.TabsPanel.addProperties({
 						domain_id: record.domain_id
 					},
 					callback: function (rpcResponse) {
+						if (rpcResponse.data.status == isc.RPCResponse.STATUS_FAILURE) {
+							isc.RPCManager.handleError(rpcResponse.data, null);
+							return;
+						}
 						var text = "Web server is ";
 						var icon = "[SKIN]/actions/";
-						if (rpcResponse.data.status) {
+						if (rpcResponse.data.httpdStatus) {
 							text += "started";
 							icon += "approve.png";
 							op_type = "stop";
@@ -255,8 +259,8 @@ isc.TabsPanel.addProperties({
 						domain_id: this.domainId
 					},
 					callback: function (rpcResponse) {
-						if (rpcResponse.data.status != 0) {
-							alert("An error has occured.");
+						if (rpcResponse.data.status == isc.RPCResponse.STATUS_FAILURE) {
+							isc.RPCManager.handleError(rpcResponse.data, null);
 							return;
 						}
 						var label3 = label3Button.container.label3;
