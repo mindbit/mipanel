@@ -19,7 +19,7 @@ struct config config = {
 	.logging_level = LOG_INFO,
 	.logging_facility = LOG_DAEMON,
 	.dbconn = NULL,
-	.err_url = "http://192.168.0.1/badurl.php",
+	.err_url = "http://127.0.0.1:8080/badurl.php",
 	.cache_timeout = 30
 };
 
@@ -74,7 +74,8 @@ int parse_config(void)
 {
 	config_setting_t *node, *child;
 	struct config local;
-	const char *value;
+	const char *str_val;
+	long long_val;
 	char *old, *current;
 	int i, err = -EINVAL;
 	config_t cf;
@@ -91,37 +92,37 @@ int parse_config(void)
 	/*
 	 * Logging configuration
 	 */
-	if (CONFIG_LOOKUP_STRING(&cf, "logging.type", &value)) {
-		if (!strcmp(value, "file"))
+	if (CONFIG_LOOKUP_STRING(&cf, "logging.type", &str_val)) {
+		if (!strcmp(str_val, "file"))
 			local.logging_type = LOGGING_TYPE_LOGFILE;
-		else if (!strcmp(value, "stderr"))
+		else if (!strcmp(str_val, "stderr"))
 			local.logging_type = LOGGING_TYPE_STDERR;
-		else if (!strcmp(value, "syslog"))
+		else if (!strcmp(str_val, "syslog"))
 			local.logging_type = LOGGING_TYPE_SYSLOG;
 		else {
-			log(LOG_ERR, "Invalid logging.type value: '%s'\n", value);
+			log(LOG_ERR, "Invalid logging.type value: '%s'\n", str_val);
 			goto out_err;
 		}
 	}
 
 	if (local.logging_type == LOGGING_TYPE_LOGFILE) {
-		if (!CONFIG_LOOKUP_STRING(&cf, "logging.path", &value)) {
+		if (!CONFIG_LOOKUP_STRING(&cf, "logging.path", &str_val)) {
 			log(LOG_ERR, "logging.path not found in config file.\n");
 			goto out_err;
 		}
-		local.logging_path = strdup(value);
+		local.logging_path = strdup(str_val);
 	}
 
-	if (CONFIG_LOOKUP_STRING(&cf, "logging.level", &value)) {
-		if ((local.logging_level = str_2_val(log_levels, value)) < 0) {
-			log(LOG_ERR, "Invalid logging.level value: '%s'.\n", value);
+	if (CONFIG_LOOKUP_STRING(&cf, "logging.level", &str_val)) {
+		if ((local.logging_level = str_2_val(log_levels, str_val)) < 0) {
+			log(LOG_ERR, "Invalid logging.level value: '%s'.\n", str_val);
 			goto out_err;
 		}
 	}
 
-	if (CONFIG_LOOKUP_STRING(&cf, "logging.facility", &value)) {
-		if ((local.logging_facility = str_2_val(log_facilities, value)) < 0) {
-			log(LOG_ERR, "Invalid logging.facility value: '%s'\n", value);
+	if (CONFIG_LOOKUP_STRING(&cf, "logging.facility", &str_val)) {
+		if ((local.logging_facility = str_2_val(log_facilities, str_val)) < 0) {
+			log(LOG_ERR, "Invalid logging.facility value: '%s'\n", str_val);
 			goto out_err;
 		}
 	}
@@ -160,16 +161,16 @@ int parse_config(void)
 	/*
 	 * Redirect specific configuration
 	 */
-	if (!CONFIG_LOOKUP_STRING(&cf, "redirect.err_url", &value)) {
+	if (!CONFIG_LOOKUP_STRING(&cf, "redirect.err_url", &str_val)) {
 		log(LOG_ERR, "redirect.err_url not found in config file.\n");
 		goto out_err;
 	}
-	local.err_url = strdup(value);
-	if (!CONFIG_LOOKUP_STRING(&cf, "redirect.cache_timeout", &value)) {
+	local.err_url = strdup(str_val);
+	if (!CONFIG_LOOKUP_INT(&cf, "redirect.cache_timeout", &long_val)) {
 		log(LOG_ERR, "redirect.cache_timeout not found in config file.\n");
 		goto out_err;
 	}
-	local.cache_timeout = atoi(value);
+	local.cache_timeout = long_val;
 
 	/* TODO parse the SQL prepared statements */
 

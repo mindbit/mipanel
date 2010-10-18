@@ -5,7 +5,7 @@
 // -------- user / database input data ----------
 $siteName = "www.test-srvctl.localdomain";
 $username = "test-srvctl";
-$port = 8000;
+$port = 10000;
 // ----------------------------------------------
 
 $basePath = realpath(dirname(__FILE__));

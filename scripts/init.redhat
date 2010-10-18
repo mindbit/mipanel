@@ -21,7 +21,7 @@
 # Source function library.
 . /etc/rc.d/init.d/functions
 
-myphp="php -q -d include_path=.:/usr/lib/mipanel/backend:/usr/lib/mipanel/lib:/usr/share/mpl:/usr/share/pear:/usr/share/php -d short_open_tag=on"
+myphp="php -q -d include_path=.:/usr/lib/mipanel/backend:/usr/lib/mipanel/web:/usr/lib/mipanel/lib:/usr/share/mpl:/usr/share/pear:/usr/share/php -d short_open_tag=on"
 
 squid_dir() {
 	if [ "$1" = "in" ]; then
@@ -36,13 +36,15 @@ start_squid() {
 	local RETVAL
 
 	dir=$(squid_dir $1)
-	swap="/var/spool/mipanel/squid-$1"
+	swap="/var/spool/mipanel/squid-$1/00"
+	pidfile="/var/spool/mipanel/squid-$1/squid.pid"
 	cfg="/etc/mipanel/squid-$1/squid.conf"
 	log="/var/log/mipanel/squid-$1/squid.out"
+	timeout=10
 
 	if [ ! -d $swap ]; then
 		echo -n "Initializing $dir squid cache: "
-		squid -f $cfg -z -F -D &> $log
+		squid -f $cfg -z -F -D >> $log 2>&1
 		success
 		echo
 	fi
@@ -51,7 +53,15 @@ start_squid() {
 	squid -f $cfg >> $log 2>&1
 	RETVAL=$?
 
-	# FIXME wait for pid file
+	if [ $RETVAL -eq 0 ]; then
+		while [ $timeout -gt 0 ]; do
+			[ -f $pidfile ] && break
+			timeout=$((timeout-1))
+			sleep 1 && echo -n "."
+		done
+		[ $timeout -le 0 ] && RETVAL=1
+	fi
+
 	# FIXME create lockfile
 
 	[ $RETVAL -eq 0 ] && success
@@ -85,8 +95,8 @@ start() {
 	# FIXME show status for each website
 	echo -n "Starting web sites (may take a while): "
 	$myphp /usr/lib/mipanel/scripts/webctl.php start
-	echo
 	success
+	echo
 
 	start_squid in
 }
@@ -97,8 +107,8 @@ stop() {
 	# FIXME show status for each website
 	echo -n "Stopping web sites (may take a while): "
 	$myphp /usr/lib/mipanel/scripts/webctl.php stop
-	echo
 	success
+	echo
 
 	stop_squid out
 }

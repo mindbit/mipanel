@@ -144,7 +144,7 @@ class HttpdConf {
 	function webmail() {
 		return
 			'RewriteRule ^/webmail$ http://' . $this->name . "/webmail/ [R,L]\n" .
-			'RewriteRule ^/webmail/(.*)$ http://127.0.0.1:8000/webmail/$1 [P]' . "\n"
+			'RewriteRule ^/webmail/(.*)$ http://127.0.0.1:8080/webmail/$1 [P]' . "\n"
 			;
 	}
 

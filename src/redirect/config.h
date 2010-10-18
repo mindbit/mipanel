@@ -40,8 +40,12 @@ extern struct config config;
 
 #ifndef LIBCONFIG_NEW_API
 #define CONFIG_LOOKUP_STRING(config, path, value) (*(value) = config_lookup_string(config, path))
+#define CONFIG_LOOKUP_INT(config, path, value) (*(value) = config_lookup_int(config, path))
+#define CONFIG_LOOKUP_INT64(config, path, value) (*(value) = config_lookup_int64(config, path))
 #else
 #define CONFIG_LOOKUP_STRING(config, path, value) (config_lookup_string(config, path, value) == CONFIG_TRUE)
+#define CONFIG_LOOKUP_INT(config, path, value) (config_lookup_int(config, path, value) == CONFIG_TRUE)
+#define CONFIG_LOOKUP_INT64(config, path, value) (config_lookup_int64(config, path, value) == CONFIG_TRUE)
 #endif
 
 #endif

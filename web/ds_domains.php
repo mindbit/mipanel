@@ -54,7 +54,7 @@ class DomainsRequest extends RestRequest {
 				$c->addDescendingOrderByColumn(SitesPeer::SERVER_PORT);
 				$c->setLimit(1);
 				$mysites=SitesPeer::doSelect($c);
-				$max_server_port = 8000;
+				$max_server_port = 10000;
 				if ($mysites)
 					foreach ($mysites as $mysite) {
 						$max_server_port = $mysite->getServerPort() + 1;

@@ -15,7 +15,7 @@ class SrvCtl {
 	const DOVECOT_SQL_CONF		= "/etc/dovecot-sql.conf";
 	const PROFTPD_PAM_CONF		= "/etc/pam.d/proftpd";
 	const PROFTPD_PAM_SQL		= "/etc/pam-pgsql-proftpd.conf";
-	const REDIRECT_CONF			= "/etc/redirect.conf";
+	const REDIRECT_CONF			= "/etc/mipanel/redirect.conf";
 	const MYDNS_CONF			= "/etc/mydns.conf";
 	const HTTPD_ROOT			= "/etc/httpd";
 	const MIPANEL_ROOT			= "/usr/lib/mipanel";
