@@ -85,6 +85,9 @@ find dovecot \
 install -m 644 -D httpd/ssl.conf ${RPM_BUILD_ROOT}%{mipanel_root}/templates/httpd/ssl.conf
 popd
 
+install -m 755 -d ${RPM_BUILD_ROOT}%{_var}/mail/virtual
+install -m 755 -d ${RPM_BUILD_ROOT}%{_var}/www/mipanel
+
 %clean
 rm -rf $RPM_BUILD_ROOT
 rm -rf $RPM_BUILD_DIR/%{name}-%{version}
@@ -105,6 +108,8 @@ rm -rf $RPM_BUILD_DIR/%{name}-%{version}
 %{mipanel_root}/templates
 %{mipanel_root}/web
 %{_sysconfdir}/rc.d/init.d/mipanel
+%dir %{_var}/mail/virtual
+%dir %{_var}/www/mipanel
 
 %defattr(-,root,squid)
 %config(noreplace) %{_sysconfdir}/mipanel/squid-in/squid.conf
@@ -116,8 +121,6 @@ rm -rf $RPM_BUILD_DIR/%{name}-%{version}
 %dir %{_var}/spool/mipanel/squid-out
 %dir %{_var}/log/mipanel/squid-in
 %dir %{_var}/log/mipanel/squid-out
-%dir %{_var}/mail/virtual
-%dir %{_var}/www/mipanel
 
 # %doc scripts/sql/schema.sql
 # %doc scripts/sql/update-db.sql

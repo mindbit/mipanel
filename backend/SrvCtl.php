@@ -113,8 +113,8 @@ class SrvCtl {
 			throw new Exception("Bad uid/gid");
 
 		$mailRoot = self::MAIL_ROOT . "/" . $domain;
-		mkdir($siteRoot, 0750);
-		$this->chown($siteRoot, $uid, $gid);
+		mkdir($mailRoot, 0750);
+		$this->chown($mailRoot, $uid, $gid);
 	}
 
 	protected function mkdir($path, $mode, $user, $group) {
