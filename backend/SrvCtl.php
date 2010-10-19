@@ -21,6 +21,7 @@ class SrvCtl {
 	const MIPANEL_ROOT			= "/usr/lib/mipanel";
 	const MAIL_ROOT				= "/var/mail/virtual";
 
+	const CHKCONFIG				= "/sbin/chkconfig";
 	const USERADD				= "/usr/sbin/useradd";
 	const USERDEL				= "/usr/sbin/userdel";
 	const SU					= "/bin/su";
@@ -254,7 +255,7 @@ class SrvCtl {
 		$this->templateReplace(self::DOVECOT_SQL_CONF, self::TEMPLATE_ROOT . "/dovecot/dovecot-sql.conf", $params);
 		chmod(self::DOVECOT_SQL_CONF, 0600);
 
-		$this->runQuiet("chkconfig dovecot on");
+		$this->runQuiet(self::CHKCONFIG . " dovecot on");
 	}
 
 	function setupPostfix($params) {
@@ -282,7 +283,7 @@ class SrvCtl {
 			chmod($path, 0640);
 		}
 
-		$this->runQuiet("chkconfig postfix on");
+		$this->runQuiet(self::CHKCONFIG . " postfix on");
 	}
 
 	function setupProftpd($params) {
@@ -293,7 +294,7 @@ class SrvCtl {
 		$this->templateReplace(self::PROFTPD_PAM_SQL, self::TEMPLATE_ROOT . "/pam-pgsql/pam-pgsql-proftpd.conf", $params);
 		chmod(self::PROFTPD_PAM_SQL, 0600);
 
-		$this->runQuiet("chkconfig proftpd on");
+		$this->runQuiet(self::CHKCONFIG . " proftpd on");
 	}
 
 	function setupRedirect($params) {
@@ -307,14 +308,14 @@ class SrvCtl {
 		$this->backupFile(self::MYDNS_CONF);
 		$this->templateReplace(self::MYDNS_CONF, self::TEMPLATE_ROOT . "/mydns/mydns.conf", $params);
 		chmod(self::MYDNS_CONF, 0600);
-		$this->runQuiet("chkconfig mydns on");
+		$this->runQuiet(self::CHKCONFIG . " mydns on");
 	}
 
 	function setupHttpd() {
 		$path = self::HTTPD_ROOT . "/conf.d/ssl.conf";
 		$this->backupFile($path);
 		$this->templateReplace($path, self::TEMPLATE_ROOT . "/httpd/ssl.conf", array());
-		$this->runQuiet("chkconfig httpd on");
+		$this->runQuiet(self::CHKCONFIG . " httpd on");
 	}
 
 	function setupMipanel($params) {
@@ -322,6 +323,10 @@ class SrvCtl {
 		$this->templateReplace($path, self::TEMPLATE_ROOT . "/mipanel/mipanel-conf.php", $params);
 		chgrp($path, "apache");
 		chmod($path, 0640);
+
+		// enable other services that mipanel depends on and are not
+		// configured separately
+		$this->runQuiet(self::CHKCONFIG . " postgresql on");
 	}
 
 	function serverCleanup($userName, $siteName, $removeUser=true) {
