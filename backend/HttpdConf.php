@@ -158,7 +158,7 @@ class HttpdConf {
 			"\n" .
 			$this->prefork($this->processModels[$this->processModel]) .
 			"\n" .
-			"Listen " . $this->port . "\n" .
+			"Listen 127.0.0.1:" . $this->port . "\n" .
 			"\n" .
 			$this->modules() .
 			"\n" .

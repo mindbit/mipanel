@@ -13,10 +13,10 @@ BuildRoot:      %{_tmppath}/%{name}-%{version}-root
 BuildRequires:	libconfig-devel
 
 Requires:		php >= 5.2.0
-Requires:		php-mysql php-pear php-pgsql
+Requires:		php-mysql php-pear php-pgsql php-posix php-process
 Requires:		mpl
 Requires:		dovecot mod_extract_forwarded mod_ssl mydns mydns-pgsql
-Requires:		postfix postgresql-server proftpd squid
+Requires:		pam-pgsql postfix postgresql-server proftpd squid
 
 %description
 Mipanel is an integrated system for the administration of web servers

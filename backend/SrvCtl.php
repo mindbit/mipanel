@@ -20,6 +20,10 @@ class SrvCtl {
 	const HTTPD_ROOT			= "/etc/httpd";
 	const MIPANEL_ROOT			= "/usr/lib/mipanel";
 
+	const USERADD				= "/usr/sbin/useradd";
+	const USERDEL				= "/usr/sbin/userdel";
+	const SU					= "/bin/su";
+
 	protected $httpdModulesPath;
 
 	function __construct() {
@@ -56,7 +60,7 @@ class SrvCtl {
 		if (!preg_match("/^[a-zA-Z0-9._-]+$/", $homeDir))
 			throw new Exception("Invalid home directory");
 
-		$cmd = "useradd -M -U -s /sbin/nologin -d " .
+		$cmd = self::USERADD . " -M -s /sbin/nologin -d " .
 			escapeshellarg(self::WEB_ROOT . "/" . $homeDir) . " " .
 			escapeshellarg($username);
 		$res = $this->runQuiet($cmd);
@@ -124,7 +128,7 @@ class SrvCtl {
 	function getHttpdCmd($configFile, $args, $username) {
 		$innerCmd = "/usr/sbin/httpd -f " . escapeshellarg($configFile) .
 			" " . $args;
-		return "su -s /bin/bash -c " . escapeshellarg($innerCmd) .
+		return self::SU . " -s /bin/bash -c " . escapeshellarg($innerCmd) .
 			" " . escapeshellarg($username);
 	}
 
@@ -304,7 +308,7 @@ class SrvCtl {
 			$this->sendHttpdSignal($siteName, "stop", $userName);
 		}
 		if ($removeUser === true)
-			$this->runQuiet("userdel -r ".escapeshellarg($userName));
+			$this->runQuiet(self::USERDEL . " -r ".escapeshellarg($userName));
 		else
 			$this->runQuiet("rm -rf ".escapeshellarg(self::WEB_ROOT . "/" . $siteName) . "/*");
 	}
