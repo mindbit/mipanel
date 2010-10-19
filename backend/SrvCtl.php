@@ -19,6 +19,7 @@ class SrvCtl {
 	const MYDNS_CONF			= "/etc/mydns.conf";
 	const HTTPD_ROOT			= "/etc/httpd";
 	const MIPANEL_ROOT			= "/usr/lib/mipanel";
+	const MAIL_ROOT				= "/var/mail/virtual";
 
 	const USERADD				= "/usr/sbin/useradd";
 	const USERDEL				= "/usr/sbin/userdel";
@@ -53,11 +54,19 @@ class SrvCtl {
 		return proc_close($process);
 	}
 
+	static function validUsername($username) {
+		return preg_match("/^[a-zA-Z0-9._-]+$/", $username);
+	}
+
+	static function validName($name) {
+		return preg_match("/^[a-zA-Z0-9._-]+$/", $name);
+	}
+
 	function userAdd($username, $homeDir) {
-		if (!preg_match("/^[a-zA-Z0-9._-]+$/", $username))
+		if (!self::validUsername($username))
 			throw new Exception("Invalid username");
 
-		if (!preg_match("/^[a-zA-Z0-9._-]+$/", $homeDir))
+		if (!self::validName($homeDir))
 			throw new Exception("Invalid home directory");
 
 		$cmd = self::USERADD . " -M -s /sbin/nologin -d " .
@@ -88,6 +97,23 @@ class SrvCtl {
 				"uid" => $uinfo["uid"],
 				"gid" => $uinfo["gid"]
 				);
+	}
+
+
+	/**
+	 * Create only root directory for all domain mail; individual
+	 * directories for mailboxes are automatically created by postfix
+	 * on first mail delivery.
+	 */
+	function createMaildirRoot($uid, $gid, $domain) {
+		if (!self::validName($domain))
+			throw new Exception("Invalid domain");
+		if ($uid < self::SAFE_MIN_UID || $gid < self::SAFE_MIN_GID)
+			throw new Exception("Bad uid/gid");
+
+		$mailRoot = self::MAIL_ROOT . "/" . $domain;
+		mkdir($siteRoot, 0750);
+		$this->chown($siteRoot, $uid, $gid);
 	}
 
 	protected function mkdir($path, $mode, $user, $group) {

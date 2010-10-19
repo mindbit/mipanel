@@ -116,6 +116,8 @@ rm -rf $RPM_BUILD_DIR/%{name}-%{version}
 %dir %{_var}/spool/mipanel/squid-out
 %dir %{_var}/log/mipanel/squid-in
 %dir %{_var}/log/mipanel/squid-out
+%dir %{_var}/mail/virtual
+%dir %{_var}/www/mipanel
 
 # %doc scripts/sql/schema.sql
 # %doc scripts/sql/update-db.sql

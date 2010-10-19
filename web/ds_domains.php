@@ -89,6 +89,8 @@ class DomainsRequest extends RestRequest {
 				$this->om->setSoaId($soa->getId());
 			}
 
+			$srvCtl->createMaildirRoot($user["uid"], $user["gid"], $this->data["domain"]);
+
 			parent::doSave();
 
 			$pdo->commit();
