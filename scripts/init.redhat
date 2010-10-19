@@ -90,27 +90,31 @@ stop_squid() {
 }
 
 start() {
-	start_squid out
+	[ "${*/+squid_out+/}" != "$*" ] && start_squid out
 
-	# FIXME show status for each website
-	echo -n "Starting web sites (may take a while): "
-	$myphp /usr/lib/mipanel/scripts/webctl.php start
-	success
-	echo
+	if [ "${*/+web+/}" != "$*" ]; then
+		# FIXME show status for each website
+		echo -n "Starting web sites (may take a while): "
+		$myphp /usr/lib/mipanel/scripts/webctl.php start
+		success
+		echo
+	fi
 
-	start_squid in
+	[ "${*/+squid_in+/}" != "$*" ] && start_squid in
 }
 
 stop() {
-	stop_squid in
+	[ "${*/+squid_in+/}" != "$*" ] && stop_squid in
 
-	# FIXME show status for each website
-	echo -n "Stopping web sites (may take a while): "
-	$myphp /usr/lib/mipanel/scripts/webctl.php stop
-	success
-	echo
+	if [ "${*/+web+/}" != "$*" ]; then
+		# FIXME show status for each website
+		echo -n "Stopping web sites (may take a while): "
+		$myphp /usr/lib/mipanel/scripts/webctl.php stop
+		success
+		echo
+	fi
 
-	stop_squid out
+	[ "${*/+squid_out+/}" != "$*" ] && stop_squid out
 }
 
 RETVAL=0
@@ -118,19 +122,29 @@ RETVAL=0
 # See how we were called.
 case "$1" in
   start)
-	start
+	start +squid_in+ +squid_out+ +web+
 	;;
   stop)
-	stop
+	stop +squid_in+ +squid_out+ +web+
+	;;
+  restart)
+	stop +squid_in+ +squid_out+ +web+
+	start +squid_in+ +squid_out+ +web+
+	;;
+  startsquid)
+	start +squid_in+ +squid_out+
+	;;
+  stopsquid)
+	stop +squid_in+ +squid_out+
+	;;
+  restartsquid)
+	stop +squid_in+ +squid_out+
+	start +squid_in+ +squid_out+
 	;;
   status)
 	;;
-  restart)
-	stop
-	start
-	;;
   *)
-	echo $"Usage: $prog {start|stop|restart|status}"
+	echo $"Usage: $prog {start|stop|restart|startsquid|stopsquid|restartsquid|status}"
 	RETVAL=3
 esac
 
