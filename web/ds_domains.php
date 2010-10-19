@@ -61,7 +61,7 @@ class DomainsRequest extends RestRequest {
 					}
 				$site = new Sites();
 				$site->setName($siteName);
-				$site->setServerIp(IP_DEFAULT);
+				$site->setServerIp(DEFAULT_HTTPD_IP);
 				$site->setServerPort($max_server_port);
 				$site->setEnabled("0");
 				$site->save();
@@ -85,58 +85,7 @@ class DomainsRequest extends RestRequest {
 			}
 
 			if (isset($this->data["enable_dns"]) && $this->data["enable_dns"]==true) {
-				$soa=new Soa();
-				$name=$this->data["domain"].".";
-				$soa->setOrigin($name);
-				$soa->setNs("ns.".$name);
-				$soa->setMbox("hostmaster.".$name);
-				$soa->setSerial(date("Ymd")."01");
-				$soa->setActive('Y');
-				$soa->save();
-
-				$rr=new Rr();
-				$rr->setName("");
-				$rr->setType("NS");
-				$rr->setData("ns.".$name);
-				$rr->setZone($soa->getId());
-				$rr->save();
-				$rr->clear();
-
-				$rr->setName("");
-				$rr->setType("MX");
-				$rr->setData("mail.".$name);
-				$rr->setAux("10");
-				$rr->setZone($soa->getId());
-				$rr->save();
-				$rr->clear();
-
-				$rr->setName("");
-				$rr->setType("A");
-				$rr->setData(IP_DEFAULT);
-				$rr->setZone($soa->getId());
-				$rr->save();
-				$rr->clear();
-
-				$rr->setName("mail");
-				$rr->setType("A");
-				$rr->setData(IP_DEFAULT);
-				$rr->setZone($soa->getId());
-				$rr->save();
-				$rr->clear();
-
-				$rr->setName("www");
-				$rr->setType("CNAME");
-				$rr->setData($name);
-				$rr->setZone($soa->getId());
-				$rr->save();
-				$rr->clear();
-
-				$rr->setName("");
-				$rr->setType("TXT");
-				$rr->setZone($soa->getId());
-				$rr->setData("v=spf1 a mx ~all");
-				$rr->save();
-
+				$soa = SoaPeer::createDefaultConfig($this->data["domain"], DEFAULT_DNS_IP);
 				$this->om->setSoaId($soa->getId());
 			}
 
