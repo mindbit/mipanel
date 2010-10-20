@@ -56,8 +56,8 @@ class MipanelHttpdRequest extends BaseRequest {
 			switch ($this->operationType) {
 			case 'start':
 			case 'stop':
-				if ($this->srvCtl->sendHttpdSignal($this->siteName, $this->operationType, $this->username))
-					$this->response->setFailure("Could not perform operation '" . $this->operationType . "'");
+				if ($err = $this->srvCtl->sendHttpdSignal($this->siteName, $this->operationType, $this->username))
+					$this->response->setFailure("Could not perform operation '" . $this->operationType . "' (" . $err . ")");
 				break;
 			case 'status':
 				$this->response->httpdStatus = $this->srvCtl->httpdAlive($this->siteName);
