@@ -3,7 +3,7 @@ require_once "common.php";
 ErrorHandler::setHandler(new ThrowErrorHandler());
 
 require_once "auth.php";
-require_once "config/config.php";
+require_once "config.php";
 require_once "RestDataSource.php";
 
 class DomainsDNSRequest extends RestRequest {

@@ -57,13 +57,12 @@ find \
 find backend \
 	web \
 	-type f -exec install -m 644 -D \{\} ${RPM_BUILD_ROOT}%{mipanel_root}/\{\} \;
-mv ${RPM_BUILD_ROOT}%{mipanel_root}/web/config/config.php.default \
-	${RPM_BUILD_ROOT}%{mipanel_root}/web/config/config.php
 
 install -m 755 -D scripts/rmiserver.default ${RPM_BUILD_ROOT}%{mipanel_root}/scripts/rmiserver
 install -m 755 -D scripts/init.redhat ${RPM_BUILD_ROOT}%{_sysconfdir}/rc.d/init.d/mipanel
 install -m 755 -D src/redirect/redirect ${RPM_BUILD_ROOT}%{_bindir}/redirect
 install -m 640 -D src/redirect/redirect.conf.default ${RPM_BUILD_ROOT}%{_sysconfdir}/mipanel/redirect.conf
+install -m 644 -D config/config.php.default ${RPM_BUILD_ROOT}%{mipanel_root}/config/config.php
 
 for dir in "in" "out"; do
 	install -m 640 -D templates/squid-$dir/squid.conf ${RPM_BUILD_ROOT}%{_sysconfdir}/mipanel/squid-$dir/squid.conf
@@ -96,6 +95,7 @@ rm -rf $RPM_BUILD_DIR/%{name}-%{version}
 %defattr(-,root,root)
 %config(noreplace) %{_sysconfdir}/httpd/conf/mipanel.conf
 %config(noreplace) %{mipanel_root}/backend/model/build/conf/mipanel-conf.php
+%config(noreplace) %{mipanel_root}/config/config.php
 %{_bindir}/redirect
 %{mipanel_root}/backend/model/build/classes
 %{mipanel_root}/backend/model/build/conf/classmap-mipanel-conf.php

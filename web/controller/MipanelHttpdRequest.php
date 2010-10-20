@@ -1,7 +1,7 @@
 <?
 require_once "common.php";
 ErrorHandler::setHandler(new ThrowErrorHandler());
-require_once "config/config.php";
+require_once "config.php";
 require_once "BaseRequest.php";
 require_once "Rmi.php";
 
