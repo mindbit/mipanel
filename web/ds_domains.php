@@ -7,6 +7,7 @@ require_once "config/config.php";
 require_once "RestDataSource.php";
 require_once "Rmi.php";
 require_once "HttpdConf.php";
+require_once "SrvCtl.php";
 
 class DomainsRequest extends RestRequest {
 	
@@ -34,6 +35,15 @@ class DomainsRequest extends RestRequest {
 		if (!isset($this->data["username"])) {
 			$username = explode(".",$this->data["domain"]);
 			$this->data["username"] = $username[0];
+		}
+
+		/*
+		 * System user setup, website and webserver configuration are
+		 * done only on add.
+		 */
+		if ($this->operationType == self::OPERATION_UPDATE) {
+			parent::doSave();
+			return;
 		}
 
 		/* create the system user */
@@ -96,7 +106,8 @@ class DomainsRequest extends RestRequest {
 			$pdo->commit();
 		} catch (Exception $e) {
 			$pdo->rollback();
-			$srvCtl->serverCleanup($this->data["username"], $siteName);
+			if (get_class($e) !== "DuplicateUserException")
+				$srvCtl->serverCleanup($this->data["username"], $siteName);
 			throw $e;
 		}
 	}

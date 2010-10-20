@@ -76,7 +76,7 @@ class SrvCtl {
 		$res = $this->runQuiet($cmd);
 
 		if ($res == 9)
-			throw new Exception("Duplicate username");
+			throw new DuplicateUserException("Duplicate username");
 		if ($res)
 			throw new Exception("useradd failed with code " . $res);
 
@@ -338,11 +338,17 @@ class SrvCtl {
 			sleep(1);
 			$this->sendHttpdSignal($siteName, "stop", $userName);
 		}
-		if ($removeUser === true)
+		if ($removeUser === true) {
 			$this->runQuiet(self::USERDEL . " -r ".escapeshellarg($userName));
+			$this->runQuiet("rm -rf ".escapeshellarg(self::MAIL_ROOT . "/" . substr($siteName, 4)));
+		}
 		else
 			$this->runQuiet("rm -rf ".escapeshellarg(self::WEB_ROOT . "/" . $siteName) . "/*");
 	}
 }
+
+class DuplicateUserException extends Exception {
+};
+
 
 ?>
