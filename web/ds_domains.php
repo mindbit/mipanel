@@ -10,7 +10,6 @@ require_once "HttpdConf.php";
 require_once "SrvCtl.php";
 
 class DomainsRequest extends RestRequest {
-	
 	function createOm() {
 		return new Domains();
 	}
@@ -100,13 +99,15 @@ class DomainsRequest extends RestRequest {
 			}
 
 			$srvCtl->createMaildirRoot($user["uid"], $user["gid"], $this->data["domain"]);
+			$this->data["mail_uid"] = $user["uid"];
+			$this->data["mail_gid"] = $user["gid"];
 
 			parent::doSave();
 
 			$pdo->commit();
 		} catch (Exception $e) {
 			$pdo->rollback();
-			if (get_class($e) !== "DuplicateUserException")
+			if (!($e instanceof DuplicateUserException))
 				$srvCtl->serverCleanup($this->data["username"], $siteName);
 			throw $e;
 		}
