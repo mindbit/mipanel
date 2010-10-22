@@ -67,6 +67,7 @@ isc.TabsPanel.addProperties({
 				dnsForm.clearErrors(true);
 				//pentru a pastra numele domeniului 
 				settForm.editRecord(record);
+				settForm.setValue("password","");
 				dnsForm.editRecord(record);
 				enableMail.editRecord(record);
 				enableWebService.editRecord(record);
@@ -1461,7 +1462,12 @@ isc.TabFTPSett.addProperties({
 		    	dataSource: isc.DS.get("domains"),
 		    	fields: [
 				{name: "username",canEdit:false,width:50,height:"20",type:"text"},
-				{name: "password",type: "password"},
+				{name: "password",type: "password",    
+						validators : [{
+            					type: "requiredIf",
+            					expression: "myrecord.password == ''",
+            					errorMessage: "Please set a password"
+         			}]},
 				{name: "password_confirm", title: "Confirm", type: "password", defaultValue:"",
 			 		length: 20, validators:
 						[{
@@ -1469,7 +1475,11 @@ isc.TabFTPSett.addProperties({
 							expression: "settForm.getValue('password') != ''",
 				     			otherField: "password",
 				     			errorMessage: "Passwords do not match"
-						 }]
+						 },{
+            					type: "requiredIf",
+            					expression: "myrecord.password == ''",
+            					errorMessage: "Please set a password and confirm"
+         			}]
 				},
 				{name:"enable_ftp", type:"checkbox", title:"Enable FTP Access"}]
 		});
@@ -1513,10 +1523,12 @@ isc.TabFTPSett.addProperties({
 			if (!this.isNewRecord())
 				return;
 			this.container.settForm.editRecord(myrecord);
+			this.container.settForm.setValue("password","");
 			
 			this.setSaveOperationType("update");
 		});
 		this.settForm.editRecord(myrecord);
+		this.settForm.setValue("password","");
 
 		listGrid.setData([]);
 		listGrid.fetchData(); 
