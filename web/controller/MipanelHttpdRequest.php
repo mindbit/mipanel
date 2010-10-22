@@ -41,12 +41,6 @@ class MipanelHttpdRequest extends BaseRequest {
 			if ($domain === null)
 				throw new Exception("Invalid domain id");
 
-			/* web service disabled for this domain */
-			if ($domain->getSiteId() === null) {
-				$this->response->status = false;
-				return;
-			}
-
 			$client = new ProcOpenRmiClient("sudo ".RMI_SERVER_PATH." 2>&1");
 			$this->srvCtl = $client->createInstance("SrvCtl");
 			$this->username = $domain->getUsername();
@@ -56,10 +50,19 @@ class MipanelHttpdRequest extends BaseRequest {
 			switch ($this->operationType) {
 			case 'start':
 			case 'stop':
+				/* web service disabled for this domain */
+				if ($domain->getSiteId() === null)
+					throw new Exception("Web service is not enabled!");
+
 				if ($err = $this->srvCtl->sendHttpdSignal($this->siteName, $this->operationType, $this->username))
 					$this->response->setFailure("Could not perform operation '" . $this->operationType . "' (" . $err . ")");
 				break;
 			case 'status':
+				/* web service disabled for this domain */
+				if ($domain->getSiteId() === null) {
+					$this->response->status = false;
+					return;
+				}
 				$this->response->httpdStatus = $this->srvCtl->httpdAlive($this->siteName);
 				break;
 			}
