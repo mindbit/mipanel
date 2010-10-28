@@ -6,6 +6,8 @@ isc.MplDataSource.create({
     		var dsResponse = this.Super("transformResponse", arguments);
 		for (i=0; i<dsResponse.totalRows; i++)
 		{
+			if (dsResponse.data[i])
+			{
 			if (dsResponse.data[i].enable_ftp!=true) 
 				dsResponse.data[i].ftp = "[SKIN]/actions/remove.png";
 			else dsResponse.data[i].ftp = "[SKIN]/actions/approve.png";
@@ -20,6 +22,7 @@ isc.MplDataSource.create({
 				dsResponse.data[i].dns = "[SKIN]/actions/remove.png";
 			else
 				dsResponse.data[i].dns = "[SKIN]/actions/approve.png";
+			}
 		}
      		return dsResponse;
 		},
