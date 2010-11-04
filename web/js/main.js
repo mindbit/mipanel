@@ -65,6 +65,7 @@ isc.TabsPanel.addProperties({
 				aliasToForm.clearErrors(true);
 				settForm.clearErrors(true);
 				dnsForm.clearErrors(true);
+				formDNS.clearErrors(true);
 				//pentru a pastra numele domeniului 
 				settForm.editRecord(record);
 				settForm.setValue("password","");
@@ -81,9 +82,12 @@ isc.TabsPanel.addProperties({
 				this.container.tabMail.hide();
 				this.container.tabDNS.hide();
 				this.container.setLabelContents(record);
+				formDNS.hide();
 				//face clear la listgrid
 				listGrid_FwMailboxes.setData([]);
 				listGrid_AliasTo.setData([]);
+				if (record.soa_id)
+					listGrid_dns.fetchData({zone:record.soa_id});
 			},
 				fields: [
 					{name: "domain", title: "Domain",required:"true",filterOnKeypress:true},
@@ -406,13 +410,13 @@ isc.TabsPanel.addProperties({
 					this.container.tabDNS.show();
 					if (this.container.listGrid.getSelectedRecord().soa_id!='')
 					{
-						label_dns_enabled.show();
+						formToolbar.show();
 						label_dns.hide();
 						saveButtonDNS.hide();
 					}
 					else 
 					{
-						label_dns_enabled.hide();
+						formToolbar.hide();
 						label_dns.show();
 						saveButtonDNS.show();
 					}
@@ -1563,7 +1567,7 @@ isc.TabDNSSett.addProperties({
 			align:"center",
 		   	contents:"DNS service for this domain is not configured. Click below to configure ..."
 		});
-		this.label_dns_enabled=isc.Label.create({
+		/*this.label_dns_enabled=isc.Label.create({
 			container:this,
 			ID:"label_dns_enabled",
 			autoDraw: false,
@@ -1571,7 +1575,7 @@ isc.TabDNSSett.addProperties({
 			visibility:"hidden",
 			align:"center",
 		   	contents:"DNS service for this domain is enabled."
-		});
+		});*/
 		this.dnsForm=isc.DynamicForm.create({
 			container:this,
    			ID: "dnsForm",
@@ -1598,8 +1602,120 @@ isc.TabDNSSett.addProperties({
 			members:[this.dnsForm, this.saveButtonDNS]		
 		});
 
+		this.listGrid_dns = isc.ListGrid.create({
+			ID:"listGrid_dns",
+			container:this,
+			width:"100%",
+			height:"200",
+			dataSource: isc.DS.get('rr'),
+			autoFetchData:true,
+			recordClick: function(viewer,record)
+			{
+				formDNS.show();
+				formDNS.editRecord(record);
+				editButtonDns.setDisabled(false);
+				deleteButtonDns.setDisabled(false);
+			},
+			fields:[
+				{name: "id", showIf:"false"},
+				{name: "name"},
+				{name: "type"},
+				{name: "aux"},
+				{name: "data"}
+			]
+		});
+
+		this.newButtonDns = isc.IButton.create({
+			ID:"newButtonDNS",
+			container: this,
+			width:110,
+			title: "New",
+			icon: "[SKIN]/actions/add.png",
+			showDisabledIcon: false,
+			click: function ()
+				{
+					this.container.newDnsRecord();
+				}
+		});
+		
+		this.editButtonDns = isc.IButton.create({
+			container: this,
+			ID:"editButtonDns",
+			width:110,
+			title: "Save",
+			icon: "[SKIN]/actions/save.png",
+			click: function () { formDNS.setValue("zone",listGrid.getSelectedRecord().soa_id);this.container.saveDnsRecord();},
+			disabled: true,
+			showDisabledIcon: false
+		});
+		
+		this.deleteButtonDns = isc.IButton.create({
+			ID:"deleteButtonDns",			
+			container: this,
+			width:110,
+			title: "Delete",
+			icon: "[SKIN]/TabSet/close.png",
+			showDisabledIcon: false,
+			disabled: true,
+			click: "this.container.deleteDnsRecord();"
+		});
+		
+		this.toolbarDNS = isc.VLayout.create({
+			ID:"toolbarDNS",
+			container:this,
+			width:100,
+			
+			members: [this.newButtonDns, this.editButtonDns, this.deleteButtonDns]
+		});		
+
+		this.listGridToolbar = isc.HLayout.create({
+			ID:"listGridToolbar",
+			container:this,
+			width:"100%",
+			showResizeBar:true,
+			membersMargin:20,
+			layoutBottomMargin:20,
+			members:[this.listGrid_dns, this.toolbarDNS]
+		});
+
+		this.formDNS = isc.DynamicForm.create({
+			ID:"formDNS",
+			container:this,
+			visibility:"hidden",
+			dataSource:isc.DS.get("rr"),
+			items:[
+				{name: "zone",title:"Zone",showIf:"false"},
+				{name: "name", title:"Name",type:"text", width:"200",required:true},
+				{name: "type", title:"Type",type:"select", required:true, redrawOnChange:true,
+					/*changed:function(){if (this.form.getValue("type")=='TXT') 
+						formDNS.items[4].type = "textArea";
+					},*/ valueMap:["A","AAAA","CNAME","MX","NS","TXT"],width:"200"},
+				{name: "aux", title:"Priority", type:"text",width:"200",showIf:"form.getValue('type')=='MX'"},
+				{name: "data", title:"Data",type:"textArea",width:"200",showIf:"form.getValue('type')=='TXT'", validators:
+						[{
+            					type: "requiredIf",
+            					expression: "formDNS.getValue('type')=='TXT'",
+            					errorMessage: "Field is required"
+         			}]},
+				{name: "data", title:"Data",width:"200",showIf:"form.getValue('type')!='TXT'",validators:
+						[{
+            					type: "requiredIf",
+            					expression: "formDNS.getValue('type')!='TXT'",
+            					errorMessage: "Field is required"
+         			}]},
+				{name: "ttl", title:"TTL", type:"text",width:"200",required:true}
+			]
+		});
+		
+		this.formToolbar = isc.VLayout.create({
+			ID:"formToolbar",
+			visibility:"hidden",
+			container:this,
+			members:[this.listGridToolbar, this.formDNS]
+		});
+
 		this.addMember(this.label_dns);
-		this.addMember(this.label_dns_enabled);
+		this.addMember(this.formToolbar);
 		this.addMember(this.TabDNS);
 	},
 	saveRecord: function() {
@@ -1614,13 +1730,51 @@ isc.TabDNSSett.addProperties({
 	},
 	saveRecordCallback: function() {
 		this.label_dns.hide();
-		this.label_dns_enabled.show();
+		this.formToolbar.show();
 		this.saveButtonDNS.hide();
 
 		listGrid.setData([]);
 		listGrid.fetchData(); 
 		listGrid.selectRecord(listGrid.getRecord(this.domainId));
 
+	},
+	saveDnsRecord: function() {
+		this.formDNS.saveData({ target: this, methodName: "saveDnsRecordCallback" },
+		function(dsResponse, data, dsRequest) {
+			if (dsResponse.status != 0)
+				return;
+			if (!this.isNewRecord())
+				return;
+			this.setSaveOperationType("update");
+		});
+	},
+	saveDnsRecordCallback: function() {
+		formDNS.editNewRecord();
+	},
+	newDnsRecord: function() {
+		formDNS.show();
+		formDNS.clearErrors();
+		editButtonDns.setDisabled(false);
+		deleteButtonDns.setDisabled(false);
+		formDNS.editNewRecord();
+	},
+	deleteDnsRecord: function() {
+		isc.ask("Really delete?", function (value) {
+			if (value)
+				this.container.__deleteDnsRecord();
+		}, {container: this});
+	},
+
+	__deleteDnsRecord: function() {
+		listGrid_dns.dataSource.removeData(listGrid_dns.getSelectedRecord(), { target: this, methodName: "deleteRecordDnsCallback" });
+		
+	},
+
+	deleteRecordDnsCallback: function(dsResponse, data, dsRequest) {
+		if (dsResponse.status != 0)
+			return;
+		listGrid_dns.fetchData({zone:myrecord.soa_id});
+		formDNS.editNewRecord();
 	},
 	setDomainId: function(domainId) {
 		this.domainId = domainId;
@@ -1921,13 +2075,13 @@ isc.MenuPanel.addProperties({
 					else record = listGrid.getSelectedRecord();
 					if (record.soa_id!='')
 					{
-						label_dns_enabled.show();
+						formToolbar.show();
 						label_dns.hide();
 						saveButtonDNS.hide();
 					}
 					else 
 					{
-						label_dns_enabled.hide();
+						formToolbar.hide();
 						label_dns.show();
 						saveButtonDNS.show();
 					}

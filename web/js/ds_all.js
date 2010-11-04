@@ -143,16 +143,16 @@ isc.MplDataSource.create({
 });
 
 isc.MplDataSource.create({
-    ID:"sites",
+    ID:"rr",
     dataFormat:"json",
-    dataURL:"ds_sites.php",
-   
+    dataURL:"ds_rr.php",
     fields:[
-        {type: "sequence", name: "site_id", primaryKey: true},
-	{name: "site_id"},
+        {type: "sequence", name: "id", primaryKey: true},
+	{name: "zone"},
 	{name: "name"},
-	{name: "server_id"},
-	{name: "server_port"},
-	{name: "enabled",type:"checkbox"}
+	{name: "data"},
+	{name: "aux"},
+	{name: "ttl"},
+	{name: "type"}
     ]
 });
