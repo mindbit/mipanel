@@ -30,6 +30,7 @@ class RrRequest extends RestRequest {
 			$rr->setName('');
 		$rr->save();
 	}
+
 }
 
 $request = new RrRequest();

@@ -11,7 +11,8 @@ class SitesRequest extends RestRequest {
 	}
 
 	function doSave() {
-		if ($this->data["site_id"]) {
+		if ($this->data["site_id"]) 
+		{
 			$site=SitesPeer::retrieveByPK($this->data["site_id"]);
 			$site->setEnabled($this->data["enabled"]);	
 			$site->save();

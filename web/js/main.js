@@ -86,8 +86,7 @@ isc.TabsPanel.addProperties({
 				//face clear la listgrid
 				listGrid_FwMailboxes.setData([]);
 				listGrid_AliasTo.setData([]);
-				if (record.soa_id)
-					listGrid_dns.fetchData({zone:record.soa_id});
+				
 			},
 				fields: [
 					{name: "domain", title: "Domain",required:"true",filterOnKeypress:true},
@@ -399,6 +398,7 @@ isc.TabsPanel.addProperties({
 		   	contents:"DNS service is not enabled"
 		});
 		this.label8Button=isc.Button.create({
+			ID:"label8Button",
 			container:this,
 			title:"[ configure...]",
 			width:80,
@@ -408,17 +408,35 @@ isc.TabsPanel.addProperties({
 				{
 					summary.hide();
 					this.container.tabDNS.show();
-					if (this.container.listGrid.getSelectedRecord().soa_id!='')
+					if (this.container.listGrid.getSelectedRecord()==null)			
 					{
-						formToolbar.show();
-						label_dns.hide();
-						saveButtonDNS.hide();
+						
+						for (i=0; i<listGrid.getTotalRows();i++)
+						{
+							if (myrecord.domain_id==listGrid.data.localData[i].domain_id)
+							{
+								myrecord.soa_id=listGrid.data.localData[i].soa_id;
+								listGrid.selectSingleRecord(i);
+								listGrid_dns.fetchData({zone:listGrid.data.localData[i].soa_id});
+								formToolbar.show();
+							}
+						}
 					}
-					else 
+					else
 					{
-						formToolbar.hide();
-						label_dns.show();
-						saveButtonDNS.show();
+						if (this.container.listGrid.getSelectedRecord().soa_id!='')
+						{
+							formToolbar.show();
+							listGrid_dns.fetchData({zone:listGrid.getSelectedRecord().soa_id});
+							label_dns.hide();
+							saveButtonDNS.hide();
+						}
+						else 
+						{
+							formToolbar.hide();
+							label_dns.show();
+							saveButtonDNS.show();
+						}
 					}
 				}		
 		});
@@ -1567,48 +1585,14 @@ isc.TabDNSSett.addProperties({
 			align:"center",
 		   	contents:"DNS service for this domain is not configured. Click below to configure ..."
 		});
-		/*this.label_dns_enabled=isc.Label.create({
-			container:this,
-			ID:"label_dns_enabled",
-			autoDraw: false,
-			width:"100%",
-			visibility:"hidden",
-			align:"center",
-		   	contents:"DNS service for this domain is enabled."
-		});*/
-		this.dnsForm=isc.DynamicForm.create({
-			container:this,
-   			ID: "dnsForm",
-    			dataSource: isc.DS.get("domainsDNS"),
-			fields: [
-				{name: "domain_id",showIf:"false"},
-				]
-		});
-
-		this.saveButtonDNS = isc.IButton.create({
-			ID:"saveButtonDNS",
-			container: this,
-			width:150,
-			title: "Enable DNS Service",
-			icon: "[SKIN]/actions/approve.png",
-			click: function () {this.container.saveRecord();
-				label8.setContents("DNS service is enabled");
-				label8.setIcon("[SKIN]/actions/approve.png");},
-		});
-
-		this.TabDNS=isc.VLayout.create({
-			container:this,
-			layoutLeftMargin:400,
-			members:[this.dnsForm, this.saveButtonDNS]		
-		});
-
+		
 		this.listGrid_dns = isc.ListGrid.create({
 			ID:"listGrid_dns",
 			container:this,
 			width:"100%",
 			height:"200",
 			dataSource: isc.DS.get('rr'),
-			autoFetchData:true,
+			autoFetchData:false,
 			recordClick: function(viewer,record)
 			{
 				formDNS.show();
@@ -1623,6 +1607,44 @@ isc.TabDNSSett.addProperties({
 				{name: "aux"},
 				{name: "data"}
 			]
+		});
+
+		this.dnsForm=isc.DynamicForm.create({
+			container:this,
+   			ID: "dnsForm",
+			
+    			dataSource: isc.DS.get("domainsDNS"),
+			fields: [
+				{name: "soa_id",showIf:"false"},
+				{name: "domain_id",showIf:"false"},
+				]
+		});
+
+		this.saveButtonDNS = isc.IButton.create({
+			ID:"saveButtonDNS",
+			container: this,
+			width:150,
+			title: "Enable DNS Service",
+			icon: "[SKIN]/actions/approve.png",
+			click: function () {
+				this.container.saveRecord();
+
+				label_dns.hide();
+				//formToolbar.show();
+				summary.show();
+				tabDNS.hide();
+				saveButtonDNS.hide();
+				
+			
+				label8.setContents("DNS service is enabled");
+				label8.setIcon("[SKIN]/actions/approve.png");
+			}
+		});
+
+		this.TabDNS=isc.VLayout.create({
+			container:this,
+			layoutLeftMargin:400,
+			members:[this.dnsForm, this.saveButtonDNS]		
 		});
 
 		this.newButtonDns = isc.IButton.create({
@@ -1690,7 +1712,12 @@ isc.TabDNSSett.addProperties({
 					/*changed:function(){if (this.form.getValue("type")=='TXT') 
 						formDNS.items[4].type = "textArea";
 					},*/ valueMap:["A","AAAA","CNAME","MX","NS","TXT"],width:"200"},
-				{name: "aux", title:"Priority", type:"text",width:"200",showIf:"form.getValue('type')=='MX'"},
+				{name: "aux", title:"Priority", type:"text",width:"200",showIf:"form.getValue('type')=='MX'",validators:
+						[{
+            					type: "requiredIf",
+            					expression: "formDNS.getValue('type')=='MX'",
+            					errorMessage: "Field is required"
+         			}]},
 				{name: "data", title:"Data",type:"textArea",width:"200",showIf:"form.getValue('type')=='TXT'", validators:
 						[{
             					type: "requiredIf",
@@ -1703,7 +1730,7 @@ isc.TabDNSSett.addProperties({
             					expression: "formDNS.getValue('type')!='TXT'",
             					errorMessage: "Field is required"
          			}]},
-				{name: "ttl", title:"TTL", type:"text",width:"200",required:true}
+				{name: "ttl", title:"TTL", type:"text",width:"200",defaultValue:86400, required:true}
 			]
 		});
 		
@@ -1714,6 +1741,7 @@ isc.TabDNSSett.addProperties({
 			members:[this.listGridToolbar, this.formDNS]
 		});
 
+		
 		this.addMember(this.label_dns);
 		this.addMember(this.formToolbar);
 		this.addMember(this.TabDNS);
@@ -1721,6 +1749,7 @@ isc.TabDNSSett.addProperties({
 	saveRecord: function() {
 		this.dnsForm.saveData({ target: this, methodName: "saveRecordCallback" },
 		function(dsResponse, data, dsRequest) {
+			
 			if (dsResponse.status != 0)
 				return;
 			if (!this.isNewRecord())
@@ -1729,14 +1758,9 @@ isc.TabDNSSett.addProperties({
 		});
 	},
 	saveRecordCallback: function() {
-		this.label_dns.hide();
-		this.formToolbar.show();
-		this.saveButtonDNS.hide();
-
+		
 		listGrid.setData([]);
 		listGrid.fetchData(); 
-		listGrid.selectRecord(listGrid.getRecord(this.domainId));
-
 	},
 	saveDnsRecord: function() {
 		this.formDNS.saveData({ target: this, methodName: "saveDnsRecordCallback" },
@@ -2055,6 +2079,7 @@ isc.MenuPanel.addProperties({
 		});
 		this.menu35=isc.Button.create({
 			container:this,
+			ID:"menu35",
 			title:"DNS",
 			width:148,
 			height:20,
@@ -2073,9 +2098,12 @@ isc.MenuPanel.addProperties({
 						record = myrecord;
 					}
 					else record = listGrid.getSelectedRecord();
+
+
 					if (record.soa_id!='')
 					{
 						formToolbar.show();
+						listGrid_dns.fetchData({zone:record.soa_id});
 						label_dns.hide();
 						saveButtonDNS.hide();
 					}
