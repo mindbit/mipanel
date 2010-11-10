@@ -4,12 +4,12 @@ ErrorHandler::setHandler(new ThrowErrorHandler());
 
 require_once "auth.php";
 require_once "config.php";
-require_once "RestDataSource.php";
+require_once "controller/MipanelRestRequest.php";
 require_once "Rmi.php";
 require_once "HttpdConf.php";
 require_once "SrvCtl.php";
 
-class DomainsRequest extends RestRequest {
+class DomainsRequest extends MipanelRestRequest {
 	function createOm() {
 		return new Domains();
 	}

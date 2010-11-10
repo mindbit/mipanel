@@ -2,9 +2,10 @@
 require_once "common.php";
 ErrorHandler::setHandler(new ThrowErrorHandler());
 
-require_once "RestDataSource.php";
+/* @inline */ require_once "auth.php";
+require_once "controller/MipanelRestRequest.php";
 
-class RrRequest extends RestRequest {
+class RrRequest extends MipanelRestRequest {
 	function createOm() 
 	{
 		return new Rr();
