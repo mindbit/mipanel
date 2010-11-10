@@ -16,7 +16,7 @@ Requires:		php >= 5.2.0
 Requires:		php-mysql php-pear php-pgsql php-posix php-process
 Requires:		mpl
 Requires:		dovecot libconfig mod_extract_forwarded mod_ssl mydns mydns-pgsql
-Requires:		pam-pgsql postfix postgresql-server proftpd squid
+Requires:		pam-pgsql postfix postgresql-server proftpd squid procps
 
 %description
 Mipanel is an integrated system for the administration of web servers

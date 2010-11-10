@@ -25,6 +25,7 @@ class SrvCtl {
 	const USERADD				= "/usr/sbin/useradd";
 	const USERDEL				= "/usr/sbin/userdel";
 	const SU					= "/bin/su";
+	const PKILL					= "/usr/bin/pkill";
 
 	protected $httpdModulesPath;
 
@@ -330,17 +331,9 @@ class SrvCtl {
 	}
 
 	function serverCleanup($userName, $siteName, $removeUser=true) {
-		/*
-		 * FIXME: we need to add a delay, because if the start process
-		 * hasn't finished the stop command will not work. Also it's
-		 * possible that httpdAlive() returns false if we call this
-		 * method too soon.
-		 */
-		sleep(1);
-		if ($this->httpdAlive($siteName))
-			$this->sendHttpdSignal($siteName, "stop", $userName);
+		$this->runQuiet(self::PKILL . " -9 -u " . escapeshellarg($userName));
 		if ($removeUser === true) {
-			$this->runQuiet(self::USERDEL . " -r ".escapeshellarg($userName));
+			$this->runQuiet(self::USERDEL . " -r " . escapeshellarg($userName));
 			$this->runQuiet("rm -rf ".escapeshellarg(self::MAIL_ROOT . "/" . substr($siteName, 4)));
 		}
 		else
