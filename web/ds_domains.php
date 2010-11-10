@@ -72,7 +72,7 @@ class DomainsRequest extends RestRequest {
 				$site->setName($siteName);
 				$site->setServerIp(DEFAULT_HTTPD_IP);
 				$site->setServerPort($max_server_port);
-				$site->setEnabled("0");
+				$site->setEnabled(1);
 				$site->save();
 				$site_alias = new SiteAliases();
 				$site_alias->setName($this->data["domain"]);
