@@ -13,5 +13,5 @@ class UsersRequest extends RestRequest {
 
 $request = new UsersRequest();
 $request->dispatch();
-echo $request->getResponse()->jsonEncode();
+echo $request->getJsonResponse();
 ?>

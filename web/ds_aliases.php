@@ -20,5 +20,5 @@ class AliasesRequest extends RestRequest {
 
 $request = new AliasesRequest();
 $request->dispatch();
-echo $request->getResponse()->jsonEncode();
+echo $request->getJsonResponse();
 ?>

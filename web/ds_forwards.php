@@ -13,5 +13,5 @@ class FowardsRequest extends RestRequest {
 
 $request = new FowardsRequest();
 $request->dispatch();
-echo $request->getResponse()->jsonEncode();
+echo $request->getJsonResponse();
 ?>

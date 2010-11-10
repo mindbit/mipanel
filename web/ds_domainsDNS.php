@@ -27,5 +27,5 @@ class DomainsDNSRequest extends RestRequest {
 
 $request = new DomainsDNSRequest();
 $request->dispatch();
-echo $request->getResponse()->jsonEncode();
+echo $request->getJsonResponse();
 ?>

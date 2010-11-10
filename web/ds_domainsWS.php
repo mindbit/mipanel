@@ -79,5 +79,5 @@ class DomainsWSRequest extends RestRequest {
 
 $request = new DomainsWSRequest();
 $request->dispatch();
-echo $request->getResponse()->jsonEncode();
+echo $request->getJsonResponse();
 ?>

@@ -24,5 +24,5 @@ class SitesRequest extends RestRequest {
 
 $request = new SitesRequest();
 $request->dispatch();
-echo $request->getResponse()->jsonEncode();
+echo $request->getJsonResponse();
 ?>

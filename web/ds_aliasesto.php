@@ -13,5 +13,5 @@ class AliasToRequest extends RestRequest {
 
 $request = new AliasToRequest();
 $request->dispatch();
-echo $request->getResponse()->jsonEncode();
+echo $request->getJsonResponse();
 ?>

@@ -22,5 +22,5 @@ class MailboxesRequest extends RestRequest {
 
 $request = new MailboxesRequest();
 $request->dispatch();
-echo $request->getResponse()->jsonEncode();
+echo $request->getJsonResponse();
 ?>

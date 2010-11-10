@@ -142,5 +142,5 @@ class DomainsRequest extends RestRequest {
 
 $request = new DomainsRequest();
 $request->dispatch();
-echo $request->getResponse()->jsonEncode();
+echo $request->getJsonResponse();
 ?>
