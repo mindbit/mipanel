@@ -48,6 +48,8 @@ find \
 	backend/SrvCtl.php \
 	backend/SrvCtlRmiServer.php \
 	backend/model/build \
+	lib/Log.php \
+	lib/Log_syslog.php \
 	scripts/install.php \
 	scripts/webctl.php \
 	sql/schema.sql \
@@ -103,6 +105,7 @@ rm -rf $RPM_BUILD_DIR/%{name}-%{version}
 %{mipanel_root}/backend/HttpdConf.php
 %{mipanel_root}/backend/SrvCtl.php
 %{mipanel_root}/backend/SrvCtlRmiServer.php
+%{mipanel_root}/lib
 %{mipanel_root}/scripts
 %{mipanel_root}/sql
 %{mipanel_root}/templates
