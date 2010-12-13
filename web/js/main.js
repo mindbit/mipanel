@@ -4,7 +4,7 @@ myrecord='';
 isc.ClassFactory.defineClass("TabsPanel", isc.VLayout);
 
 isc.TabsPanel.addProperties({
-	width: "80%",
+	width: "85%",
 	height: "100%",
 	align:"center",
 	layoutTopMargin:10,
@@ -1818,7 +1818,7 @@ isc.TabDNSSett.addProperties({
 isc.ClassFactory.defineClass("MenuPanel", isc.VLayout);
 
 isc.MenuPanel.addProperties({
-	width: "20%",
+	width: "15%",
 	height: "100%",
 	align:"center",
 	showResizeBar:true,
@@ -1829,7 +1829,7 @@ isc.MenuPanel.addProperties({
 			container:this,
 			title:"Domains",
 			align:"left",
-			width:148,
+			//width:148,
 			height:20,
 			icon:"[SKINIMG]/SchemaViewer/complexType.gif",
 			baseStyle: "myMenuButton",
@@ -1841,7 +1841,7 @@ isc.MenuPanel.addProperties({
 		this.menu12=isc.Button.create({
 			container:this,
 			title:"Databases",
-			width:148,
+			//width:148,
 			height:20,
 			align:"left",
 			icon:"[SKINIMG]/DatabaseBrowser/data.png",
@@ -1854,7 +1854,7 @@ isc.MenuPanel.addProperties({
 		this.menu13=isc.Button.create({
 			container:this,
 			title:"System",
-			width:148,
+			//width:148,
 			height:20,
 			align:"left",
 			icon:"[SKINIMG]/Window/headerIcon.png",
@@ -1867,7 +1867,7 @@ isc.MenuPanel.addProperties({
 		this.menu14=isc.Button.create({
 			container:this,
 			title:"Logout",
-			width:148,
+			//width:148,
 			height:20,
 			align:"left",
 			icon:"[SKINIMG]/Window/headerIcon.png",
@@ -1883,7 +1883,7 @@ isc.MenuPanel.addProperties({
 		this.treegrid1=isc.VLayout.create({
 			container:this,
 			ID:"treegrid1",
-			width:150,
+			//width:150,
 			height:80,
 			layoutTopMargin:10,
 			layoutBottomMargin:10,
@@ -1894,7 +1894,7 @@ isc.MenuPanel.addProperties({
 			container:this,
 			title:"New domain",
 			align:"left",
-			width:148,
+			//width:148,
 			height:20,
 			icon:"[SKINIMG]/actions/add.png",
 			baseStyle: "myMenuButton",
@@ -1913,7 +1913,7 @@ isc.MenuPanel.addProperties({
 		this.menu22=isc.Button.create({
 			container:this,
 			title:"Wizard",
-			width:148,
+			//width:148,
 			height:20,
 			align:"left",
 			icon:"[SKINIMG]/RichTextEditor/link_new.png",
@@ -1933,7 +1933,7 @@ isc.MenuPanel.addProperties({
 		this.menu23=isc.Button.create({
 			container:this,
 			title:"Remove",
-			width:148,
+			//width:148,
 			height:20,
 			align:"left",
 			icon:"[SKINIMG]/actions/remove.png",
@@ -1954,7 +1954,7 @@ isc.MenuPanel.addProperties({
 		this.treegrid2=isc.VLayout.create({
 			container:this,
 			ID:"treegrid2",
-			width:150,
+			//width:150,
 			height:60,
 			layoutTopMargin:10,
 			layoutBottomMargin:10,
@@ -1967,7 +1967,7 @@ isc.MenuPanel.addProperties({
 			container:this,
 			title:"Summary",
 			align:"left",
-			width:148,
+			//width:148,
 			height:20,
 			icon:"[SKINIMG]/FileBrowser/file.png",
 			baseStyle: "myMenuButton",
@@ -2001,7 +2001,7 @@ isc.MenuPanel.addProperties({
 		this.menu32=isc.Button.create({
 			container:this,
 			title:"Web",
-			width:148,
+			//width:148,
 			height:20,
 			align:"left",
 			icon:"[SKINIMG]/Window/headerIcon.png",
@@ -2039,7 +2039,7 @@ isc.MenuPanel.addProperties({
 		this.menu33=isc.Button.create({
 			container:this,
 			title:"FTP",
-			width:148,
+			//width:148,
 			height:20,
 			align:"left",
 			icon:"[SKINIMG]/FileBrowser/folder.png",
@@ -2060,7 +2060,7 @@ isc.MenuPanel.addProperties({
 		this.menu34=isc.Button.create({
 			container:this,
 			title:"Mail",
-			width:148,
+			//width:148,
 			height:20,
 			align:"left",
 			icon:"[SKINIMG]/Window/headerIcon.png",
@@ -2081,7 +2081,7 @@ isc.MenuPanel.addProperties({
 			container:this,
 			ID:"menu35",
 			title:"DNS",
-			width:148,
+			//width:148,
 			height:20,
 			align:"left",
 			icon:"[SKINIMG]/Window/headerIcon.png",
@@ -2123,7 +2123,7 @@ isc.MenuPanel.addProperties({
 		this.treegrid3=isc.VLayout.create({
 			container:this,
 			ID:"treegrid3",
-			width:150,
+			//width:150,
 			height:100,
 			align:"center",
 			layoutTopMargin:10,
@@ -2136,14 +2136,14 @@ isc.MenuPanel.addProperties({
 		   	ID: "stack1",
 			container:this,
 			visibilityMode: "multiple",
-		    	width:162,
+		    	//width:162,
 			height: 400,
 			layoutLeftMargin:10,
 			layoutTopMargin:10,
 		    	sections: [
-			{title: "MENU", expanded: true,width: 152,align:"center", items: [this.treegrid1]},
-			{title: "ACTIONS", expanded: true, width: 152,items: [this.treegrid2]},
-			{title: "d", expanded: true, width: 152,items: [this.treegrid3]}
+			{title: "MENU", expanded: true,/*width: 152,*/align:"center", items: [this.treegrid1]},
+			{title: "ACTIONS", expanded: true, /*width: 152,*/items: [this.treegrid2]},
+			{title: "d", expanded: true, /*width: 152,*/items: [this.treegrid3]}
 		    ]
 		});
 		this.addMember(this.stack1);
