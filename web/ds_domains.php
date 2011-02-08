@@ -49,7 +49,7 @@ class DomainsRequest extends MipanelRestRequest {
 		$client = new ProcOpenRmiClient("sudo ".RMI_SERVER_PATH." 2>&1");
 
 		$srvCtl = $client->createInstance("SrvCtl");
-		$siteName = "www.".$this->data["domain"];
+		$siteName = $this->data["domain"];
 
 		$pdo = Propel::getConnection(DomainsPeer::DATABASE_NAME);
 
@@ -75,7 +75,7 @@ class DomainsRequest extends MipanelRestRequest {
 				$site->setEnabled(1);
 				$site->save();
 				$site_alias = new SiteAliases();
-				$site_alias->setName($this->data["domain"]);
+				$site_alias->setName("www." . $this->data["domain"]);
 				$site_alias->setSiteId($site->getSiteId());
 				$site_alias->save();
 				$this->om->setSiteId($site->getSiteId());

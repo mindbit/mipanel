@@ -23,8 +23,8 @@ class DomainsWSRequest extends MipanelRestRequest {
 		$client = new ProcOpenRmiClient("sudo ".RMI_SERVER_PATH." 2>&1");
 		$srvCtl = $client->createInstance("SrvCtl");
 
-		$siteName = "www.".$this->data["domain"];
-		$u = explode(".", $this->data["domain"]);
+		$siteName = $this->data["domain"];
+		$u = explode(".", $siteName);
 		$user = posix_getpwnam($u[0]);
 
 		try {
@@ -48,7 +48,7 @@ class DomainsWSRequest extends MipanelRestRequest {
 			$site->save();
 
 			$site_alias = new SiteAliases();
-			$site_alias->setName($this->data["domain"]);
+			$site_alias->setName("www." . $this->data["domain"]);
 			$site_alias->setSiteId($site->getSiteId());
 			$site_alias->save();
 

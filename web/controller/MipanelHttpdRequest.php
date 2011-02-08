@@ -44,7 +44,7 @@ class MipanelHttpdRequest extends BaseRequest {
 			$client = new ProcOpenRmiClient("sudo ".RMI_SERVER_PATH." 2>&1");
 			$this->srvCtl = $client->createInstance("SrvCtl");
 			$this->username = $domain->getUsername();
-			$this->siteName = "www.".$domain->getDomain();
+			$this->siteName = $domain->getDomain();
 
 			/* perform the requested operation */
 			switch ($this->operationType) {
