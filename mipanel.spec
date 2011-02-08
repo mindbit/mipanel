@@ -2,7 +2,7 @@
 
 Summary:        Mindbit Webhosting Platform
 Name:           mipanel
-Version:        0.1
+Version:        0.2
 Release:        1%{dist}
 License:        AGPL
 Packager:       Radu Rendec
