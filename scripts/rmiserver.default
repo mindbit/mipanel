@@ -6,4 +6,4 @@
 #
 # apache   ALL=(root)  NOPASSWD: /usr/lib/mipanel/scripts/rmiserver
 #
-/usr/bin/php -q -dinclude_path=.:/usr/share/pear:/usr/share/php:/usr/share/mpl:/usr/lib/mipanel/backend -d short_open_tag=on /usr/lib/mipanel/backend/SrvCtlRmiServer.php
+/usr/bin/php -q -dinclude_path=.:/usr/lib/mipanel/backend:/usr/lib/mipanel/lib:/usr/share/mpl:/usr/share/pear:/usr/share/php -d short_open_tag=on /usr/lib/mipanel/backend/SrvCtlRmiServer.php

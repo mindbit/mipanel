@@ -48,6 +48,7 @@ class SrvCtl {
 				1 => array("file", "/dev/null", "a"),
 				2 => array("file", "/dev/null", "a")
 				);
+		Env::log("runQuiet('".$cmd."')", PEAR_LOG_INFO);
 		$process = proc_open($cmd, $descriptorspec, $pipes, $cwd, $env);
 		if ($process === false)
 			throw new Exception("Failed executing: " . $cmd);
