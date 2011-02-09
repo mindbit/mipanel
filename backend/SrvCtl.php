@@ -66,10 +66,10 @@ class SrvCtl {
 
 	function userAdd($username, $homeDir) {
 		if (!self::validUsername($username))
-			throw new Exception("Invalid username");
+			throw new Exception("Invalid username: '" . $username . "'");
 
 		if (!self::validName($homeDir))
-			throw new Exception("Invalid home directory");
+			throw new Exception("Invalid home directory: '" . $homeDir . "'");
 
 		$cmd = self::USERADD . " -M -s /sbin/nologin -d " .
 			escapeshellarg(self::WEB_ROOT . "/" . $homeDir) . " " .
@@ -111,7 +111,7 @@ class SrvCtl {
 		if (!self::validName($domain))
 			throw new Exception("Invalid domain");
 		if ($uid < self::SAFE_MIN_UID || $gid < self::SAFE_MIN_GID)
-			throw new Exception("Bad uid/gid");
+			throw new Exception("Bad uid/gid: ".$uid."/".$gid);
 
 		$mailRoot = self::MAIL_ROOT . "/" . $domain;
 		mkdir($mailRoot, 0750);
@@ -137,7 +137,7 @@ class SrvCtl {
 		if (!preg_match("/^[a-zA-Z0-9._-]+$/", $siteName))
 			throw new Exception("Invalid site name");
 		if ($uid < self::SAFE_MIN_UID || $gid < self::SAFE_MIN_GID)
-			throw new Exception("Bad uid/gid");
+			throw new Exception("Bad uid/gid: ".$uid."/".$gid);
 
 		$siteRoot = self::WEB_ROOT . "/" . $siteName;
 		
@@ -331,6 +331,8 @@ class SrvCtl {
 	}
 
 	function serverCleanup($userName, $siteName, $removeUser=true) {
+		if (!self::validUsername($userName))
+			throw new Exception("Invalid username: '" . $userName . "'");
 		$this->runQuiet(self::PKILL . " -9 -u " . escapeshellarg($userName));
 		if ($removeUser === true) {
 			$this->runQuiet(self::USERDEL . " -r " . escapeshellarg($userName));
