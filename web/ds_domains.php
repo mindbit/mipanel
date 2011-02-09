@@ -117,25 +117,30 @@ class DomainsRequest extends MipanelRestRequest {
 		$domain=DomainsPeer::retrieveByPK($this->data["domain_id"]);
 		$id=$domain->getSiteId();
 		$id_soa = $domain->getSoaId();
-		parent::doRemove();
-		if ($id_soa)
-		{
-			$c = new Criteria();
-			$c->add(RrPeer::ZONE,$domain->getSoaId());
-			$rrs=RrPeer::doSelect($c);
-			foreach ($rrs as $rr)
-			{		
-				RrPeer::doDelete($rr);
-			}		
 
-			$soa=SoaPeer::retrieveByPK($domain->getSoaId());		
-			SoaPeer::doDelete($soa);
-		}
-		if ($id) {
-			$sites=SitesPeer::retrieveByPK($domain->getSiteId());		
-			SitesPeer::doDelete($sites);
+		$pdo = Propel::getConnection(DomainsPeer::DATABASE_NAME);
 
-			
+		try {
+			$pdo->beginTransaction();
+			parent::doRemove();
+			if ($id_soa) {
+				$c = new Criteria();
+				$c->add(RrPeer::ZONE,$domain->getSoaId());
+				$rrs=RrPeer::doSelect($c);
+				foreach ($rrs as $rr)
+					RrPeer::doDelete($rr);
+
+				$soa=SoaPeer::retrieveByPK($domain->getSoaId());
+				SoaPeer::doDelete($soa);
+			}
+			if ($id) {
+				$sites=SitesPeer::retrieveByPK($domain->getSiteId());
+				SitesPeer::doDelete($sites);
+			}
+			$pdo->commit();
+		} catch (Exception $e) {
+			$pdo->rollback();
+			throw $e;
 		}
 	}
 }
