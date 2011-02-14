@@ -171,3 +171,16 @@ isc.MplDataSource.create({
         {name: "enabled",type:"checkbox"}
     ]
 });
+
+isc.MplDataSource.create({
+    ID:"site_aliases",
+    dataFormat:"json",
+    dataURL:"ds_site_aliases.php",
+
+    fields:[
+        {type: "sequence", name: "site_alias_id", primaryKey: true},
+        {name: "site_id"},
+        {name: "name"}
+    ]
+});
+

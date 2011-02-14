@@ -100,18 +100,20 @@ isc.TabsPanel.addProperties({
 		  		autoFitMaxRecords: 10
 		});
 
-		this.TabMailboxes=isc.TabMailboxes.create();
-		this.TabAliases=isc.TabAliases.create();
-		this.TabFTPSett=isc.TabFTPSett.create();
-		this.TabDNSSett=isc.TabDNSSett.create();
-		this.TabWebDomain=isc.TabWebDomain.create();
+		this.TabMailboxes = isc.TabMailboxes.create();
+		this.TabAliases = isc.TabAliases.create();
+		this.TabFTPSett = isc.TabFTPSett.create();
+		this.TabDNSSett = isc.TabDNSSett.create();
+		this.TabWebDomain = isc.TabWebDomain.create();
+		this.TabWebAliases = isc.TabWebAliases.create();
 		
 		this.tabWeb=isc.TabSet.create({
 			container:this,
                         ID:"tabWeb",
 			visibility:"hidden",
 			tabs:[	
-				{title:"Settings", pane:this.TabWebDomain, ID:"settWebTab"}//,<-----Versiuni viitoare
+				{title:"Settings", pane:this.TabWebDomain, ID:"settWebTab"},
+				{title:"Aliases", pane:this.TabWebAliases, ID:"aliasesWebTab"}//,<-----Versiuni viitoare
 				/*{title:"VHOSTS", pane:label2, ID:"vhostWebTab"},
 				{title:"Statistics", pane:label3, ID:"statWebTab"},
 				{title:"Logs", pane:label4, ID:"logsWebTab"}*/
@@ -605,6 +607,9 @@ isc.TabsPanel.addProperties({
 		this.TabDNSSett.setSoaId(record.soa_id);
 		
 		this.TabWebDomain.setRecord(record);
+		this.TabWebAliases.setRecord(record);
+		this.TabWebAliases.setSiteId(record.site_id);		
+
 		this.TabDNSSett.setRecord(record);
 		this.TabFTPSett.setRecord(record);
 
@@ -858,6 +863,142 @@ isc.TabWebDomain.addProperties({
 	domainId:null,
 	siteId:null,
 	record:null
+});
+
+isc.ClassFactory.defineClass("TabWebAliases", isc.VLayout);
+isc.TabWebAliases.addProperties({
+        width: "100%",
+        height: "100%",
+        align:"center",
+        padding:30,
+        showResizeBar:false,
+        initWidget: function() {
+                this.Super("initWidget", arguments);
+
+		this.listGrid_WAliases=isc.ListGrid.create({
+                        ID:"listGrid_WAliases",
+                        container:this,
+                        width:"100%",
+                        height:"100%",
+                        alternateRecordStyles:true,
+                        dataSource: isc.DS.get("site_aliases"),
+                        autoFetchData: false,
+                        showResizeBar: false,
+                        recordClick: function (viewer, record){
+                                this.container.deleteButton.setDisabled(false);
+				//this.container.web_aliasForm.editRecord(record);
+                                //this.container.loadToRecord(record);
+                                this.container.newButton.setDisabled(false);
+                        },
+                                fields: [
+                                        {name: "site_id",showIf:"false"},
+                                        {name: "name", title: "Alias",required:"true",canEdit:false}
+                                        ],
+                                autoFitData: "vertical",
+                                showFilterEditor: false,
+                                autoFitMaxRecords: 10
+                });
+
+                this.deleteButton = isc.IButton.create({
+                        container: this,
+                        title: "Remove",
+                        icon: "[SKIN]/TabSet/close.png",
+                        showDisabledIcon: false,
+                        disabled: true,
+                        click: function () { this.container.deleteRecord();}
+                });
+                this.web_aliasForm=isc.DynamicForm.create({
+                        ID:"web_aliasForm",
+                        container: this,
+                        dataSource: isc.DS.get("site_aliases"),
+                        fields: [
+			{name: "site_id",showIf:"false"},
+                        {name: "name", title: "Name",type: "text", required:"true"}],
+                });
+                this.newButton = isc.IButton.create({
+                        container: this,
+                        title: "New",
+                        icon: "[SKIN]/actions/add.png",
+                        showDisabledIcon: false,
+                        click: function ()
+			{
+				this.container.saveRecord();
+			}
+		});
+		this.WAliasGridH = isc.HLayout.create({
+                        container:this,
+                        showResizeBar:false,
+                        membersMargin:10,
+                        height:"100%",
+                        layoutTopMargin:30,
+                        members: [this.listGrid_WAliases, this.deleteButton]
+                });
+                this.WAliasAddH = isc.HLayout.create({
+                        container:this,
+                        showResizeBar:false,
+                        membersMargin:10,
+                        layoutTopMargin:10,
+                        members: [this.web_aliasForm, this.newButton]
+                });
+
+                this.WAlias=isc.VLayout.create({
+                        container:this,
+                        showResizeBar:false,
+                        layoutLeftMargin:30,
+                        width:"80%",
+                        height:"100%",
+                        members: [this.WAliasGridH, this.WAliasAddH]
+                });
+
+		this.addMember(this.WAlias);
+	},
+	saveRecord: function() {
+                this.web_aliasForm.saveData(function(dsResponse, data, dsRequest) {
+                        if (dsResponse.status != 0)
+                                return;
+                        if (!this.isNewRecord())
+                                return;
+                        this.setSaveOperationType("update");
+                });
+        },
+	deleteRecord: function() {
+                if (listGrid_WAliases.getSelectedRecord()==null) isc.say("Select a alias first!");
+                else isc.ask("Really delete this alias? ", function (value) {
+                        if (value)
+                        {
+                                this.container.__deleteRecord();
+                        }
+
+                }, {container: this});
+        },
+
+        __deleteRecord: function() {
+                this.listGrid_WAliases.dataSource.removeData(this.listGrid_WAliases.getSelectedRecord(), { target: this, methodName: "deleteRecordCallback" });
+        },
+        deleteRecordCallback: function(dsResponse, data, dsRequest) {
+                if (dsResponse.status != 0)
+                        return;
+                this.web_aliasForm.editNewRecord();
+	},
+	setSiteId: function(siteId) {
+                this.siteId = siteId;
+		if (siteId != '')
+		{
+			this.newButton.setDisabled(false);
+			this.web_aliasForm.setValue("site_id",siteId);
+			this.listGrid_WAliases.fetchData({site_id: siteId});
+		}
+		else 
+		{ 
+			this.newButton.setDisabled(true);
+			this.listGrid_WAliases.setData([]);
+		}
+        },
+        setRecord: function(record) {
+                this.record = record;
+        },
+ 	siteId:null,
+        record:null
 });
 
 isc.ClassFactory.defineClass("TabMailboxes", isc.VLayout);
