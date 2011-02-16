@@ -74,15 +74,15 @@ ALTER FUNCTION public.ftp_auth(character varying, character varying) OWNER TO mi
 CREATE FUNCTION get_mailbox_properties(character varying, character varying) RETURNS SETOF mailbox_properties
     LANGUAGE plpgsql
     AS $_$
---@obfuscate
 DECLARE
+--@obfuscate
 	_user ALIAS FOR $1;
 	_domain ALIAS FOR $2;
 
 	_ret mailbox_properties;
 	_domain_id integer;
 BEGIN --{
-	SELECT INTO _domain_id, _ret.uid, _ret.gid domain_id, mail_uid, mail_gid FROM domains WHERE domain = _domain;
+	SELECT INTO _domain_id, _ret.uid, _ret.gid domain_id, mail_uid, mail_gid FROM domains WHERE domain = _domain AND enable_mail;
 	IF NOT FOUND THEN --{
 		RETURN;
 	END IF; --}
@@ -102,10 +102,12 @@ $_$;
 ALTER FUNCTION public.get_mailbox_properties(character varying, character varying) OWNER TO mipanel;
 
 --
--- Name: get_virtual_mail(character varying); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: get_virtual_mail(character varying); Type: FUNCTION; Schema: public; Owner: mipanel
 --
 
-CREATE FUNCTION get_virtual_mail(character varying) RETURNS SETOF text AS $_$
+CREATE FUNCTION get_virtual_mail(character varying) RETURNS SETOF text
+    LANGUAGE plpgsql
+    AS $_$
 --@obfuscate
 DECLARE
 	_query ALIAS FOR $1;
@@ -122,7 +124,7 @@ BEGIN --{
 	_user := split_part(_query, '@', 1);
 	_domain := split_part(_query, '@', 2);
 
-	SELECT INTO _domain_id domain_id FROM domains WHERE domain = _domain;
+	SELECT INTO _domain_id domain_id FROM domains WHERE domain = _domain AND enable_mail;
 	IF NOT FOUND THEN --{
 		RETURN;
 	END IF; --}
@@ -179,9 +181,10 @@ BEGIN --{
 
 END; --}
 --@end
-$_$ LANGUAGE plpgsql;
+$_$;
 
-ALTER FUNCTION public.get_virtual_mail(character varying) OWNER TO postgres;
+
+ALTER FUNCTION public.get_virtual_mail(character varying) OWNER TO mipanel;
 
 SET default_tablespace = '';
 
@@ -1192,6 +1195,13 @@ CREATE UNIQUE INDEX sites_name_idx ON sites USING btree (name);
 
 
 --
+-- Name: sites_server_ip_server_port_idx; Type: INDEX; Schema: public; Owner: mipanel; Tablespace: 
+--
+
+CREATE UNIQUE INDEX sites_server_ip_server_port_idx ON sites USING btree (server_ip, server_port);
+
+
+--
 -- Name: users_username_idx; Type: INDEX; Schema: public; Owner: mipanel; Tablespace: 
 --
 
@@ -1283,7 +1293,7 @@ ALTER TABLE ONLY rr
 --
 
 ALTER TABLE ONLY site_aliases
-    ADD CONSTRAINT site_aliases_site_id_fkey FOREIGN KEY (site_id) REFERENCES sites(site_id);
+    ADD CONSTRAINT site_aliases_site_id_fkey FOREIGN KEY (site_id) REFERENCES sites(site_id) ON UPDATE CASCADE ON DELETE CASCADE;
 
 
 --
@@ -1291,7 +1301,7 @@ ALTER TABLE ONLY site_aliases
 --
 
 ALTER TABLE ONLY site_rewrites
-    ADD CONSTRAINT site_rewrites_site_id_fkey FOREIGN KEY (site_id) REFERENCES sites(site_id);
+    ADD CONSTRAINT site_rewrites_site_id_fkey FOREIGN KEY (site_id) REFERENCES sites(site_id) ON UPDATE CASCADE ON DELETE CASCADE;
 
 
 --

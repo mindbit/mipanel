@@ -17,7 +17,7 @@ BEGIN --{
 	_user := split_part(_query, '@', 1);
 	_domain := split_part(_query, '@', 2);
 
-	SELECT INTO _domain_id domain_id FROM domains WHERE domain = _domain;
+	SELECT INTO _domain_id domain_id FROM domains WHERE domain = _domain AND enable_mail;
 	IF NOT FOUND THEN --{
 		RETURN;
 	END IF; --}
