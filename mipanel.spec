@@ -40,6 +40,8 @@ mv runtime-conf.xml.default runtime-conf.xml
 propel-gen
 popd
 
+scripts/gensqlschema.sh
+
 %install
 rm -rf $RPM_BUILD_ROOT
 
