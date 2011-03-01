@@ -9,7 +9,13 @@ class MipanelHttpd extends RequestDispatcher {
 	}
 
 	function write() {
-		echo $this->request->getResponse()->jsonEncode();
+		try {
+			echo $this->request->getResponse()->jsonEncode();
+		} catch (Exception $e) {
+			ErrorHandler::logException($e);
+			echo '{"status":' . SmartClientRPCResponse::STATUS_FAILURE . ',' .
+				'"data":"Data Server Failure"}';
+		}
 	}
 }
 

@@ -67,8 +67,13 @@ class MipanelHttpdRequest extends BaseRequest {
 				break;
 			}
 		} catch (RemoteException $e) {
-			$this->response->setFailure($e->getMessage() . ": " . $e->getPrevious()->getMessage());
+			ErrorHandler::logException($e);
+			$msg = $e->getMessage();
+			if (PHP_VERSION_ID >= 50300)
+				$msg .= ": " . $e->getPrevious()->getMessage();
+			$this->response->setFailure($msg);
 		} catch (Exception $e) {
+			ErrorHandler::logException($e);
 			$this->response->setFailure($e->getMessage());
 		}
 	}

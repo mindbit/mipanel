@@ -2,8 +2,11 @@
 require_once "Env.php";
 require_once "ThrowErrorHandler.php";
 require_once "Log.php";
+
 Env::setup();
-Env::setLogger(Log::factory('syslog', LOG_LOCAL5, 'mipanel'));
+$logger = Log::factory('syslog', LOG_LOCAL5, 'mipanel');
+$logger->setPriority(PEAR_LOG_WARNING);
+Env::setLogger($logger);
 
 $path = dirname($_SERVER["SCRIPT_FILENAME"]);
 
