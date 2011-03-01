@@ -176,13 +176,15 @@ isc.TabsPanel.addProperties({
 					
 					if (this.container.listGrid.getSelectedRecord() && this.container.listGrid.getSelectedRecord().site_id!='')
 					{						
-						tabWeb.show();					
+						tabWeb.show();		
+						tabWeb.enableTab(1);			
 						configV.show();
 						unconfigV.hide();
 					}
 					else 
 					{
 						tabWeb.show();
+						tabWeb.disableTab(1);
 						configV.hide();
 						unconfigV.show();
 					}
@@ -217,12 +219,14 @@ isc.TabsPanel.addProperties({
 					if (this.container.listGrid.getSelectedRecord().site_id!='')
 					{
 						tabWeb.show();					
+						tabWeb.enableTab(1);
 						configV.show();
 						unconfigV.hide();
 					}
 					else 
 					{
 						tabWeb.show();
+						tabWeb.disableTab(1);
 						configV.hide();
 						unconfigV.show();
 					}
@@ -752,9 +756,12 @@ isc.TabWebDomain.addProperties({
 			width:100,
 			//visibility:"hidden",
 			icon: "[SKIN]/actions/approve.png",
-			click: function () {this.container.saveAccessWeb();
+			click: function () 
+			{
+				this.container.saveAccessWeb();
 				label2.setContents("Web access is enabled");
-				label2.setIcon("[SKIN]/actions/approve.png");}
+				label2.setIcon("[SKIN]/actions/approve.png");
+			}
 		});
 		var ok=false;
 		this.configButton=isc.IButton.create({
@@ -766,8 +773,20 @@ isc.TabWebDomain.addProperties({
 			click: function (){
 			
 				this.container.saveconfigWeb();
+				var record = listGrid.getSelectedRecord();
 				listGrid.setData([]);
-				listGrid.fetchData();
+				listGrid.fetchData({},
+                                function (dsResponse, data, dsRequest) {
+          				for (i=0; i < listGrid.data.totalRows; i++)
+					{
+						if (listGrid.data.localData[i].domain_id == record.domain_id)
+						{
+							record = isc.addProperties(record,{site_id:listGrid.data.localData[i].site_id});
+							enableWebAcces.editRecord(record);
+						}
+					}                              
+                                });
+				tabWeb.enableTab(1);
 				label1.setContents("Web service is enabled");
 				label1.setIcon("[SKIN]/actions/approve.png"); 
 				
@@ -2168,12 +2187,14 @@ isc.MenuPanel.addProperties({
 					{
 						configV.show();
 						unconfigV.hide();
+						tabWeb.enableTab(1);
 					}
 					else 
 					{
 						configV.hide();
 						enableWebAccesButton.show();
 						unconfigV.show();
+						tabWeb.disableTab(1);
 					}
 				}		
 		});
