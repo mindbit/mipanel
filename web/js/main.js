@@ -173,7 +173,7 @@ isc.TabsPanel.addProperties({
 			click: function() 
 				{
 					summary.hide();
-					
+					tabWeb.selectTab(0);
 					if (this.container.listGrid.getSelectedRecord() && this.container.listGrid.getSelectedRecord().site_id!='')
 					{						
 						tabWeb.show();		
@@ -215,7 +215,7 @@ isc.TabsPanel.addProperties({
 			click: function() 
 				{
 					summary.hide();
-
+					tabWeb.selectTab(0);
 					if (this.container.listGrid.getSelectedRecord().site_id!='')
 					{
 						tabWeb.show();					
@@ -783,10 +783,12 @@ isc.TabWebDomain.addProperties({
 						{
 							record = isc.addProperties(record,{site_id:listGrid.data.localData[i].site_id});
 							enableWebAcces.editRecord(record);
+							listGrid_WAliases.fetchData({site_id: listGrid.data.localData[i].site_id});
 						}
 					}                              
                                 });
 				tabWeb.enableTab(1);
+				newButtonWebAliases.setDisabled(false);
 				label1.setContents("Web service is enabled");
 				label1.setIcon("[SKIN]/actions/approve.png"); 
 				
@@ -935,6 +937,7 @@ isc.TabWebAliases.addProperties({
                         {name: "name", title: "Name",type: "text", required:"true"}],
                 });
                 this.newButton = isc.IButton.create({
+			ID:"newButtonWebAliases",
                         container: this,
                         title: "New",
                         icon: "[SKIN]/actions/add.png",
