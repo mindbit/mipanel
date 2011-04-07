@@ -4,7 +4,7 @@ myrecord='';
 isc.ClassFactory.defineClass("TabsPanel", isc.VLayout);
 
 isc.TabsPanel.addProperties({
-	width: "85%",
+	width: "83%",
 	height: "100%",
 	align:"center",
 	layoutTopMargin:10,
@@ -1981,7 +1981,7 @@ isc.TabDNSSett.addProperties({
 isc.ClassFactory.defineClass("MenuPanel", isc.VLayout);
 
 isc.MenuPanel.addProperties({
-	width: "15%",
+	width: "17%",
 	height: "100%",
 	align:"center",
 	showResizeBar:true,
@@ -2110,7 +2110,7 @@ isc.MenuPanel.addProperties({
 					summary.hide();
 					wizardFTPV.hide();
 					tabDNS.hide();
-					if (listGrid.getSelectedRecord() != null) this.container.deleteRecord(); 
+					if (listGrid.getSelectedRecord() != null) this.container.deleteRecord(listGrid.getSelectedRecord().domain); 
 						else isc.say('Select a domain first!');
 				}		
 		});
@@ -2301,7 +2301,7 @@ isc.MenuPanel.addProperties({
 		   	ID: "stack1",
 			container:this,
 			visibilityMode: "multiple",
-		    	//width:162,
+		     //	width:162,
 			height: 400,
 			layoutLeftMargin:10,
 			layoutTopMargin:10,
@@ -2315,8 +2315,8 @@ isc.MenuPanel.addProperties({
 
 	},
 
-	deleteRecord: function() {
-		isc.ask("Really delete?", function (value) {
+	deleteRecord: function(domain) {
+		isc.ask('Really delete the domain "'+domain +'" ?', function (value) {
 			if (value)
 				this.container.__deleteRecord();
 		}, {container: this});

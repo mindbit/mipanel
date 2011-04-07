@@ -143,6 +143,13 @@ class DomainsRequest extends MipanelRestRequest {
 			throw $e;
 		}
 	}
+
+	function buildFetchCriteria()
+	{
+		$c = parent::buildFetchCriteria();
+		$c->addAscendingOrderByColumn(DomainsPeer::DOMAIN);
+		return $c;
+	}
 }
 
 $request = new DomainsRequest();
