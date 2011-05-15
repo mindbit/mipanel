@@ -1,7 +1,9 @@
 *.swp
 *.o
 .deps
+config/config.php
 src/redirect/redirect
+scripts/rmiserver
 backend/model/build/classes/mipanel/map
 backend/model/build/classes/mipanel/om
 backend/model/build/classes/mipanel/Domains.php

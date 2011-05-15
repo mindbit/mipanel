@@ -1198,7 +1198,7 @@ isc.TabMailboxes.addProperties({
 			height:20,
 			dataSource: isc.DS.get("mailboxes"),
 			fields: [
-				{name: "copy_on_forward", type: "checkbox", title:"Also leap a local copy"}
+				{name: "copy_on_forward", type: "checkbox", title:"Also keep a local copy"}
 			]
 		});
 		
