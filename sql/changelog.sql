@@ -732,3 +732,16 @@ END; --}
 --@end
 $_$ LANGUAGE plpgsql;
 ALTER FUNCTION public.get_virtual_mail(character varying) OWNER TO mipanel;
+
+--@version: 4
+ALTER TABLE mailboxes add enable_autoresponder boolean not null default false;
+ALTER TABLE mailboxes add autoresponder_text text not null default '';
+
+create table customers(customer_id serial primary key, name varchar(50) not null, parent_id int);
+alter table customers add foreign key(parent_id) references customers(customer_id);
+insert into customers(name) values ('Administrator');
+
+alter table domains add customer_id int;
+update domains set customer_id = (select customer_id from customers where parent_id is null limit 1);
+alter table domains alter column customer_id set not null;
+alter table domains add foreign key(customer_id) references customers(customer_id);
