@@ -131,6 +131,9 @@ case "$1" in
 	stop +squid_in+ +squid_out+ +web+
 	start +squid_in+ +squid_out+ +web+
 	;;
+  graceful)
+	$myphp /usr/lib/mipanel/scripts/webctl.php graceful
+	;;
   startsquid)
 	start +squid_in+ +squid_out+
 	;;

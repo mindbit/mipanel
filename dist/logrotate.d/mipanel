@@ -1,0 +1,10 @@
+/var/www/mipanel/*/logs/*.log {
+    missingok
+    notifempty
+    sharedscripts
+    compress
+    delaycompress
+    postrotate
+	/etc/init.d/mipanel graceful
+    endscript
+}
