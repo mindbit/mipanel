@@ -8,3 +8,14 @@
 	/etc/init.d/mipanel graceful
     endscript
 }
+
+/var/log/mipanel/squid-in/*.log {
+    missingok
+    notifempty
+    sharedscripts
+    compress
+    delaycompress
+    postrotate
+	squid -f /etc/mipanel/squid-in/squid.conf -k rotate
+    endscript
+}
