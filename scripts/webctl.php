@@ -22,9 +22,9 @@ $domains = DomainsPeer::doSelect($c);
 foreach ($domains as $domain) {
 	$site = $domain->getSites();
 	switch ($_SERVER["argv"][1]) {
-	case 'reload':
-		if ($srcCtl->httpdAlive())
-			$srvCtl->sendHttpdSignal($site->getName(), "graceful", $domain->getUsername);
+	case 'graceful':
+		if ($srvCtl->httpdAlive($site->getName()))
+			$srvCtl->sendHttpdSignal($site->getName(), 'graceful', $domain->getUsername());
 		break;
 	default:
 		$srvCtl->sendHttpdSignal($site->getName(), $_SERVER["argv"][1], $domain->getUsername());
