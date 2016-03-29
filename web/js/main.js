@@ -19,6 +19,7 @@ isc.TabsPanel.addProperties({
 			height:"30%",
 			alternateRecordStyles:true,
 			dataSource: isc.DS.get("domains"),
+			dataProperties: {resultSize: 150}, // see ListGrid.dataProperties and ResultSet.resultSize
 			autoFetchData: true,
 			showResizeBar: true,
 			recordClick: function (viewer, record) {
