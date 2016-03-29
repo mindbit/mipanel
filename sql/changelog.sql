@@ -738,6 +738,7 @@ ALTER TABLE mailboxes add enable_autoresponder boolean not null default false;
 ALTER TABLE mailboxes add autoresponder_text text not null default '';
 
 create table customers(customer_id serial primary key, name varchar(50) not null, parent_id int);
+alter table customers owner to mipanel;
 alter table customers add foreign key(parent_id) references customers(customer_id);
 insert into customers(name) values ('Administrator');
 
