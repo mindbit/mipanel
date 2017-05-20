@@ -1,0 +1,29 @@
+{
+	"name" : "mindbit/mipanel",
+	"description" : "Web hosting configuration",
+	"license" : "GPL-2",
+	"authors" : [{
+			"name" : "Radu Rendec",
+			"email" : "radu.rendec@mindbit.ro",
+			"role" : "Lead"
+		}
+	],
+	"repositories" : [{
+			"type" : "vcs",
+			"url" : "file:///host/work/mpl/.git"
+		}
+	],
+	"require" : {
+		"mindbit/mpl" : "dev-ng",
+		"propel/propel": "~2.0@dev"
+	},
+	"minimum-stability" : "beta",
+	"autoload" : {
+		"psr-4" : {
+			"Mindbit\\Mipanel\\View\\" : "view/",
+			"Mindbit\\Mipanel\\Controller\\" : "controller/",
+			"Mindbit\\Mipanel\\Model\\" : "model/"
+		}
+	},
+	"support" : {}
+}
