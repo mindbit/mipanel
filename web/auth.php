@@ -1,16 +1,11 @@
-<?
-require_once "common.php";
-require_once "BaseForm.php";
-require_once "controller/MipanelAuthRequest.php";
-require_once "SmartClientAuthForm.php";
+<?php
+use Mindbit\Mipanel\View\AuthForm;
+use Mindbit\Mpl\Session\Session;
 
-class MipanelAuthForm extends SmartClientAuthForm {
-	function createRequest() {
-		return new MipanelAuthRequest();
-	}
-}
+require_once 'common.php';
 
-$protector = new MipanelAuthForm();
-$protector->write();
+$authForm = new AuthForm();
+$authForm->write();
 
-?>
+$user = Session::getUser();
+print "Welcome " . $user->getUsername() . "!";
