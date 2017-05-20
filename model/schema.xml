@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<database name="default" defaultIdMethod="native" namespace="Mindbit\Mipanel\Model\Mipanel" package="Mipanel" defaultPhpNamingMethod="underscore">
+  <table name="Users" idMethod="native" phpName="User">
+    <column name="id" phpName="Id" type="INTEGER" size="10" sqlType="int(10) unsigned" primaryKey="true" autoIncrement="true" required="true"/>
+    <column name="username" phpName="Username" type="VARCHAR" size="255" required="true"/>
+    <column name="password" phpName="Password" type="CHAR" size="64" required="true"/>
+    <column name="salt" phpName="Salt" type="CHAR" size="16" required="true"/>
+    <vendor type="mysql">
+      <parameter name="Engine" value="InnoDB"/>
+    </vendor>
+  </table>
+</database>
