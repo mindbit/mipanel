@@ -6,6 +6,3 @@ require_once 'common.php';
 
 $authForm = new AuthForm();
 $authForm->write();
-
-$user = Session::getUser();
-print "Welcome " . $user->getUsername() . "!";
