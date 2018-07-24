@@ -3,12 +3,19 @@ namespace Mindbit\Mipanel\Controller;
 
 use Mindbit\Mpl\Auth\BaseAuthRequest;
 use Mindbit\Mipanel\Model\Mipanel\UserQuery;
+use Mindbit\Mipanel\View\AuthResponse;
 
 class AuthRequest extends BaseAuthRequest
 {
-
-    function authenticateUser($username, $password)
+    protected function createResponse()
     {
+        return new AuthResponse($this);
+    }
+
+    protected function authenticateUser()
+    {
+        $username = $_REQUEST['username'];
+        $password = $_REQUEST['password'];
         $user = UserQuery::create()->findOneByUsername($username);
         if ($user == null) {
             return;

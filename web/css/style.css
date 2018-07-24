@@ -1,0 +1,13 @@
+input[type="submit"] {
+    background-color: #575BB7;
+    color: #FFFFFF;
+}
+
+#hdr1 {
+    font-family: sans-serif;
+    font-size: 14pt;
+}
+
+.error {
+    color: red;
+}
