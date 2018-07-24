@@ -14,7 +14,7 @@
 		}
 	],
 	"require" : {
-		"mindbit/mpl" : "dev-ng",
+		"mindbit/mpl" : "dev-master",
 		"propel/propel": "~2.0@dev"
 	},
 	"minimum-stability" : "beta",
