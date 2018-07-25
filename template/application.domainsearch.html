@@ -1,0 +1,32 @@
+<!-- BEGIN application.search.form [hidden] -->
+<table>
+<tr>
+  <td>Domain</td>
+  <td><input type="text" name="domain">
+</tr>
+</table>
+<!-- END application.search.form -->
+<!-- BEGIN application.search.noresults [hidden] -->
+No domain found.
+<!-- END application.search.noresults -->
+<!-- BEGIN application.search.results [hidden] -->
+<!-- BEGIN application.search.pager -->
+<!-- END application.search.pager -->
+<input type="hidden" name="domain" value=""><!-- FIXME -->
+<table border="1">
+  <tr>
+    <th>Domain</th>
+    <th>DNS</th>
+    <th>Mail</th>
+    <th>Actions</th>
+  </tr>
+  <!-- BEGIN application.search.row -->
+  <tr>
+    <td>{domain:e}</td>
+    <td>{dns:e}</td>
+    <td>{mail:e}</td>
+    <td>[ <a href="domain-edit?id={domain}">Edit</a> ]</td>
+  </tr>
+  <!-- END application.search.row -->
+</table>
+<!-- END application.search.results -->

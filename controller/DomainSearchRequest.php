@@ -3,23 +3,27 @@ namespace Mindbit\Mipanel\Controller;
 
 use Mindbit\Mpl\Search\BaseSearchRequest;
 use Mindbit\Mipanel\Model\Mipanel\DomainQuery;
-use Propel\Runtime\ActiveQuery\Criteria;
+use Mindbit\Mpl\Mvc\View\HtmlDecorator;
+use Mindbit\Mpl\Mvc\View\HtmlResponse;
+use Mindbit\Mipanel\Model\Mipanel\Map\DomainTableMap;
+use Mindbit\Mpl\Mvc\View\FormDecorator;
+use Mindbit\Mpl\Mvc\View\SearchDecorator;
 
-class DomainSearchRequest extends BaseSearchRequest 
+class DomainSearchRequest extends BaseSearchRequest
 {
-    function initData()
+    protected function createResponse()
     {
-        return array(
-            "name"      => ""
-        );
+        $ret = new HtmlResponse($this);
+        $ret = new FormDecorator($ret, HtmlResponse::BLOCK_BODY_INNER);
+        $ret = new HtmlDecorator($ret, FormDecorator::BLOCK_CONTENT, 'application.domainsearch.html');
+        $ret = new SearchDecorator($ret);
+        return $ret;
     }
 
-    function initPager()
+    protected function buildQuery()
     {
-        $c = DomainQuery::create()
-            ->filterByName('%'.$this->data['name'].'%', Criteria::LIKE)
-            ->orderByName();
-       // $c->setIgnoreCase(true);
-        $this->setQueryPager($c);
+        $query = DomainQuery::create();
+        $this->addLike($query, DomainTableMap::COL_DOMAIN, $_REQUEST['domain']);
+        return $query->orderByDomain();
     }
 }

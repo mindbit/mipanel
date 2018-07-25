@@ -22,7 +22,9 @@ require __DIR__ . '/../model/generated-conf/config.php';
 $authRequest = new AuthRequest();
 $authRequest->handle();
 
-$routes = [];
+$routes = [
+    'domain-search' => 'DomainSearchRequest',
+];
 $class = '\\Mindbit\\Mipanel\\Controller\\' . (@$routes[$_REQUEST['page']] ?: 'HomeRequest');
 /**
  * @var \Mindbit\Mpl\Mvc\Controller\BaseRequest $controller
