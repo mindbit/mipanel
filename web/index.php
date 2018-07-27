@@ -9,8 +9,7 @@ require __DIR__ . '/../vendor/autoload.php';
 
 // Initialise MPL
 MPL::init();
-$log = new SyslogLogger("mindbit");
-MPL::setLogger($log);
+MPL::setLogger(new SyslogLogger("mindbit"));
 Template::setLoadPath(array(
     __DIR__ . '/../vendor/mindbit/mpl/template',
     __DIR__ . '/../template'
@@ -23,10 +22,11 @@ require __DIR__ . '/../model/generated-conf/config.php';
 $authRequest = new AuthRequest();
 $authRequest->handle();
 
-$validPages = array();
-
-if (isset($_REQUEST["page"]) && in_array($_REQUEST["page"],$validPages)) {
-    $page = $_REQUEST["page"];
-    $pageRequest = new $validPages[$page];
-    $pageRequest->handle();
-}
+$routes = [];
+$class = '\\Mindbit\\Mipanel\\Controller\\' . (@$routes[$_REQUEST['page']] ?: 'HomeRequest');
+/**
+ * @var \Mindbit\Mpl\Mvc\Controller\BaseRequest $controller
+ */
+$controller = new $class;
+$controller->handle();
+$controller->getResponse()->send();
