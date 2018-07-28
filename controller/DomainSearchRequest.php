@@ -8,6 +8,7 @@ use Mindbit\Mpl\Mvc\View\HtmlResponse;
 use Mindbit\Mipanel\Model\Mipanel\Map\DomainTableMap;
 use Mindbit\Mpl\Mvc\View\FormDecorator;
 use Mindbit\Mpl\Mvc\View\SearchDecorator;
+use Mindbit\Mipanel\View\IconTheme;
 
 class DomainSearchRequest extends BaseSearchRequest
 {
@@ -25,5 +26,21 @@ class DomainSearchRequest extends BaseSearchRequest
         $query = DomainQuery::create();
         $this->addLike($query, DomainTableMap::COL_DOMAIN, $_REQUEST['domain']);
         return $query->orderByDomain();
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see \Mindbit\Mpl\Search\BaseSearchRequest::getRowVariables()
+     *
+     * @param \Mindbit\Mipanel\Model\Mipanel\Domain $om
+     */
+    protected function getRowVariables($om)
+    {
+        return [
+            'id'        => $om->getId(),
+            'domain'    => $om->getDomain(),
+            'img.dns'   => IconTheme::boolIcon($om->getDnsZonesId()),
+            'img.mail'  => IconTheme::boolIcon($om->getMailDomainsId())
+        ];
     }
 }

@@ -39,10 +39,26 @@
       <parameter name="Engine" value="InnoDB"/>
     </vendor>
   </table>
-  <table name="domains" idMethod="native" phpName="Domain" readOnly="true" skipSql="true">
-    <column name="domain" phpName="Domain" type="VARCHAR" size="255" primaryKey="true"/>
-    <column name="dns" phpName="Dns" type="INTEGER" size="10"/>
-    <column name="mail" phpName="Mail" type="INTEGER" size="10"/>
+  <table name="domains" idMethod="native" phpName="Domain">
+    <column name="id" phpName="Id" type="INTEGER" size="10" sqlType="int(10) unsigned" primaryKey="true" autoIncrement="true" required="true"/>
+    <column name="domain" phpName="Domain" type="VARCHAR" size="255" required="true"/>
+    <column name="dns_zones_id" phpName="DnsZonesId" type="INTEGER" size="10" sqlType="int(10) unsigned"/>
+    <column name="mail_domains_id" phpName="MailDomainsId" type="INTEGER" size="10" sqlType="int(10) unsigned"/>
+    <foreign-key foreignTable="mail_domains" name="domains_ibfk_2">
+      <reference local="mail_domains_id" foreign="id"/>
+    </foreign-key>
+    <foreign-key foreignTable="dns_zones" name="domains_ibfk_1">
+      <reference local="dns_zones_id" foreign="id"/>
+    </foreign-key>
+    <unique name="dns_zones_id">
+      <unique-column name="dns_zones_id"/>
+    </unique>
+    <unique name="mail_domains_id">
+      <unique-column name="mail_domains_id"/>
+    </unique>
+    <vendor type="mysql">
+      <parameter name="Engine" value="InnoDB"/>
+    </vendor>
   </table>
   <table name="mail_aliases" idMethod="native" phpName="MailAlias">
     <column name="id" phpName="Id" type="INTEGER" size="10" sqlType="int(10) unsigned" primaryKey="true" autoIncrement="true" required="true"/>
