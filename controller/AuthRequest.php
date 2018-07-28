@@ -4,12 +4,16 @@ namespace Mindbit\Mipanel\Controller;
 use Mindbit\Mpl\Auth\BaseAuthRequest;
 use Mindbit\Mipanel\Model\Mipanel\UserQuery;
 use Mindbit\Mipanel\View\AuthResponse;
+use Mindbit\Mpl\Mvc\View\FormDecorator;
+use Mindbit\Mpl\Mvc\View\HtmlResponse;
 
 class AuthRequest extends BaseAuthRequest
 {
     protected function createResponse()
     {
-        return new AuthResponse($this);
+        $ret = new AuthResponse($this);
+        $ret = new FormDecorator($ret, HtmlResponse::BLOCK_BODY_INNER);
+        return $ret;
     }
 
     protected function authenticateUser()
