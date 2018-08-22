@@ -15,7 +15,13 @@ class DomainSearchRequest extends BaseSearchRequest
     protected function createResponse()
     {
         $ret = new HtmlResponse($this);
-        $ret = new FormDecorator($ret, HtmlResponse::BLOCK_BODY_INNER);
+        if ($this->action == self::ACTION_FORM) {
+            $ret = new HtmlDecorator($ret, HtmlResponse::BLOCK_BODY_INNER, 'application.searchwrapper.html');
+            $ret = new FormDecorator($ret, 'application.search.wrapper.form');
+            $ret->getTemplate()->setVariable(FormDecorator::VAR_TARGET, 'results');
+        } else {
+            $ret = new FormDecorator($ret, HtmlResponse::BLOCK_BODY_INNER);
+        }
         $ret = new HtmlDecorator($ret, FormDecorator::BLOCK_CONTENT, 'application.domainsearch.html');
         $ret = new SearchDecorator($ret);
         return $ret;
