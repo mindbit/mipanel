@@ -1,4 +1,13 @@
 *.swp
+/.buildpath
+/.project
+/.settings
+/composer.lock
+/model/generated-*
+/model/propel.xml
+/vendor
+
+
 *.o
 .deps
 config/config.php
