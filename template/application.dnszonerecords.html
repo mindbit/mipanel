@@ -1,0 +1,36 @@
+<!-- BEGIN application.search.form [hidden] -->
+<table>
+<tr>
+  <td>Name</td>
+  <td><input type="text" name="name">
+</tr>
+</table>
+<!-- END application.search.form -->
+<!-- BEGIN application.search.noresults [hidden] -->
+No records found.
+<!-- END application.search.noresults -->
+<!-- BEGIN application.search.results [hidden] -->
+<!-- BEGIN application.search.pager -->
+<!-- END application.search.pager -->
+<input type="hidden" name="id" value="{query.id}">
+<input type="hidden" name="name" value="{query.name}">
+<table border="1">
+  <tr>
+    <th>Name</th>
+    <th>Type</th>
+    <th>Priority</th>
+    <th>Data</th>
+    <th>TTL</th>
+  </tr>
+  <!-- BEGIN application.search.row -->
+  <tr>
+    <td>{name:e}</td>
+    <td>{type}</td>
+    <td>{aux}</td>
+    <td>{data:e}</td>
+    <td>{ttl}</td>
+    <td>[ <a href="dns-record-edit?id={id}" target="_top">Edit</a> ]</td>
+  </tr>
+  <!-- END application.search.row -->
+</table>
+<!-- END application.search.results -->
