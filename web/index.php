@@ -27,6 +27,7 @@ $routes = [
     'domain-view'       => 'DomainViewRequest',
     'dns-zone-edit'     => 'DnsZoneEditRequest',
     'dns-zone-records'  => 'DnsZoneRecordsRequest',
+    'dns-record-edit'   => 'DnsRecordEditRequest',
 ];
 $class = '\\Mindbit\\Mipanel\\Controller\\' . (@$routes[$_REQUEST['page']] ?: 'HomeRequest');
 /**
