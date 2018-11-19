@@ -1,7 +1,5 @@
 <u>{domain:e}</u>
-<!-- FIXME hide DNS tabs if no DNS zone is associated; similarly hide mail related tabs -->
-<div>DNS Zone</div>
-<div>DNS Records</div>
-<div>Mailboxes</div>
-<div>Mail Aliases</div>
-<iframe id="content" src="dns-zone-edit?id={dns_zones_id}" style="width: 100%; height: 500px;"></iframe>
+<!-- BEGIN application.tab [hidden] -->
+<div class="{tab.class}" onClick="selectTab('{tab.url:e}')">{tab.text:e}</div>
+<!-- END application.tab -->
+<iframe id="content" src="{content.url}" style="width: 100%; height: 500px;"></iframe>

@@ -1,0 +1,9 @@
+.tab-active {
+	color: red;
+	cursor: pointer;
+}
+
+.tab-inactive {
+	color: blue;
+	cursor: pointer;
+}
