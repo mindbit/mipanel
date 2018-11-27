@@ -41,15 +41,18 @@
   </table>
   <table name="domains" idMethod="native" phpName="Domain">
     <column name="id" phpName="Id" type="INTEGER" size="10" sqlType="int(10) unsigned" primaryKey="true" autoIncrement="true" required="true"/>
-    <column name="domain" phpName="Domain" type="VARCHAR" size="255" required="true"/>
+    <column name="name" phpName="Name" type="VARCHAR" size="255" required="true"/>
     <column name="dns_zones_id" phpName="DnsZonesId" type="INTEGER" size="10" sqlType="int(10) unsigned"/>
     <column name="mail_domains_id" phpName="MailDomainsId" type="INTEGER" size="10" sqlType="int(10) unsigned"/>
-    <foreign-key foreignTable="mail_domains" name="domains_ibfk_2">
-      <reference local="mail_domains_id" foreign="id"/>
-    </foreign-key>
     <foreign-key foreignTable="dns_zones" name="domains_ibfk_1">
       <reference local="dns_zones_id" foreign="id"/>
     </foreign-key>
+    <foreign-key foreignTable="mail_domains" name="domains_ibfk_2">
+      <reference local="mail_domains_id" foreign="id"/>
+    </foreign-key>
+    <unique name="name">
+      <unique-column name="name"/>
+    </unique>
     <unique name="dns_zones_id">
       <unique-column name="dns_zones_id"/>
     </unique>
@@ -79,15 +82,15 @@
   <table name="mail_domains" idMethod="native" phpName="MailDomain">
     <column name="id" phpName="Id" type="INTEGER" size="10" sqlType="int(10) unsigned" primaryKey="true" autoIncrement="true" required="true"/>
     <column name="unix_id" phpName="UnixId" type="INTEGER" size="10" sqlType="int(10) unsigned" required="true"/>
-    <column name="domain" phpName="Domain" type="VARCHAR" size="255" required="true"/>
+    <column name="name" phpName="Name" type="VARCHAR" size="255" required="true"/>
     <foreign-key foreignTable="unix" name="mail_domains_ibfk_1">
       <reference local="unix_id" foreign="id"/>
     </foreign-key>
     <index name="unix_id">
       <index-column name="unix_id"/>
     </index>
-    <unique name="domain">
-      <unique-column name="domain"/>
+    <unique name="name">
+      <unique-column name="name"/>
     </unique>
     <vendor type="mysql">
       <parameter name="Engine" value="InnoDB"/>
