@@ -30,8 +30,8 @@ class DomainSearchRequest extends BaseSearchRequest
     protected function buildQuery()
     {
         $query = DomainQuery::create();
-        $this->addLike($query, DomainTableMap::COL_DOMAIN, $_REQUEST['domain']);
-        return $query->orderByDomain();
+        $this->addLike($query, DomainTableMap::COL_NAME, $_REQUEST['name']);
+        return $query->orderByName();
     }
 
     /**
@@ -44,7 +44,7 @@ class DomainSearchRequest extends BaseSearchRequest
     {
         return [
             'id'        => $om->getId(),
-            'domain'    => $om->getDomain(),
+            'name'      => $om->getName(),
             'img.dns'   => IconTheme::boolIcon($om->getDnsZonesId()),
             'img.mail'  => IconTheme::boolIcon($om->getMailDomainsId())
         ];

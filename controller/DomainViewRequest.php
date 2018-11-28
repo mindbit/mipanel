@@ -29,7 +29,7 @@ class DomainViewRequest extends BaseRequest
         $template = $this->response->getTemplate();
         $this->addTabs($tabs, $template->getBlock('application.tab'));
         $template->setVariables([
-            'domain'        => $om->getDomain(),
+            'name'          => $om->getName(),
             'content.url'   => array_shift($tabs),
         ]);
         $template->getBlock(HtmlDecorator::BLOCK_BODY_INNER)->show();
