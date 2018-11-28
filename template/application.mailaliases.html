@@ -1,0 +1,34 @@
+<!-- BEGIN application.search.form [hidden] -->
+<table>
+<tr>
+  <td>Name</td>
+  <td><input type="text" name="user">
+  <td>Alias</td>
+  <td><input type="text" name="alias">
+</tr>
+</table>
+<!-- END application.search.form -->
+<!-- BEGIN application.search.noresults [hidden] -->
+No mail aliases found.
+<!-- END application.search.noresults -->
+<!-- BEGIN application.search.results [hidden] -->
+<!-- BEGIN application.search.pager -->
+<!-- END application.search.pager -->
+<input type="hidden" name="id" value="{query.id:e}">
+<input type="hidden" name="user" value="{query.user:e}">
+<input type="hidden" name="alias" value="{query.alias:e}">
+<table border="1">
+  <tr>
+    <th>Name</th>
+    <th>Alias</th>
+    <th>Actions</th>
+  </tr>
+  <!-- BEGIN application.search.row -->
+  <tr>
+    <td>{user:e}</td>
+    <td>{alias:e}</td>
+    <td>[ <a href="mail-alias-edit?id={id}" target="_top">Edit</a> ]</td>
+  </tr>
+  <!-- END application.search.row -->
+</table>
+<!-- END application.search.results -->

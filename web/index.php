@@ -30,6 +30,8 @@ $routes = [
     'dns-record-edit'   => 'DnsRecordEditRequest',
     'mail-mboxes'       => 'MailMboxesRequest',
     'mail-mbox-edit'    => 'MailMboxEditRequest',
+    'mail-aliases'      => 'MailAliasesRequest',
+    'mail-alias-edit'   => 'MailAliasEditRequest',
 ];
 $class = '\\Mindbit\\Mipanel\\Controller\\' . (@$routes[$_REQUEST['page']] ?: 'HomeRequest');
 /**
