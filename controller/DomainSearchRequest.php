@@ -20,6 +20,9 @@ class DomainSearchRequest extends BaseSearchRequest
             $ret = new FormDecorator($ret, 'application.search.wrapper.form');
             $ret->getTemplate()->setVariable(FormDecorator::VAR_TARGET, 'results');
         } else {
+            $ret->getTemplate()->setVariables([
+            'query.name'    => $_REQUEST['name'],
+            ]);
             $ret = new FormDecorator($ret, HtmlResponse::BLOCK_BODY_INNER);
         }
         $ret = new HtmlDecorator($ret, FormDecorator::BLOCK_CONTENT, 'application.domainsearch.html');
