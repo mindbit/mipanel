@@ -1,0 +1,50 @@
+<font size="+1"><u>Mipanel {mipanel.version:e}</u></font>
+<br>
+<br>Web Server Environment:
+<table border="1">
+<tr><td>Server Type/Version</td><td>{server.software:e}</td></tr>
+<tr><td>PHP Server API</td><td>{php.sapi:e}</td></tr>
+<tr><td>PHP Version</td><td>{php.version:e}</td></tr>
+<tr><td colspan="2" align="right"><a href="info">View Full PHP Info</a></td></tr>
+</table>
+<br>Host OS:
+<table border="1">
+<tr><td>OS Type</td><td>{os.type:e}</td></tr>
+<tr><td>OS Release</td><td>{os.release:e}</td></tr>
+<tr><td>OS Version</td><td>{os.version:e}</td></tr>
+</table>
+<br>System Load:
+<table border="1">
+<tr><th>&nbsp;</th><th>1 minute</th><th>5 minutes</th><th>10 minutes</th></tr>
+<tr><td>Load Average</td><td>{load.avg.1m}</td><td>{load.avg.5m}</td><td>{load.avg.10m}</td></tr>
+<tr><td>Running Processes</td><td colspan="3">{load.proc.running}</td></tr>
+<tr><td>Total Processes</td><td colspan="3">{load.proc.total}</td></tr>
+</table>
+<br>System Memory:
+<table style="text-align: right;" border="1">
+  <tr>
+    <th style="text-align: left;">Type</th>
+    <th>Total (MB)</th>
+    <th>Used (MB)</th>
+    <th>Free (MB)</th>
+    <th>Shared (MB)</th>
+    <th>Buffers/Cache (MB)</th>
+    <th>Available (MB)</th>
+  </tr>
+  <tr>
+    <td style="text-align: left;">Physical</td>
+    <td>{free.mem.total}</td>
+    <td>{free.mem.used}</td>
+    <td>{free.mem.free}</td>
+    <td>{free.mem.shared}</td>
+    <td>{free.mem.buf}</td>
+    <td>{free.mem.available}</td>
+  </tr>
+  <tr>
+    <td style="text-align: left;">Swap</td>
+    <td>{free.swap.total}</td>
+    <td>{free.swap.used}</td>
+    <td>{free.swap.free}</td>
+    <td colspan="3">&nbsp;</td>
+  </tr>
+</table>

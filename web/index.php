@@ -32,6 +32,7 @@ $routes = [
     'mail-mbox-edit'    => 'MailMboxEditRequest',
     'mail-aliases'      => 'MailAliasesRequest',
     'mail-alias-edit'   => 'MailAliasEditRequest',
+    'about'             => 'AboutRequest',
 ];
 $class = '\\Mindbit\\Mipanel\\Controller\\' . (@$routes[$_REQUEST['page']] ?: 'HomeRequest');
 /**
