@@ -15,3 +15,37 @@
 	position: absolute;
 	overflow: hidden;
 }
+
+.container {
+	height: 100%;
+}
+
+.iframe-container {
+	width: 90%;
+	height: 100%;
+	border: none;
+	position: absolute;
+	border-left: 1px solid grey;
+	overflow: hidden;
+	padding-left: 40px;
+}
+
+.menu-active {
+	color: blue;
+	cursor: pointer;
+	padding: 5px
+}
+
+.menu-inactive {
+	padding: 5px;
+	color: black;
+	cursor: pointer;
+}
+
+.menu {
+	float: left;
+	width: 200px;
+	height: 100%;
+	margin-top: 50px;
+	text-align: center;
+}

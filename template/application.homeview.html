@@ -1,0 +1,11 @@
+<script type="text/javascript">
+var menus = ['domains', 'about'];
+</script>
+<div class="menu">
+  <div id="domains" class="menu-active" onclick="selectMenu('domain-search','domains')">Domains</div>
+  <div id="about" class="menu-inactive" onclick="selectMenu('about','about')">About</div>
+  <div class="menu-inactive" onclick="window.open('logout', '_top')">Logout</div>
+</div>
+<div class="container">
+<iframe name="main" id="ifr-main" src="/domain-search" class="iframe-container"></iframe>
+</div>
