@@ -15,6 +15,7 @@ class MailMboxesRequest extends BaseSearchRequest
     protected function createResponse()
     {
         $ret = new HtmlResponse($this);
+        $ret->addCssRef('css/main.css');
         if ($this->action == self::ACTION_FORM) {
             $ret = new HtmlDecorator($ret, HtmlResponse::BLOCK_BODY_INNER, 'application.searchwrapper.html');
             $ret = new FormDecorator($ret, 'application.search.wrapper.form');

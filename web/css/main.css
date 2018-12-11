@@ -7,3 +7,11 @@
 	color: blue;
 	cursor: pointer;
 }
+
+.iframe-container-results {
+	width: 100%;
+	height: 80%;
+	border: none;
+	position: absolute;
+	overflow: hidden;
+}
