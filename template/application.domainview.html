@@ -1,5 +1,8 @@
-<u>{name:e}</u>
+<div class="domain-name">{name:e}</div>
+<script type="text/javascript">var tabs = Array();</script>
 <!-- BEGIN application.tab [hidden] -->
-<div class="{tab.class}" onClick="selectTab('{tab.url:e}')">{tab.text:e}</div>
+<div class="{tab.class}" id="{tab.id}" onClick="selectTab('{tab.url:e}','{tab.id:e}')">{tab.text:e}</div>
+<script type="text/javascript">tabs[{tab.count}] = '{tab.id:e}';</script>
 <!-- END application.tab -->
-<iframe id="content" src="{content.url}" style="width: 100%; height: 500px;"></iframe>
+<div class="tab-last"></div>
+<iframe id="content" scrolling="no" src="{content.url}" class="iframe-subcontainer"></iframe>

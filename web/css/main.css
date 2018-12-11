@@ -1,11 +1,51 @@
+body {
+	padding: 0;
+	margin: 0;
+}
+
+.domain-name {
+	padding: 10px;
+}
+
 .tab-active {
-	color: red;
+	color: blue;
 	cursor: pointer;
+	float: left;
+	padding: 5px;
+	text-align: center;
+	border-top: 1px solid gray;
+	border-left: 1px solid gray;
 }
 
 .tab-inactive {
-	color: blue;
+	float: left;
+	padding: 5px;
+	color: black;
 	cursor: pointer;
+	border: 1px solid gray;
+	border-left: 1px solid gray;
+	border-right: none;
+	text-align: center;
+}
+
+.tab-last {
+	height: 20px;
+	width: 50%;
+	float: left;
+	padding: 5px;
+	border-left: 1px solid gray;
+	border-bottom: 1px solid gray;
+	text-align: center;
+}
+
+#content {
+	margin: 10px;
+}
+
+.iframe-subcontainer {
+	width: 70%;
+	height: 500px;
+	border: none;
 }
 
 .iframe-container-results {

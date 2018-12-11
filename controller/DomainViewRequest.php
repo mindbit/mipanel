@@ -41,13 +41,17 @@ class DomainViewRequest extends BaseRequest
      */
     protected function addTabs($tabs, $block)
     {
+        $count = 0;
         $class = 'tab-active';
         foreach ($tabs as $text => $url)
         {
+            $id = strtolower(str_replace(" ","_",$text));
             $block->setVariables([
                 'tab.class' => $class,
                 'tab.text'  => $text,
                 'tab.url'   => $url,
+                'tab.id'    => $id,
+                'tab.count' => $count++
             ]);
             $block->show();
             $class = 'tab-inactive';
