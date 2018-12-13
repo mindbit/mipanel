@@ -8,6 +8,7 @@ use Mindbit\Mpl\Mvc\View\FormDecorator;
 use Mindbit\Mpl\Mvc\View\CrudDecorator;
 use Mindbit\Mpl\Mvc\View\HtmlDecorator;
 use Mindbit\Mipanel\Model\Mipanel\Map\DnsZoneTableMap;
+use Propel\Runtime\Map\TableMap;
 
 class DnsZoneEditRequest extends SimpleFormRequest
 {
@@ -16,9 +17,9 @@ class DnsZoneEditRequest extends SimpleFormRequest
         return new DnsZone();
     }
 
-    protected function setOmFields($data)
+    protected function omFromArray($arr, $keyType = TableMap::TYPE_PHPNAME)
     {
-        parent::setOmFields($data);
+        parent::omFromArray($arr, $keyType);
 
         if ($this->action == self::ACTION_UPDATE) {
             $this->om->resetModified(DnsZoneTableMap::COL_ORIGIN);
